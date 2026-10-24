@@ -6,6 +6,7 @@
 import type { Board, Card, MuralState, Op } from "./mural";
 import { normalizar } from "./fala";
 import { lerValor } from "./financeiro";
+import type { QuandoAgenda } from "./agenda";
 
 export type Comando =
   | { tipo: "criarQuadro"; titulo: string; cartoes: string[]; projeto: string }
@@ -23,7 +24,8 @@ export type Comando =
   | { tipo: "ajuda" }
   | { tipo: "meta"; valor: number }
   | { tipo: "missaoNota"; missao: string; texto: string }
-  | { tipo: "missaoStatus"; missao: string | null };
+  | { tipo: "missaoStatus"; missao: string | null }
+  | { tipo: "agenda"; quando: QuandoAgenda };
 
 export type Periodo = "hoje" | "ontem" | "semana" | "mes";
 
@@ -107,6 +109,11 @@ export function entender(entrada: string): Comando | null {
   if (quadro) return quadro;
 
   // Perguntas: o texto normalizado já tirou acento, gíria e pontuação.
+  // "minha agenda" · "o que tenho amanhã?" · "próximo compromisso" · "tenho reunião essa semana?"
+  if (/\b(?:agenda|compromissos?|reuni(?:ao|oes)|eventos?|marcado|marquei)\b/.test(n) || /^o que (?:eu )?tenho (?:amanha|essa semana|esta semana|na semana)$/.test(n)) {
+    const quando: QuandoAgenda = /\bproxim[oa]\b/.test(n) ? "proximo" : /\bamanha\b/.test(n) ? "amanha" : /\bsemana\b/.test(n) ? "semana" : "hoje";
+    return { tipo: "agenda", quando };
+  }
   // "como está a missão?" · "missão da flush" · "o que falta no drend?" (antes das vendas: "flush" é dos dois)
   if (/\bmiss(?:ao|oes)\b/.test(n) || (/^o que falta (?:no|na|em) /.test(n) && qualMissao(n))) return { tipo: "missaoStatus", missao: qualMissao(n) };
   const loja = /\bflush\b/.test(n);

@@ -6,7 +6,8 @@ import { SetaCirculo } from "@/design-system/BotaoCirculo";
 import { useAviso } from "@/design-system/useAviso";
 import { abertas } from "@/core/tarefas";
 import { Valor } from "@/design-system/Valor";
-import { agenda } from "@/data/exemplo";
+import { diaDe, horaDe, proximo } from "@/core/agenda";
+import { eventosDa, useAgenda } from "@/fontes/agenda";
 import { DIAS_PARADO, projetos } from "@/core/missao";
 import { useMissoes } from "@/fontes/missoes";
 import { useStatusVM } from "@/fontes/status";
@@ -43,7 +44,16 @@ export function Hoje() {
   const data = longa.charAt(0).toUpperCase() + longa.slice(1);
   const lista = abertas(tarefas);
   const total = lista.length + caixaDeEntrada.length;
-  const [hora, compromisso] = agenda[0];
+  const agendaEstado = useAgenda();
+  const eventos = eventosDa(agendaEstado);
+  const prox = eventos ? proximo(eventos, agora) : null;
+  const amanha = (() => { const d = new Date(agora); d.setHours(12); d.setDate(d.getDate() + 1); return diaDe(d); })();
+  const tiraAgenda = prox
+    ? {
+        rotulo: `Próximo · ${prox.dia === diaDe(agora) ? "" : prox.dia === amanha ? "amanhã " : new Date(`${prox.dia}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "") + " "}${prox.diaInteiro ? "dia todo" : new Date(prox.inicio) <= agora ? "agora" : horaDe(prox.inicio)}`,
+        texto: prox.titulo,
+      }
+    : { rotulo: "Agenda", texto: eventos ? "Nada marcado" : agendaEstado.fase === "sem-agenda" ? "Ligar a agenda" : agendaEstado.fase === "carregando" ? "Lendo…" : "Entrar" };
 
   return (
     <>
@@ -134,8 +144,8 @@ export function Hoje() {
           <strong><i className="dr-ponto" data-tom={resumoMissoes.parados ? "alerta" : resumoMissoes.agora ? "acento" : undefined} aria-hidden="true" />{resumoMissoes.texto}</strong>
         </Link>
         <Link to="/vida" className="dr-tira">
-          <span className="dr-rotulo">Próximo · {hora}</span>
-          <strong>{compromisso}</strong>
+          <span className="dr-rotulo">{tiraAgenda.rotulo}</span>
+          <strong>{tiraAgenda.texto}</strong>
         </Link>
       </nav>
       <Aviso aviso={aviso} aoSumir={limpar} />

@@ -97,6 +97,7 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-dia-lista li { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: baseline; min-height: 52px; padding: 14px 0; font-size: 15px; font-weight: 500; }
 .dr-dia-lista li + li { border-top: 1px solid var(--cos-linha); }
 .dr-dia-lista time { font-size: 13px; color: var(--cos-tinta-3); font-variant-numeric: tabular-nums; }
+.dr-dia-local { display: block; margin-top: 2px; font-size: 13px; font-weight: 400; color: var(--cos-tinta-3); }
 .dr-dia-lista li[data-hipotese] span { color: var(--cos-tinta-2); font-style: italic; }
 
 /* Conversa. */

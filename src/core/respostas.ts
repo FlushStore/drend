@@ -139,6 +139,7 @@ export const AJUDA = [
   "• ver o que falta: “o que tenho hoje?”",
   "• números da Flush: “quanto vendi hoje?”, “e a semana?”, “e o mês?”",
   "• meta: “meta do mês 10 mil”",
+  "• agenda: “o que tenho amanhã?”, “minha agenda da semana”, “próximo compromisso”",
   "• missões: “anota na missão: terminei o login”, “como está a missão da flush?”",
   "• guardar ideia: “tive uma ideia: kit de natal”",
   "• montar quadro: “crie um quadro Natal com cartões vídeo, cupom e stories”",

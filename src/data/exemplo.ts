@@ -44,12 +44,6 @@ export const outrosProjetos = [
 export const dinheiroHoje = { entradas: 640, saidas: 212, atualizado: "21:04" };
 export const dinheiroMes = { entradas: 7900, saidas: 5210 };
 
-export const agenda = [
-  ["09:00", "Reposição da Flush com o fornecedor"],
-  ["12:00", "Resumo do dia chega no iPhone"],
-  ["19:30", "Estudo · 1 h"],
-] as const;
-
 export const metas = [
   ["Reserva de emergência", 40],
   ["Estudo · 20 h no mês", 65],
