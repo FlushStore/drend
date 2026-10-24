@@ -1,5 +1,5 @@
 -- DREND · fundação do banco (Fase 4)
--- NÃO APLICADA. Vai para um projeto Supabase novo, só do DREND, depois do "pode" do Rapha.
+-- Aplicar junto com 0002 no projeto Supabase do DREND (criado pela Vercel, 24/10/2026).
 -- Nunca aplicar nos projetos da Flush ou da Vape Mania.
 --
 -- O banco guarda só o que é do DREND: mural, caixa de entrada e log de ações.
