@@ -10,6 +10,8 @@ import "./sobreposicoes.css";
 export interface ResultadoDaBusca {
   id: string;
   titulo: string;
+  /** O título como aparece (ex.: com o trecho achado marcado). Sem ele, `titulo`. */
+  tituloRico?: ReactNode;
   subtitulo?: ReactNode;
   /** Termos extras que também acham este resultado (código, sabores, apelidos). */
   palavras?: ReadonlyArray<string>;
@@ -89,7 +91,7 @@ export function Busca({
                     >
                       {r.visual && <span className="cos-icone" aria-hidden="true">{r.visual}</span>}
                       <span className="cos-busca-item-texto">
-                        <strong>{r.titulo}</strong>
+                        <strong>{r.tituloRico ?? r.titulo}</strong>
                         {r.subtitulo && <small>{r.subtitulo}</small>}
                       </span>
                       {r.fim && <span className="cos-busca-item-fim">{r.fim}</span>}

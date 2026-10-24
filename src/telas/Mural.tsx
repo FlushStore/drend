@@ -131,6 +131,19 @@ export function Mural() {
     setBusca({}, { replace: true });
   }, [busca, mural, setBusca]);
 
+  // Vindo da busca com ?cartao=: abre o quadro do cartão e o cartão.
+  useEffect(() => {
+    const id = busca.get("cartao");
+    if (!id) return;
+    const c = mural.state.cards[id];
+    if (c) {
+      setTermo("");
+      setAtivo(c.boardId);
+      setAberto(c.id);
+    }
+    setBusca({}, { replace: true });
+  }, [busca, mural, setBusca]);
+
   // No iPhone a fileira de quadros rola de lado: o quadro aberto fica à vista.
   useEffect(() => {
     document.querySelector(".dr-mural-filtros [aria-checked='true']")?.scrollIntoView({ inline: "center", block: "nearest" });

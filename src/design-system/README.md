@@ -23,7 +23,7 @@ A direção **Estúdio** (Missão 2A, aprovada) como código de produção. O la
 | `Doca.tsx` | Navegação do celular; some ao rolar (`useBarraAoRolar`) | `itens`, `ativo`, `mais`, `aoNavegar`, `elementoDeRolagem`; item com `sai` ganha marca discreta (destino fora da casca) |
 | `MenuMais.tsx` | O "+" expandido | `aberto`, `aoFechar`, `origem` doca·topo, `secoes` |
 | `AbasTopo.tsx` | Abas centradas do desktop | `itens`, `ativo`, `aoNavegar` |
-| `Busca.tsx` | Busca universal (cmdk + diálogo Radix) | `aberto`, `aoFechar`, `grupos`, `consulta`/`aoMudarConsulta`, `filtrar`, `carregando` |
+| `Busca.tsx` | Busca universal (cmdk + diálogo Radix) | `aberto`, `aoFechar`, `grupos` (resultado com `tituloRico` opcional), `consulta`/`aoMudarConsulta`, `filtrar`, `carregando` |
 | `ConfirmarAcao.tsx` | Segundo toque antes de ação que não volta; "Voltar" com foco; Escape cancela só ela | `rotulo`, `textoConfirmar`, `aoConfirmar`, `aoCancelar`, `ocupado`, `variante` |
 | `Painel.tsx` | Painel vaul: de baixo no celular, à direita no desktop | `aberto`, `aoFechar`, `titulo`, `lado`, `rodape`, `ocultarCabecalho` |
 | `movimento.ts` | Curvas/molas e `useMovimentoReduzido()` | — |

@@ -13,6 +13,7 @@ import type { ItemDeNavegacao } from "@/design-system/navegacao";
 import { useTelaLarga } from "@/design-system/useTelaLarga";
 import { useStore } from "@/store";
 import { AvisosDoApp } from "./AvisosDoApp";
+import { BuscaGeral } from "./BuscaGeral";
 import { ContaAvisos } from "./ContaAvisos";
 import { ContaFlush } from "./ContaFlush";
 import { ContaNuvem } from "./ContaNuvem";
@@ -100,6 +101,7 @@ export function Casca() {
           </Link>
           {largo && <AbasTopo itens={itens} ativo={ativoDe(pathname)} />}
           <div className="cv2-topo-acoes">
+            <BuscaGeral />
             {largo && (
               <div className="cv2-mais-ancora">
                 <BotaoCirculo rotulo="Ações do DREND" tom="acento" aria-expanded={menu} aria-haspopup="dialog" onClick={() => setMenu((m) => !m)}>
