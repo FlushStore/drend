@@ -8,6 +8,7 @@ import { useFlush } from "@/fontes/useFlush";
 import { CurvaDaSemana } from "./VendasDaSemana";
 import { MesDaFlush } from "./MesDaFlush";
 import { ProdutosDaFlush } from "./ProdutosDaFlush";
+import { ReposicaoDaFlush } from "./ReposicaoDaFlush";
 
 /** Um projeto por bloco: o número que importa e o estado. Operar é no painel do projeto. */
 export function Negocios() {
@@ -40,6 +41,8 @@ export function Negocios() {
         {flush.mes && <MesDaFlush mes={flush.mes} />}
 
         <ProdutosDaFlush flush={flush} />
+
+        <ReposicaoDaFlush flush={flush} />
 
         <Bloco className="dr-proj" aria-label="Vape Mania">
           <div className="dr-proj-cab">

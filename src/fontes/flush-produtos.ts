@@ -11,6 +11,7 @@
  * Só agrega o que veio da leitura: nada aqui inventa número.
  */
 import { diaLocal, ehVendaComercial, type VendaFlush } from "./flush-regras";
+import type { GiroFlush } from "./flush-reposicao";
 
 /** O limite do "Sabores acabando" do Início da Flush (`LIMITE_PADRAO_ACABANDO`). */
 export const LIMITE_ACABANDO = 2;
@@ -23,6 +24,8 @@ const um = <T>(x: Talvez<T>): T | null => (Array.isArray(x) ? x[0] ?? null : x ?
 export interface SaborEstoqueFlush {
   id: string;
   product_id: string;
+  /** Para casar com o sabor da venda (reposição). */
+  flavor_id?: string | null;
   qty: number | string | null;
   is_external?: boolean | null;
   flavors?: Talvez<{ name: string | null; emoji?: string | null }>;
@@ -67,6 +70,8 @@ export interface ProdutosFlush {
   /** AAAA-MM do mês corrente. */
   mes: string;
   formas: FormaDePagamento[];
+  /** Giro dos sabores acabando, para a reposição. null quando o estoque não veio; ausente em resumo antigo. */
+  giro?: GiroFlush | null;
 }
 
 const centavos = (v: number) => Math.round(v * 100);

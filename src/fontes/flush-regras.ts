@@ -17,6 +17,10 @@ export interface VendaFlush {
   quantity: number | string | null;
   payment_method?: string | null;
   cash_neutralized?: boolean | null;
+  /** Para o giro por sabor (reposição). */
+  product_id?: string | null;
+  flavor_id?: string | null;
+  flavor_name?: string | null;
 }
 
 export interface CaixaFlush {

@@ -9,6 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { inicioDoMesAnterior } from "@/core/financeiro";
 import { diasDesde, resumirPorDia, type CaixaFlush, type CustoPadrao, type VendaFlush } from "./flush-regras";
 import { LIMITE_ACABANDO, resumirProdutos, type ProdutosFlush, type SaborEstoqueFlush, type VinculoFlush } from "./flush-produtos";
+import { calcularGiro } from "./flush-reposicao";
 import { criarFonte, type DiaLoja, type EstadoLoja, type ResumoLoja } from "./loja";
 import { supabase as drend } from "@/core/nuvem";
 
@@ -44,7 +45,7 @@ async function buscarEstoque(db: SupabaseClient): Promise<{ sabores: SaborEstoqu
     const [sabores, vinculos] = await Promise.all([
       todas<SaborEstoqueFlush>((de, ate) =>
         db.from("product_flavors")
-          .select("id, product_id, qty, is_external, flavors(name, emoji)")
+          .select("id, product_id, flavor_id, qty, is_external, flavors(name, emoji)")
           .eq("store_id", LOJA_PRINCIPAL).eq("is_external", false).lte("qty", LIMITE_ACABANDO)
           .order("qty", { ascending: true }).order("id", { ascending: true }).range(de, ate)),
       todas<VinculoFlush>((de, ate) =>
@@ -69,7 +70,7 @@ export async function buscarSemana(db: SupabaseClient, agora = new Date()): Prom
   const [vendas, caixa, custos, estoque] = await Promise.all([
     todas<VendaFlush>((de, ate) =>
       db.from("sales")
-        .select("id, final_price, created_at, order_id, product_name, cost_price, quantity, payment_method, cash_neutralized")
+        .select("id, final_price, created_at, order_id, product_name, cost_price, quantity, payment_method, cash_neutralized, product_id, flavor_id, flavor_name")
         .eq("store_id", LOJA_PRINCIPAL).gte("created_at", inicio)
         .order("created_at", { ascending: true }).order("id", { ascending: true }).range(de, ate)),
     todas<CaixaFlush>((de, ate) =>
@@ -91,7 +92,7 @@ export async function buscarSemana(db: SupabaseClient, agora = new Date()): Prom
   }
   const historico = resumirPorDia(vendas, caixa, tabela, dias);
   const semana = historico.slice(-7);
-  const produtos = resumirProdutos(vendas, estoque, semana.map((d) => d.dia), agora);
+  const produtos = { ...resumirProdutos(vendas, estoque, semana.map((d) => d.dia), agora), giro: estoque ? calcularGiro(vendas, estoque, dias) : null };
   return { dias: semana, historico, produtos, atualizadoEm: new Date().toISOString() };
 }
 
