@@ -37,9 +37,9 @@ export function Hoje() {
       </header>
 
       <div className="dr-hoje">
-        <Link to="/negocios" className="cos-bloco dr-heroi" aria-label={`FlushStore hoje: faturamento e lucro`}>
+        <Link to="/negocios" className="cos-bloco dr-heroi" aria-label={`FlushStore ${numeros.dia}: faturamento e lucro`}>
           <span className="dr-rotulo">
-            FlushStore · hoje
+            FlushStore · {numeros.dia}
             {numeros.exemplo && <span className="dr-tag-exemplo">exemplo</span>}
           </span>
           <span className="dr-heroi-num">
@@ -49,7 +49,7 @@ export function Hoje() {
             </span>
             {numeros.pedidos !== null && <span className="dr-heroi-extra">{numeros.pedidos === 1 ? "1 pedido" : `${numeros.pedidos} pedidos`}</span>}
           </span>
-          <CurvaDaSemana dias={numeros.semana} />
+          <CurvaDaSemana dias={numeros.semana} ultimoEhHoje={numeros.ultimoEhHoje} />
         </Link>
 
         <section className="cos-bloco dr-para-voce" aria-labelledby="dr-pv">
