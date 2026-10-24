@@ -62,6 +62,12 @@ describe("vault: leitura das notas", () => {
     expect(t).toContain("senha: [oculto]");
   });
 
+  it("esconde credencial também no título, nas etiquetas e no POST", () => {
+    const n = notaDoArquivo("a/b.md", "---\ntitle: 'token: ghp_abcdefghijklmnopqrstuvwxyz12'\ntags: [sk-ant-abcdefghijklmnopqrstu]\n---\nx");
+    expect(JSON.stringify(n)).not.toMatch(/ghp_|sk-ant/);
+    expect(JSON.stringify(validarNota({ caminho: "a/b.md", titulo: "ghp_abcdefghijklmnopqrstuvwxyz12", resumo: "senha: segredo123", projeto: "sk-ant-abcdefghijklmnopqrstu" }))).not.toMatch(/ghp_|segredo123|sk-ant/);
+  });
+
   it("o resumo pula títulos, avisos, listas e tabelas", () => {
     expect(resumoDe("# T\n\n- item\n\n| a | b |\n\nFrase de verdade aqui.")).toBe("Frase de verdade aqui.");
   });

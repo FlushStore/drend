@@ -46,7 +46,7 @@ function limpar(v) {
   return String(v).trim().replace(/^(["'])(.*)\1$/, "$2").trim();
 }
 
-const texto = (v, max = 200) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
+const texto = (v, max = 200) => (typeof v === "string" && v.trim() ? tirarSegredos(v.trim()).slice(0, max) : null);
 const data = (v) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null);
 
 /** Tira o que parece credencial: chaves de API, tokens, JWT, senhas escritas. */
@@ -93,19 +93,19 @@ export function notaDoArquivo(caminho, conteudo) {
   const nome = partes[partes.length - 1].replace(/\.md$/, "");
   const h1 = corpo.match(/^#\s+(.+)$/m)?.[1];
   const tags = (Array.isArray(dados.tags) ? dados.tags : typeof dados.tags === "string" ? dados.tags.split(/[\s,]+/) : [])
-    .map((x) => String(x).replace(/^#/, "").trim())
+    .map((x) => tirarSegredos(String(x).replace(/^#/, "").trim()))
     .filter(Boolean)
     .slice(0, 20);
   const limpo = tirarSegredos(corpo.trim());
   return {
     caminho: c,
-    titulo: (texto(dados.title) ?? texto(h1 && semMarkdown(h1)) ?? nome).slice(0, 200),
+    titulo: (texto(dados.title) ?? texto(h1 && semMarkdown(h1)) ?? tirarSegredos(nome)).slice(0, 200),
     pasta: partes.slice(0, -1).join("/"),
     tipo: texto(dados.type, 40),
     status: texto(dados.status, 40),
     projeto: texto(dados.project, 80),
     papel: texto(dados.project_role, 40),
-    proxima: texto(tirarSegredos(String(dados.next_action ?? "")), 300),
+    proxima: texto(dados.next_action, 300),
     tags,
     resumo: resumoDe(limpo),
     corpo: limpo.length > MAX_CORPO ? `${limpo.slice(0, MAX_CORPO)}\n\n…(nota cortada no DREND)` : limpo,
@@ -118,18 +118,19 @@ export function validarNota(n) {
   if (!n || typeof n !== "object") return null;
   if (typeof n.caminho !== "string" || !n.caminho.endsWith(".md") || n.caminho.length > 400 || n.caminho.includes("..")) return null;
   if (typeof n.titulo !== "string" || !n.titulo.trim()) return null;
-  const opc = (v, max) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
+  // Credencial pode aparecer em qualquer texto, não só no corpo: tudo passa pelo tirarSegredos.
+  const opc = (v, max) => (typeof v === "string" && v.trim() ? tirarSegredos(v.trim()).slice(0, max) : null);
   return {
     caminho: n.caminho,
-    titulo: n.titulo.trim().slice(0, 200),
+    titulo: tirarSegredos(n.titulo.trim()).slice(0, 200),
     pasta: typeof n.pasta === "string" ? n.pasta.slice(0, 400) : "",
     tipo: opc(n.tipo, 40),
     status: opc(n.status, 40),
     projeto: opc(n.projeto, 80),
     papel: opc(n.papel, 40),
     proxima: opc(n.proxima, 300),
-    tags: Array.isArray(n.tags) ? n.tags.filter((t) => typeof t === "string").map((t) => t.slice(0, 60)).slice(0, 20) : [],
-    resumo: typeof n.resumo === "string" ? n.resumo.slice(0, 300) : "",
+    tags: Array.isArray(n.tags) ? n.tags.filter((t) => typeof t === "string").map((t) => tirarSegredos(t).slice(0, 60)).slice(0, 20) : [],
+    resumo: typeof n.resumo === "string" ? tirarSegredos(n.resumo).slice(0, 300) : "",
     corpo: typeof n.corpo === "string" ? tirarSegredos(n.corpo).slice(0, MAX_CORPO + 40) : "",
     modificado: data(n.modificado),
   };

@@ -56,6 +56,7 @@ export function motivoSemVault(e: EstadoVault): string {
   return "";
 }
 
+const inteiras = new Map<string, NotaInteira>();
 let ultima = 0;
 export async function atualizarVault(forcar = false) {
   if (!supabase) return;
@@ -73,6 +74,8 @@ export async function atualizarVault(forcar = false) {
     if (r.status === 503 && corpo.codigo === "sem-vault") return mudar({ fase: "sem-vault" });
     if (!r.ok) throw new Error(corpo.erro || `erro ${r.status}`);
     const novo = { notas: unir(corpo.notas), vaults: corpo.vaults };
+    // Índice novo pode trazer nota mudada: o texto das notas já abertas é lido de novo.
+    inteiras.clear();
     guardar(novo);
     mudar({ fase: "ok", ...novo });
   } catch (e) {
@@ -80,7 +83,6 @@ export async function atualizarVault(forcar = false) {
   }
 }
 
-const inteiras = new Map<string, NotaInteira>();
 /** A nota inteira, com o texto. Lida uma vez por sessão. */
 export async function abrirNota(n: Pick<NotaVault, "vault" | "caminho">): Promise<NotaInteira> {
   const chave = `${n.vault}/${n.caminho}`;
