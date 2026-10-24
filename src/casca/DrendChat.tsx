@@ -2,10 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Botao } from "@/design-system/Botao";
 import { useStore, type Mensagem } from "@/store";
+import { iniciarFlush } from "@/fontes/flush";
+import { Cerebro } from "@/cerebro/Cerebro";
 
 const DESTINOS = [
   ["flushstore", "FlushStore"],
-  ["vape-mania", "Vape Mania"],
+  ["vida", "Vida"],
+  ["drend", "DREND"],
+] as const;
+
+/** Atalhos da conversa vazia: o rótulo é curto, o toque deixa o começo da frase no campo. */
+const SUGESTOES = [
+  ["O que tenho hoje?", "O que tenho hoje?", true],
+  ["Quanto vendi hoje?", "Quanto vendi hoje?", true],
+  ["Me lembra de…", "Me lembra de ", false],
+  ["Tive uma ideia", "Tive uma ideia: ", false],
 ] as const;
 
 const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
@@ -20,9 +31,27 @@ const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
 export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) => void }) {
   const { mensagens, falar, guardarIdeia, desfazer, mural } = useStore();
   const [texto, setTexto] = useState("");
+  // O cérebro: cada pedido é uma rajada, e ele "pensa" por um instante.
+  const [atividade, setAtividade] = useState(0);
+  const [pensando, setPensando] = useState(false);
+  const fimDoPensar = useRef<ReturnType<typeof setTimeout>>();
+  function pedir(frase: string) {
+    if (!frase.trim()) return;
+    setAtividade((a) => a + 1);
+    setPensando(true);
+    clearTimeout(fimDoPensar.current);
+    fimDoPensar.current = setTimeout(() => setPensando(false), 1600);
+    falar(frase);
+  }
+  useEffect(() => () => clearTimeout(fimDoPensar.current), []);
+  const vazia = mensagens.every((m) => m.de === "drend" && m.status === "dica");
   const fim = useRef<HTMLDivElement>(null);
+  const entrada = useRef<HTMLInputElement>(null);
   // O Desfazer só volta a última ação ativa: o botão aparece só na mensagem dela.
   const ultima = [...mural.log].reverse().find((e) => !e.undone && !e.summary.startsWith("Desfez:"));
+
+  // A conversa responde sobre a Flush mesmo quando o Hoje ainda não abriu.
+  useEffect(iniciarFlush, []);
 
   useEffect(() => {
     fim.current?.scrollIntoView({ block: "end" });
@@ -30,6 +59,10 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
 
   return (
     <div className="dr-chat">
+      <div className="dr-chat-cerebro">
+        <Cerebro atividade={atividade} pensando={pensando} tamanho={vazia ? "g" : "p"} />
+        <p className="dr-chat-estado" aria-live="polite">{pensando ? "Pensando…" : "\u00a0"}</p>
+      </div>
       <ol className="dr-chat-lista" aria-label="Conversa com o DREND">
         {mensagens.map((m) =>
           m.de === "rapha" ? (
@@ -55,18 +88,27 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
           ),
         )}
       </ol>
+      {vazia && (
+        <ul className="dr-chat-sugestoes" aria-label="Sugestões">
+          {SUGESTOES.map(([rotulo, inicio, enviar]) => (
+            <li key={rotulo}>
+              <button type="button" className="dr-chat-sugestao" onClick={() => { if (enviar) pedir(inicio); else { setTexto(inicio); entrada.current?.focus(); } }}>{rotulo}</button>
+            </li>
+          ))}
+        </ul>
+      )}
       <div ref={fim} />
       <form
         className="dr-chat-campo"
         onSubmit={(e) => {
           e.preventDefault();
-          falar(texto);
+          pedir(texto);
           setTexto("");
         }}
       >
         <label className="cos-entrada dr-chat-entrada">
           <span className="cos-sr">Falar com o DREND</span>
-          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Tive uma ideia…" enterKeyHint="send" />
+          <input ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Fale com o DREND…" enterKeyHint="send" />
         </label>
         <button type="submit" className="cos-circulo cos-circulo-acento dr-chat-enviar" aria-label="Enviar" disabled={!texto.trim()}>
           <ArrowUp size={20} strokeWidth={2} aria-hidden="true" />

@@ -4,15 +4,27 @@
  * de linguagem, mas a saída continua a mesma: um `Op`.
  */
 import type { Board, Card, MuralState, Op } from "./mural";
+import { normalizar } from "./fala";
 
 export type Comando =
   | { tipo: "criarQuadro"; titulo: string; cartoes: string[]; projeto: string }
   | { tipo: "desfazer" }
-  | { tipo: "ideia"; texto: string };
+  | { tipo: "ideia"; texto: string }
+  | { tipo: "tarefa"; texto: string }
+  | { tipo: "concluir"; texto: string }
+  | { tipo: "reabrir"; texto: string }
+  | { tipo: "apagarTarefa"; texto: string }
+  | { tipo: "pendencias" }
+  | { tipo: "vendas"; periodo: Periodo }
+  | { tipo: "resumo" }
+  | { tipo: "saudacao" }
+  | { tipo: "agradecimento" }
+  | { tipo: "ajuda" };
+
+export type Periodo = "hoje" | "ontem" | "semana";
 
 const PROJETOS: ReadonlyArray<[RegExp, string]> = [
   [/\b(?:da |na |para a |pra )?flush(?:store)?\b/i, "flushstore"],
-  [/\b(?:da |na |para a |pra )?vape ?mania\b/i, "vape-mania"],
   [/\b(?:do |no |para o |pro )?drend\b/i, "drend"],
 ];
 
@@ -24,15 +36,73 @@ export function separarItens(texto: string): string[] {
     .filter(Boolean);
 }
 
+/** O resto da frase depois do pedido, sem aspas nem ponto final. */
+const resto = (m: RegExpMatchArray | null) => m?.[1]?.trim().replace(/^["“”']+|["“”'.!?]+$/g, "").trim() || "";
+
 export function entender(entrada: string): Comando | null {
   const t = entrada.trim().replace(/\s+/g, " ");
-  if (/^(?:desfa(?:z|zer|ça|ca)|volta(?:r)?)(?: (?:a |o )?(?:última|ultima|último|ultimo)(?: coisa| ação| acao)?)?[.!]?$/i.test(t)) {
+  const n = normalizar(t);
+  if (!n) return null;
+  if (/^(?:desfa(?:z|zer|ca)|volta(?:r)?)(?: (?:a |o )?ultim[ao](?: coisa| acao)?)?$/.test(n)) {
     return { tipo: "desfazer" };
   }
+  if (/^(?:ajuda|help|socorro|comandos|como (?:funciona|te uso|usar)|o que (?:voce )?(?:faz|sabe fazer|consegue fazer|entende)|preciso de ajuda)(?: drend)?$/.test(n)) {
+    return { tipo: "ajuda" };
+  }
+
   const ideia = t.match(/^tive uma ideia[:,]?\s*(.*)$/i);
   if (ideia) return { tipo: "ideia", texto: ideia[1] || t };
+  // "guarda isso: kit de natal" · "salva aí: cupom pra quem indicar" · "anota: …" (sem "tarefa")
+  const guardar = t.match(/^(?:guard[ae]|salv[ae]|anot[ae])(?:\s+(?:isso|isto|ai|aí|essa ideia|esta ideia|ideia))*\s*[:,-]\s*(.+)$/i) ?? t.match(/^(?:ideia)\s*[:,-]\s*(.+)$/i);
+  if (guardar && resto(guardar) && !/^(?:anot[ae])\s+(?:a\s+)?tarefa\b/i.test(t)) return { tipo: "ideia", texto: resto(guardar) };
 
-  // "crie um quadro Natal com cartões A, B e C" · "quadro Natal: A, B, C"
+  // "me lembra de pagar o fornecedor" · "lembrar de X" · "tarefa: X" · "preciso X" · "tenho q X" · "não deixa eu esquecer de X"
+  const tarefa = t.match(
+    /^(?:(?:me\s+)?lembr(?:a|ar|e)(?:-me)?(?:\s+eu)?\s+(?:de\s+|que\s+|q\s+)?|tarefa\s*:\s*|anota(?:r)?\s+(?:a\s+)?(?:uma\s+)?tarefa\s*:?\s*|preciso\s+(?:de\s+)?|tenho\s+(?:que|q)\s+|n(?:ão|ao)?\s+(?:me\s+)?(?:deixa\s+(?:eu\s+)?)?esquecer?\s+(?:de\s+)?)(.+)$/i,
+  );
+  if (tarefa && resto(tarefa)) return { tipo: "tarefa", texto: resto(tarefa) };
+
+  // "feito: pagar fornecedor" · "fiz o stories" · "já paguei o fornecedor" · "marca X como feita"
+  const feito =
+    t.match(/^(?:feito|fiz|conclu[ií](?:do|da)?|terminei|acabei|pronto|marca(?:r)?(?:\s+como)?\s+feit[ao])\s*[:,-]?\s+(?:a\s+tarefa\s+)?(.+)$/i) ??
+    t.match(/^marca(?:r)?\s+(.+?)\s+como\s+feit[ao]$/i) ??
+    t.match(/^j[aá]\s+(.+)$/i);
+  if (feito && resto(feito)) return { tipo: "concluir", texto: resto(feito) };
+  const reabrir = t.match(/^(?:reabr[ea]|reabrir|desmarca(?:r)?)\s+(?:a\s+tarefa\s+)?(.+)$/i);
+  if (reabrir && resto(reabrir)) return { tipo: "reabrir", texto: resto(reabrir) };
+  const apagar =
+    t.match(/^(?:apag[ae]|apagar|remov[ae]|remover|tir[ae]|tirar|exclu[ia]|excluir|delet[ae]|deletar)\s+(?:a\s+)?tarefa\s*:?\s+(.+)$/i) ??
+    t.match(/^(?:tir[ae]|tirar|remov[ae])\s+(.+?)\s+da\s+(?:lista|minhas tarefas)$/i);
+  if (apagar && resto(apagar)) return { tipo: "apagarTarefa", texto: resto(apagar) };
+
+  const quadro = lerQuadro(t);
+  if (quadro) return quadro;
+
+  // Perguntas: o texto normalizado já tirou acento, gíria e pontuação.
+  const loja = /\bflush\b/.test(n);
+  if (
+    /\b(?:vend\w*|fatur\w*|lucr\w*|pedidos?)\b/.test(n) ||
+    (loja && /\b(?:como|hoje|ontem|semana|quanto|status|numeros?)\b|^(?:e )?a flush$/.test(n)) ||
+    /^e (?:a |o )?(?:semana|ontem)$/.test(n)
+  ) {
+    const periodo: Periodo = /\bsemana\b|\b7 dias\b/.test(n) ? "semana" : /\bontem\b/.test(n) ? "ontem" : "hoje";
+    return { tipo: "vendas", periodo };
+  }
+  if (/\b(?:resumo|me atualiza|novidades?|como (?:esta|foi|anda) (?:o )?meu dia|o que (?:ha|tem) de novo)\b/.test(n)) return { tipo: "resumo" };
+  if (/\b(?:pendencias?|pendente|minhas tarefas|tarefas|afazeres|o que (?:eu )?tenho|o que falta|o que (?:eu )?preciso fazer|tem algo para fazer|(?:minha|a) lista)\b/.test(n)) {
+    return { tipo: "pendencias" };
+  }
+  if (/^(?:(?:oi|ola|opa|salve|fala|e ai|eae|eai|hey|bom dia|boa tarde|boa noite)(?: (?:drend|tudo bem|tudo bom|beleza|tranquilo|mano|parceiro))*)$/.test(n)) {
+    return { tipo: "saudacao" };
+  }
+  if (/^(?:valeu|obrigado|obrigada|tamo junto|show|top|perfeito|massa|boa|beleza|otimo|show de bola)(?: (?:drend|demais|mano|mesmo|man))*$/.test(n)) {
+    return { tipo: "agradecimento" };
+  }
+  return null;
+}
+
+/** "crie um quadro Natal com cartões A, B e C" · "quadro Natal: A, B, C" */
+function lerQuadro(t: string): Comando | null {
   const q =
     t.match(/^(?:(?:cri[ea]r?|fa[çc]a|monta?r?|abr[ea]|novo)\s+)?(?:um\s+)?quadro\s+(?:chamado\s+)?(.+?)\s+com\s+(?:os\s+|as\s+)?(?:\d+\s+)?(?:cart(?:ões|oes|ão|ao)|cards?|notas?|itens|ideias)\s*:?\s*(.+)$/i) ??
     t.match(/^(?:(?:cri[ea]r?|fa[çc]a|monta?r?|novo)\s+)?(?:um\s+)?quadro\s+(?:chamado\s+)?([^:]+?)\s*:\s*(.+)$/i);

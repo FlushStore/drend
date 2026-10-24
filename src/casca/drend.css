@@ -30,7 +30,10 @@
 .dr-heroi { display: flex; flex-direction: column; gap: 6px; padding: 22px 22px 18px; color: inherit; transition: transform var(--cos-rapido) var(--cos-curva); }
 a.dr-heroi:active { transform: scale(.99); }
 .dr-heroi-num { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; }
-.dr-heroi-lucro { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--cos-tinta-2); }
+.dr-heroi-lucro { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px 5px; border-radius: var(--cos-r-pilula); font-size: 13px; font-weight: 500; color: var(--cos-positivo); background: var(--cos-positivo-suave); }
+.dr-heroi-lucro[data-tom="negativo"] { color: var(--cos-negativo); background: var(--cos-negativo-suave); }
+.dr-heroi-lucro .cos-valor, .dr-heroi-lucro * { color: inherit; }
+.dr-heroi-extra { font-size: 13px; color: var(--cos-tinta-3); }
 .dr-heroi .ini-semana-grafico { height: 96px; margin-top: 18px; }
 @media (min-width: 1024px) { .dr-heroi { padding: 28px 30px 24px; } .dr-heroi .ini-semana-grafico { height: 132px; } }
 
@@ -49,6 +52,7 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-tira { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 16px; border-radius: var(--cos-r-bloco); background: var(--cos-bloco); border: 1px solid var(--cos-linha); box-shadow: var(--cos-sombra); color: inherit; }
 .dr-tira strong { font-size: 15px; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .dr-tira .dr-rotulo { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+@media (max-width: 599px) { .dr-tiras { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dr-tira:last-child { grid-column: 1 / -1; } }
 @media (min-width: 1024px) { .dr-tiras { gap: 20px; } .dr-tira { padding: 20px 24px; } .dr-tira strong { font-size: 17px; } }
 
 /* Negócios. */
@@ -89,7 +93,7 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-chat-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .dr-msg-eu { align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 20px 20px 6px 20px; background: var(--cos-acento); color: var(--cos-sobre-acento); font-size: var(--cos-texto-corpo); line-height: 1.4; }
 .dr-msg-drend { display: grid; gap: 8px; padding: 14px 16px; max-width: 92%; border-radius: 20px 20px 20px 6px; }
-.dr-msg-drend p { margin: 0; font-size: var(--cos-texto-corpo); line-height: 1.45; }
+.dr-msg-drend p { margin: 0; white-space: pre-line; font-size: var(--cos-texto-corpo); line-height: 1.45; }
 .dr-msg-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
 .dr-selo { justify-self: start; display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: var(--cos-r-pilula); font-size: 12px; font-weight: 600; background: var(--cos-controle); color: var(--cos-tinta-2); }
 .dr-selo[data-status="feito"] { background: var(--cos-positivo-suave); color: var(--cos-positivo); }
@@ -135,3 +139,95 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-nuvem .cv2-conta-dados dd { display: flex; align-items: center; gap: 10px; }
 .dr-nuvem .cos-entrada input { width: 100%; }
 .dr-nuvem-aviso { margin: 0; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
+
+/* Selo pequeno de número de exemplo, ao lado do rótulo. */
+.dr-tag-exemplo { padding: 1px 7px; border-radius: var(--cos-r-pilula); font-size: 11px; font-weight: 500; color: var(--cos-tinta-3); background: var(--cos-controle); letter-spacing: .02em; }
+
+/* Sugestões quando a conversa ainda está vazia: um toque preenche o campo. */
+.dr-chat-sugestoes { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 0; padding: 0; list-style: none; }
+.dr-chat-sugestao { padding: 9px 14px; border: 1px solid var(--cos-linha-forte); border-radius: var(--cos-r-pilula); background: var(--cos-bloco); color: var(--cos-tinta); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background var(--cos-rapido) var(--cos-curva), transform var(--cos-rapido) var(--cos-curva); }
+.dr-chat-sugestao:hover { background: var(--cos-acento-suave); }
+.dr-chat-sugestao:active { transform: scale(.97); }
+
+/* Conversa como tela no PC (link direto para /drend): coluna de leitura e campo embaixo. */
+@media (min-width: 768px) {
+  .cv2-conteudo > .dr-chat { width: 100%; max-width: 760px; margin-inline: auto; min-height: calc(100dvh - 260px); }
+}
+
+/* Tarefas em "Para você": um círculo para concluir, texto, e o campo de nova tarefa no fim. */
+.dr-tarefa { justify-content: flex-start; }
+.dr-tarefa-check { display: grid; place-items: center; flex: none; width: 26px; height: 26px; padding: 0; border: 1.5px solid var(--cos-linha-forte); border-radius: 50%; background: none; color: transparent; cursor: pointer; transition: background var(--cos-rapido) var(--cos-curva), color var(--cos-rapido) var(--cos-curva), border-color var(--cos-rapido) var(--cos-curva); }
+.dr-tarefa-check::before { content: ""; position: absolute; inset: -9px; }
+.dr-tarefa-check { position: relative; }
+@media (hover: hover) { .dr-tarefa-check:hover { border-color: var(--cos-acento); color: var(--cos-acento); } }
+.dr-tarefa-check:active { background: var(--cos-acento); border-color: var(--cos-acento); color: var(--cos-sobre-acento); }
+.dr-tarefa-texto { min-width: 0; overflow-wrap: anywhere; }
+.dr-lista-tipo { display: block; margin-bottom: 2px; font-size: 11.5px; font-weight: 500; color: var(--cos-acento-tinta); letter-spacing: .02em; }
+.dr-vazio { margin: 6px 0 2px; font-size: 14.5px; color: var(--cos-tinta-3); }
+.dr-tarefa-nova { display: flex; align-items: center; gap: 12px; min-height: 56px; margin-top: auto; border-top: 1px solid var(--cos-linha); color: var(--cos-tinta-3); }
+.dr-tarefa-nova-campo { flex: 1; min-width: 0; }
+.dr-tarefa-nova input { width: 100%; padding: 10px 0; border: 0; background: none; color: var(--cos-tinta); font: inherit; font-size: 15.5px; font-weight: 500; outline: none; }
+.dr-tarefa-nova input::placeholder { color: var(--cos-tinta-3); }
+.dr-tarefa-nova:focus-within { color: var(--cos-acento); }
+
+/* Mural: busca, cartão tocável e o painel de edição. */
+.dr-mural-busca { margin-bottom: 12px; }
+@media (min-width: 1024px) { .dr-mural-busca { max-width: 420px; } .dr-mural-lista[aria-label="Resultados da busca"] { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
+.dr-cartao-botao { width: 100%; height: 100%; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; align-content: start; transition: transform var(--cos-rapido) var(--cos-curva), box-shadow var(--cos-rapido) var(--cos-curva); }
+.dr-cartao-botao:active { transform: scale(.985); }
+@media (hover: hover) { .dr-cartao-botao:hover { box-shadow: var(--cos-sombra-alta); } }
+.dr-mural-nada { padding: 24px 4px; }
+.dr-editar { display: grid; gap: 14px; }
+.dr-editar-campo { display: grid; gap: 6px; }
+.dr-editar-campo span { font-size: 13px; font-weight: 500; color: var(--cos-tinta-2); }
+.dr-editar-campo :is(input, textarea) { width: 100%; padding: 12px 14px; border: 1px solid var(--cos-linha-forte); border-radius: var(--cos-r-interno); background: var(--cos-bloco); color: var(--cos-tinta); font: inherit; font-size: 16px; resize: vertical; outline: none; transition: border-color var(--cos-rapido) var(--cos-curva), box-shadow var(--cos-rapido) var(--cos-curva); }
+.dr-editar-campo :is(input, textarea):focus { border-color: var(--cos-acento); box-shadow: 0 0 0 4px var(--cos-acento-suave); }
+.dr-editar-campo input { font-weight: 600; }
+
+/* Faixas do app: sem internet e versão nova. Discretas, no topo do conteúdo. */
+.dr-faixas { display: flex; justify-content: center; margin: 0 0 14px; }
+.dr-faixa { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--cos-linha); border-radius: var(--cos-r-pilula); background: var(--cos-bloco); box-shadow: var(--cos-sombra); color: var(--cos-tinta-2); font: inherit; font-size: 13.5px; font-weight: 500; }
+.dr-faixa-acao { cursor: pointer; color: var(--cos-tinta); }
+.dr-faixa-acao strong { color: var(--cos-acento-tinta); font-weight: 600; }
+
+/* Aviso com ação e texto curto ("Feito · Desfazer"): numa linha só. */
+.cv2-raiz .cos-aviso:has(.cos-aviso-acao) { flex-wrap: nowrap; }
+.cv2-raiz .cos-aviso:has(.cos-aviso-acao) .cos-aviso-texto { flex: 0 1 auto; margin-right: 8px; }
+
+/* Missões ao vivo (Central de IAs) */
+.dr-ao-vivo { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border: 1px solid var(--cos-linha); border-radius: var(--cos-r-pilula); font-size: 13px; font-weight: 600; color: var(--cos-tinta-2); }
+.dr-ao-vivo i { width: 8px; height: 8px; border-radius: 50%; background: var(--cos-tinta-3); }
+.dr-ao-vivo[data-on] { color: var(--cos-tinta); }
+.dr-ao-vivo[data-on] i { background: var(--cos-positivo); animation: dr-pulso 2s ease-out infinite; }
+@keyframes dr-pulso { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cos-positivo) 55%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+.dr-missao { gap: 12px; }
+.dr-mi-lista { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.dr-mi { position: relative; display: flex; gap: 12px; padding: 8px 0; border-radius: 12px; }
+.dr-mi-marca { flex: none; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; border: 2px solid var(--cos-acento); }
+.dr-mi[data-fase="feito"] .dr-mi-marca { background: var(--cos-positivo); border-color: var(--cos-positivo); }
+.dr-mi[data-fase="depois"] .dr-mi-marca { border-color: var(--cos-tinta-3); }
+.dr-mi-corpo { display: grid; gap: 2px; min-width: 0; color: inherit; text-decoration: none; }
+a.dr-mi-corpo { grid-template-columns: minmax(0, 1fr) auto; column-gap: 6px; }
+a.dr-mi-corpo .dr-mi-link { grid-row: 1; grid-column: 2; color: var(--cos-tinta-3); margin-top: 3px; }
+.dr-mi-titulo { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.dr-mi[data-fase="feito"] .dr-mi-titulo { color: var(--cos-tinta-2); }
+.dr-mi-texto { grid-column: 1; font-size: 13px; line-height: 1.4; color: var(--cos-tinta-2); }
+.dr-mi[data-novo], .dr-feed-item[data-novo] { animation: dr-chegou 2.4s ease-out; }
+@keyframes dr-chegou { 0% { background: var(--cos-acento-suave); } 100% { background: transparent; } }
+.dr-mi-mais { align-self: flex-start; padding: 6px 12px; border: 1px solid var(--cos-linha); border-radius: var(--cos-r-pilula); background: none; color: var(--cos-tinta-2); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.dr-mi-resto { display: grid; gap: 10px; padding-top: 4px; border-top: 1px solid var(--cos-linha); }
+.dr-feed { display: grid; gap: 4px; padding: 24px 4px 0; }
+.dr-feed-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 8px; border-radius: 12px; }
+.dr-feed-quem { grid-column: 1; font-size: 12px; font-weight: 600; color: var(--cos-acento-tinta); }
+.dr-feed-o-que { grid-column: 1; font-size: 14.5px; font-weight: 500; }
+.dr-feed-item time { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 12.5px; color: var(--cos-tinta-3); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .dr-ao-vivo[data-on] i, .dr-mi[data-novo], .dr-feed-item[data-novo] { animation: none; } }
+.dr-saude { display: grid; gap: 10px; margin: 0; }
+.dr-saude div { display: flex; justify-content: space-between; gap: 12px; font-size: 14.5px; }
+.dr-saude dt { color: var(--cos-tinta-2); }
+.dr-saude dd { margin: 0; font-weight: 600; }
+
+/* Cérebro no topo da conversa: fica à vista enquanto as mensagens rolam por baixo. */
+.dr-chat-cerebro { position: sticky; top: 0; z-index: 2; display: grid; justify-items: center; margin: 0 -16px; padding: 0 16px 4px; background: linear-gradient(to bottom, var(--cos-app) 78%, transparent); }
+.cos-painel .dr-chat-cerebro { background: linear-gradient(to bottom, var(--cos-bloco) 78%, transparent); }
+.dr-chat-estado { margin: -6px 0 0; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--cos-acento-tinta); min-height: 1.2em; }

@@ -1,14 +1,20 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { FileText, History, Image, Link2, Megaphone, Mic, Plus, StickyNote, Undo2, type LucideIcon } from "lucide-react";
+import { Aviso } from "@/design-system/Aviso";
 import { Bloco } from "@/design-system/Bloco";
+import { CampoDeBusca } from "@/design-system/CampoDeBusca";
+import { useAviso } from "@/design-system/useAviso";
 import { BotaoCirculo } from "@/design-system/BotaoCirculo";
 import { Painel } from "@/design-system/Painel";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { FiltroDeLista } from "@/design-system/FiltroDeLista";
 import { useTelaLarga } from "@/design-system/useTelaLarga";
-import type { Card, CardKind } from "@/core/mural";
+import type { Card, CardKind, LogEntry } from "@/core/mural";
 import { useStore } from "@/store";
+import { EditarCartao } from "./EditarCartao";
+
+const normalizar = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 const TIPO: Record<CardKind, { rotulo: string; Icone: LucideIcon }> = {
   nota: { rotulo: "Nota", Icone: StickyNote },
@@ -48,23 +54,55 @@ export function Mural() {
   const links = quadro ? mural.linksOf(quadro.id) : [];
   const historico = [...mural.log].reverse().slice(0, 12);
   const [verHistorico, setVerHistorico] = useState(false);
+  const [aberto, setAberto] = useState<string | null>(null);
+  const [termo, setTermo] = useState("");
+  const { aviso, avisar, limpar } = useAviso();
+
+  // Busca em todos os quadros: título, texto e origem.
+  const achados = useMemo(() => {
+    const t = normalizar(termo.trim());
+    if (!t) return null;
+    return Object.values(mural.state.cards).filter((c) => normalizar(`${c.title} ${c.body ?? ""} ${c.source ?? ""}`).includes(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [termo, mural, mural.state]);
+
+  // O Desfazer do aviso vale só para a ação que ele anunciou: se outra veio depois, não desfaz a errada.
+  function desfazerSeAinda(e: LogEntry) {
+    const ultima = [...mural.log].reverse().find((x) => !x.undone && !x.summary.startsWith("Desfez:"));
+    if (ultima?.id === e.id) desfazer();
+    else avisar("Outra mudança veio depois. Use o Desfazer do topo, uma por vez.", "erro");
+  }
+  function salvar(c: Card, titulo: string, texto: string) {
+    const e = executar({ type: "editCard", cardId: c.id, title: titulo, body: texto }, "rapha", `Editou “${titulo}”`);
+    avisar("Cartão salvo", "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazerSeAinda(e) });
+  }
+  function apagar(c: Card) {
+    const e = executar({ type: "removeCard", cardId: c.id }, "rapha", `Apagou “${c.title}”`);
+    avisar("Cartão apagado", "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazerSeAinda(e) });
+  }
 
   // Arrastar: a posição muda só na tela; ao soltar vira um moveCard no log (dá para desfazer).
-  const arrasto = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  const arrasto = useRef<{ id: string; dx: number; dy: number; x0: number; y0: number } | null>(null);
   const [fantasma, setFantasma] = useState<{ id: string; x: number; y: number } | null>(null);
   const pos = (c: Card) => (fantasma?.id === c.id ? fantasma : c);
 
   function inicio(e: PointerEvent<HTMLDivElement>, c: Card) {
     e.currentTarget.setPointerCapture(e.pointerId);
-    arrasto.current = { id: c.id, dx: e.clientX - c.x, dy: e.clientY - c.y };
+    arrasto.current = { id: c.id, dx: e.clientX - c.x, dy: e.clientY - c.y, x0: e.clientX, y0: e.clientY };
   }
   function mover(e: PointerEvent<HTMLDivElement>) {
     const a = arrasto.current;
     if (a) setFantasma({ id: a.id, x: Math.max(0, e.clientX - a.dx), y: Math.max(0, e.clientY - a.dy) });
   }
-  function soltar() {
+  function soltar(e: PointerEvent<HTMLDivElement>) {
     const a = arrasto.current;
     arrasto.current = null;
+    // Toque sem arrastar abre o cartão.
+    if (a && Math.hypot(e.clientX - a.x0, e.clientY - a.y0) < 5) {
+      setFantasma(null);
+      setAberto(a.id);
+      return;
+    }
     if (a && fantasma?.id === a.id) {
       const c = mural.state.cards[a.id];
       if (c && (c.x !== fantasma.x || c.y !== fantasma.y)) {
@@ -119,15 +157,32 @@ export function Mural() {
         </div>
       </CabecalhoDeTela>
 
-      <FiltroDeLista
+      <CampoDeBusca className="dr-mural-busca" valor={termo} aoMudar={setTermo} rotulo="Buscar no Mural" />
+
+      {!achados && <FiltroDeLista
         className="dr-mural-filtros"
         rotulo="Quadros"
         valor={quadro?.id ?? ""}
         aoMudar={setAtivo}
         opcoes={quadros.map((b) => ({ valor: b.id, rotulo: b.title }))}
-      />
+      />}
 
-      {largo ? (
+      {achados ? (
+        achados.length === 0 ? (
+          <p className="dr-vazio dr-mural-nada">Nada no Mural com “{termo.trim()}”.</p>
+        ) : (
+          <ul className="dr-mural-lista" aria-label="Resultados da busca">
+            {achados.map((c, i) => (
+              <li key={c.id} style={{ "--i": i } as CSSProperties}>
+                <button type="button" className="dr-cartao cos-bloco dr-cartao-botao" onClick={() => setAberto(c.id)}>
+                  <small className="dr-lista-tipo">{mural.state.boards[c.boardId]?.title}</small>
+                  <Cartao c={c} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : largo ? (
         <Bloco className="dr-canvas" aria-label="Canvas do quadro">
           <div className="dr-canvas-area" style={{ width: largura, height: altura }}>
             <svg className="dr-canvas-ligacoes" width={largura} height={altura} aria-hidden="true">
@@ -158,10 +213,15 @@ export function Mural() {
       ) : (
         <ul className="dr-mural-lista" aria-label="Cartões">
           {[...cards].sort((a, b) => a.y - b.y || a.x - b.x).map((c, i) => (
-            <li key={c.id} className="dr-cartao cos-bloco" style={{ "--i": i } as CSSProperties}><Cartao c={c} /></li>
+            <li key={c.id} style={{ "--i": i } as CSSProperties}>
+              <button type="button" className="dr-cartao cos-bloco dr-cartao-botao" onClick={() => setAberto(c.id)}><Cartao c={c} /></button>
+            </li>
           ))}
         </ul>
       )}
+
+      <EditarCartao cartao={aberto ? mural.state.cards[aberto] ?? null : null} aoFechar={() => setAberto(null)} aoSalvar={salvar} aoApagar={apagar} />
+      <Aviso aviso={aviso} aoSumir={limpar} />
 
       <Painel aberto={verHistorico} aoFechar={() => setVerHistorico(false)} titulo="Histórico">
         {historico.length === 0 ? (

@@ -27,14 +27,6 @@ export const flush = {
   ],
 } as const;
 
-export const vapeMania = {
-  saude: [
-    ["Site e vitrine", "Respondendo em 180 ms"],
-    ["API e banco", "Saudáveis"],
-    ["Último deploy", "Ontem, 21:30"],
-  ],
-} as const;
-
 export const drendStatus = {
   fase: "Fase 4",
   saude: [
@@ -75,7 +67,7 @@ export const linhaDoTempo = {
 const seed: Op[] = [
   { type: "createBoard", board: { id: "natal", title: "Marketing Flush · Natal", project: "flushstore", tags: ["natal", "kit", "reels"] } },
   { type: "createBoard", board: { id: "vitrine", title: "Vitrine Flush", project: "flushstore", tags: [] } },
-  { type: "createBoard", board: { id: "sabores", title: "Vape Mania · sabores", project: "vape-mania", tags: [] } },
+  { type: "createBoard", board: { id: "vida-ideias", title: "Vida · ideias", project: "vida", tags: [] } },
   { type: "addCard", card: { id: "c1", boardId: "natal", kind: "imagem", title: "Vitrine de sabores em grade", x: 40, y: 40, w: 250 } },
   { type: "addCard", card: { id: "c2", boardId: "natal", kind: "campanha", title: "Natal Flush 2026", body: "Kit presente, frete para Unaí, posts de 1 a 24/12", x: 420, y: 200, w: 220 } },
   { type: "addCard", card: { id: "c3", boardId: "natal", kind: "link", title: "Reels de unboxing com luz neon", source: "instagram", x: 720, y: 60, w: 240 } },

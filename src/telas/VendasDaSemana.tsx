@@ -12,7 +12,7 @@ const DIA_LONGO = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", 
 const diaDaSemana = (iso: string) => new Date(`${iso}T12:00:00`).getDay();
 
 /** A curva da semana do Início da Flush: área suave, só o ponto de hoje, dias embaixo. */
-export function CurvaDaSemana({ dias }: { dias: ReadonlyArray<{ dia: string; valor: number }> }) {
+export function CurvaDaSemana({ dias, ultimoEhHoje = true }: { dias: ReadonlyArray<{ dia: string; valor: number }>; ultimoEhHoje?: boolean }) {
   const grad = useId();
   const maior = Math.max(1, ...dias.map((d) => d.valor));
   const passo = dias.length > 1 ? (L - 2 * M) / (dias.length - 1) : 0;
@@ -39,7 +39,7 @@ export function CurvaDaSemana({ dias }: { dias: ReadonlyArray<{ dia: string; val
         )}
       </figure>
       <ol className="ini-semana-dias" aria-hidden="true">
-        {dias.map((d, i) => <li key={d.dia} data-hoje={i === dias.length - 1 || undefined}>{i === dias.length - 1 ? "Hoje" : DIA_CURTO[diaDaSemana(d.dia)]}</li>)}
+        {dias.map((d, i) => <li key={d.dia} data-hoje={i === dias.length - 1 || undefined}>{i === dias.length - 1 && ultimoEhHoje ? "Hoje" : DIA_CURTO[diaDaSemana(d.dia)]}</li>)}
       </ol>
     </>
   );

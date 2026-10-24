@@ -1,0 +1,8 @@
+.dr-cerebro { position: relative; width: 100%; height: 220px; margin: -8px 0 4px; }
+.dr-cerebro[data-tamanho="p"] { height: 150px; }
+@media (min-width: 1024px) { .dr-cerebro { height: 260px; } .dr-cerebro[data-tamanho="p"] { height: 170px; } }
+/* Halo atrás do cérebro: dá profundidade sem competir com a rede. */
+.dr-cerebro::before { content: ""; position: absolute; inset: 12% 22%; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--cos-acento) 22%, transparent), transparent); filter: blur(18px); opacity: .7; transition: opacity .6s ease; pointer-events: none; }
+.dr-cerebro[data-pensando]::before { opacity: 1; }
+.dr-cerebro-cena { position: absolute; inset: 0; }
+.dr-cerebro-cena canvas { display: block; width: 100% !important; height: 100% !important; }
