@@ -140,6 +140,7 @@ export const AJUDA = [
   "• números da Flush: “quanto vendi hoje?”, “e a semana?”, “e o mês?”",
   "• meta: “meta do mês 10 mil”",
   "• seu dinheiro: “gastei 50 no mercado”, “recebi 1.200 do freela”, “quanto gastei?”, “apaga o último lançamento”",
+  "• contas do mês: “conta de luz todo dia 10, 200 reais”, “paguei a luz”, “quais contas vencem?”",
   "• hábitos: “novo hábito academia”, “fiz academia”, “meus hábitos”",
   "• a semana: “como foi a semana?”, “resumo da semana”",
   "• agenda: “o que tenho amanhã?”, “minha agenda da semana”, “próximo compromisso”",

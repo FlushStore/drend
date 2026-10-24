@@ -16,7 +16,8 @@ import { responderProjetos, responderVault } from "./core/vault";
 import { iniciarVault, lerVault, motivoSemVault, notasDo } from "./fontes/vault";
 import { adicionarLancamento, confirmarLancamento, lerLancamentos, nomeDoLancamento, novoLancamento, removerLancamento, responderDinheiro, ultimos, type Lancamento } from "./core/dinheiro";
 import { adicionarHabito, alternarDia, feitoNoDia, habitoParaConcluir, lerHabitos, marcarHoje, mesmoHabito, novoHabito, removerHabito, responderHabitos, sequencia, textoDaSequencia, type Habito } from "./core/habitos";
-import { diaEmBrasilia } from "./core/brasilia";
+import { diaEmBrasilia, mesEmBrasilia } from "./core/brasilia";
+import { adicionarConta, confirmarConta, confirmarPagamento, contaParaPagar, desmarcarPaga, editarConta as editarNaLista, lerContas, marcarPaga, mesmaConta, novaConta, pagamentoDoMes, removerConta, responderContas, semLancamento, substituirConta, type Conta, type ContaLida, type MudancaDeConta, type PagamentoDeConta } from "./core/contas";
 import { responderSemana, semanaDaFlush, type SemanaFlush } from "./core/semana";
 import type { ResumoFlush } from "./fontes/flush";
 
@@ -53,7 +54,7 @@ function semanaDaConversa(): SemanaFlush | null | "carregando" {
 
 export type Mensagem =
   | { id: string; de: "rapha"; texto: string }
-  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string };
+  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string; pagamento?: { conta: string; mes: string } };
 
 /** Banco: "sem-banco" quando o build não tem as chaves; "fora" sem login. */
 export type Sincronia = "sem-banco" | "fora" | "sincronizando" | "ok" | "erro";
@@ -90,9 +91,32 @@ interface Store {
   alternarHabitoHoje: (id: string, dia?: string) => void;
   apagarHabito: (id: string) => void;
   restaurarHabito: (h: Habito) => void;
+  /** Contas fixas do mês (Vida). Nível B: criar, pagar, editar e apagar, tudo com desfazer. */
+  contas: Conta[];
+  /** Devolve a conta criada, ou `null` se já existe uma com o mesmo nome. */
+  criarConta: (c: ContaLida) => Conta | null;
+  editarConta: (id: string, m: MudancaDeConta) => void;
+  apagarConta: (id: string) => void;
+  /** Volta a conta como estava (desfazer de editar ou de apagar). */
+  restaurarConta: (c: Conta) => void;
+  /** Marca paga no mês de agora e lança o gasto (quando tem valor). Devolve o pagamento para o desfazer. */
+  pagarConta: (id: string) => PagamentoDeConta | null;
+  /** Desmarca e tira o gasto que o pagamento lançou. Devolve o que tirou, para refazer. */
+  desfazerPagamento: (id: string, mes: string) => { pagamento: PagamentoDeConta; lancamento: Lancamento | null } | null;
+  restaurarPagamento: (id: string, p: PagamentoDeConta, l: Lancamento | null) => void;
 }
 
 export const META_FLUSH_MES = "flush-mes";
+
+/** Quita a conta no mês de agora: com valor, o gasto nasce junto e fica vinculado. Já paga: nada muda. */
+function pagarAgora(contas: readonly Conta[], cid: string, agora: Date): { contas: Conta[]; pagamento: PagamentoDeConta | null; lancamento: Lancamento | null } {
+  const c = contas.find((x) => x.id === cid);
+  const mes = mesEmBrasilia(agora);
+  if (!c || pagamentoDoMes(c, mes)) return { contas: [...contas], pagamento: null, lancamento: null };
+  const lancamento = c.valor ? novoLancamento({ tipo: "gasto", valor: c.valor, descricao: c.nome }, agora) : null;
+  const pagamento: PagamentoDeConta = { mes, em: agora.toISOString(), valor: c.valor, lancamento: lancamento?.id ?? null };
+  return { contas: marcarPaga(contas, cid, pagamento), pagamento, lancamento };
+}
 
 const Ctx = createContext<Store | null>(null);
 const NOMES_PROJETO: Record<string, string> = { flushstore: "Flush", vida: "Vida", drend: "DREND" };
@@ -121,10 +145,18 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const [metas, setMetas] = useState<Record<string, number>>(salvo?.metas ?? {});
   const [lancamentos, setLancamentos] = useState<Lancamento[]>(() => lerLancamentos(salvo?.lancamentos));
   const [habitos, setHabitos] = useState<Habito[]>(() => lerHabitos(salvo?.habitos));
+  const [contas, setContas] = useState<Conta[]>(() => lerContas(salvo?.contas));
+  // O Desfazer de um aviso roda depois de outros toques: lê sempre a lista de agora, não a do toque.
+  const contasAgora = useRef(contas);
+  const lancamentosAgora = useRef(lancamentos);
+  useEffect(() => {
+    contasAgora.current = contas;
+    lancamentosAgora.current = lancamentos;
+  }, [contas, lancamentos]);
 
   useEffect(() => {
-    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos });
-  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos]);
+    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas });
+  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas]);
 
   // As missões ficam ouvindo desde a abertura: a conversa responde sem precisar abrir a tela.
   useEffect(iniciarMissoes, []);
@@ -166,6 +198,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
           setMetas(remoto.metas ?? {});
           setLancamentos(lerLancamentos(remoto.lancamentos));
           setHabitos(lerHabitos(remoto.habitos));
+          setContas(lerContas(remoto.contas));
           setVersao((v) => v + 1);
         } else if (local) {
           await subir(local);
@@ -184,11 +217,11 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   useEffect(() => {
     if (!usuario || !conciliado.current) return;
     const t = setTimeout(() => {
-      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos };
+      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas };
       subir(r).then(() => setSincronia("ok"), () => setSincronia("erro"));
     }, 1000);
     return () => clearTimeout(t);
-  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos]);
+  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas]);
 
   const entrar = useCallback(async (email: string, senha: string) => {
     if (!supabase) return "O banco ainda não está ligado.";
@@ -221,7 +254,21 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const falar = useCallback((texto: string) => {
     const limpo = texto.trim();
     if (!limpo) return;
-    const cmd = entender(limpo);
+    const lido = entender(limpo);
+    // "paguei o fornecedor": sem conta do mês parecida, é o mesmo que "já paguei o fornecedor" (concluir).
+    const cmd = lido?.tipo === "pagarConta" && !contaParaPagar(contas, lido.texto) ? { tipo: "concluir" as const, texto: lido.frase } : lido;
+    /** Quita pelo chat: a resposta leva o Desfazer, que tira o pagamento e o gasto juntos. */
+    const pagarPeloChat = (texto: string): Mensagem[] => {
+      const r = contaParaPagar(contas, texto);
+      if (!r) return [];
+      if ("empate" in r) return [{ id: id(), de: "drend", status: "pergunta", texto: `Qual delas? ${r.empate.slice(0, 4).map((c) => `“${c.nome}”`).join(", ")}.` }];
+      const { contas: depois, pagamento, lancamento } = pagarAgora(contas, r.achado.id, new Date());
+      if (!pagamento) return [{ id: id(), de: "drend", status: "dica", texto: `${r.achado.nome} já estava paga neste mês.` }];
+      if (lancamento) setLancamentos((ls) => adicionarLancamento(ls, lancamento));
+      setContas(depois);
+      return [{ id: id(), de: "drend", status: "feito", texto: confirmarPagamento(r.achado, pagamento, depois), lancamento: lancamento?.id, pagamento: { conta: r.achado.id, mes: pagamento.mes } }];
+    };
+    const contaDoJaPaguei = (texto: string) => texto.replace(/^(?:paguei|quitei)\s+(?:a |o |as |os )?/i, "");
     // As mensagens novas saem prontas daqui: o updater fica puro (o StrictMode roda ele duas vezes).
     const novas: Mensagem[] = [{ id: id(), de: "rapha", texto: limpo }];
     if (cmd?.tipo === "ideia") {
@@ -246,9 +293,17 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
         : { id: id(), de: "drend", status: "feito", texto: `Anotei: “${t.texto}”. Está em Para você, no Hoje.` });
     } else if (cmd?.tipo === "lancamento") {
       // Nível B (dinheiro.anotar): grava na hora; o Desfazer da mensagem tira o lançamento.
+      // "paguei 200 de luz": se casa com uma conta do mês ainda não paga, o mesmo gasto quita a conta (sem lançar duas vezes).
       const l = novoLancamento(cmd.lancamento);
       setLancamentos((ls) => adicionarLancamento(ls, l));
-      novas.push({ id: id(), de: "drend", status: "feito", texto: confirmarLancamento(l, [...lancamentos, l]), lancamento: l.id });
+      const alvo = l.tipo === "gasto" && l.descricao && /^(?:eu\s+)?(?:paguei|quitei)\b/i.test(limpo) ? contaParaPagar(contas, l.descricao) : null;
+      if (alvo && "achado" in alvo) {
+        const p: PagamentoDeConta = { mes: mesEmBrasilia(new Date()), em: l.em, valor: l.valor, lancamento: l.id };
+        setContas(marcarPaga(contas, alvo.achado.id, p));
+        novas.push({ id: id(), de: "drend", status: "feito", texto: `${confirmarLancamento(l, [...lancamentos, l]).replace(/ Está em Vida\.$/, "")} ${alvo.achado.nome} ficou paga neste mês.`, lancamento: l.id, pagamento: { conta: alvo.achado.id, mes: p.mes } });
+      } else {
+        novas.push({ id: id(), de: "drend", status: "feito", texto: confirmarLancamento(l, [...lancamentos, l]), lancamento: l.id });
+      }
     } else if (cmd?.tipo === "dinheiro") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderDinheiro(lancamentos) });
     } else if (cmd?.tipo === "apagarLancamento") {
@@ -266,6 +321,17 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
         : { id: id(), de: "drend", status: "feito", texto: `Hábito novo: “${h.nome}”. Está em Vida; diga “fiz ${h.nome.toLowerCase()}” para marcar hoje.` });
     } else if (cmd?.tipo === "habitos") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderHabitos(habitos) });
+    } else if (cmd?.tipo === "novaConta") {
+      const c = novaConta(cmd.conta);
+      const repetida = contas.find((x) => mesmaConta(x.nome, c.nome));
+      if (!repetida) setContas((cs) => adicionarConta(cs, c));
+      novas.push(repetida
+        ? { id: id(), de: "drend", status: "dica", texto: `“${repetida.nome}” já é uma conta sua (dia ${repetida.dia}). Para mudar, toque nela em Vida.` }
+        : { id: id(), de: "drend", status: "feito", texto: confirmarConta(c) });
+    } else if (cmd?.tipo === "contas") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderContas(contas) });
+    } else if (cmd?.tipo === "pagarConta") {
+      novas.push(...pagarPeloChat(cmd.texto));
     } else if (cmd?.tipo === "concluir" && !cmd.tarefa && habitoParaConcluir(habitos, abertas(tarefas), cmd.texto)) {
       // "fiz academia": só vira hábito quando nenhuma tarefa aberta casa e a frase não disse "tarefa".
       const h = habitoParaConcluir(habitos, abertas(tarefas), cmd.texto)!;
@@ -273,6 +339,9 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       if (!ja) setHabitos((hs) => marcarHoje(hs, h.id));
       const n = ja ? sequencia(h) : sequencia({ ...h, feitos: [...h.feitos, diaEmBrasilia(new Date())] });
       novas.push({ id: id(), de: "drend", status: ja ? "dica" : "feito", texto: ja ? `“${h.nome}” já estava marcado hoje. ${textoDaSequencia(n)}.` : `Marquei “${h.nome}” hoje. ${textoDaSequencia(n)}.` });
+    } else if (cmd?.tipo === "concluir" && !cmd.tarefa && /^(?:paguei|quitei)\s/i.test(cmd.texto) && !acharPorTexto(abertas(tarefas), cmd.texto, (t) => t.texto) && contaParaPagar(contas, contaDoJaPaguei(cmd.texto))) {
+      // "já paguei a luz": nenhuma tarefa aberta casa, mas uma conta do mês casa.
+      novas.push(...pagarPeloChat(contaDoJaPaguei(cmd.texto)));
     } else if (cmd?.tipo === "concluir" || cmd?.tipo === "reabrir" || cmd?.tipo === "apagarTarefa") {
       // Concluir e apagar procuram nas abertas; reabrir, nas feitas. Empate vira pergunta, nunca chute.
       const base = cmd.tipo === "reabrir" ? tarefas.filter((t) => t.feitaEm) : abertas(tarefas);
@@ -347,7 +416,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Não entendi isso como pedido. Se for uma ideia, escolha onde eu guardo. Diga “ajuda” para ver o que eu entendo.", ideia: limpo });
     }
     setMensagens((ms) => [...ms, ...novas]);
-  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos]);
+  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos, contas]);
 
   const guardarIdeia = useCallback(
     (ideia: string, projeto: string) => {
@@ -369,8 +438,57 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const criarTarefa = useCallback((texto: string) => setTarefas((l) => adicionar(l, novaTarefa(texto))), []);
   const concluirTarefa = useCallback((tid: string) => setTarefas((l) => concluir(l, tid)), []);
   const reabrirTarefa = useCallback((tid: string) => setTarefas((l) => reabrir(l, tid)), []);
-  const apagarLancamento = useCallback((lid: string) => setLancamentos((ls) => removerLancamento(ls, lid)), []);
-  const restaurarLancamento = useCallback((l: Lancamento) => setLancamentos((ls) => adicionarLancamento(ls, l)), []);
+  // Apagar um gasto que quitava uma conta devolve a conta para "a pagar"; o desfazer do gasto quita de novo.
+  const pagamentosSoltos = useRef(new Map<string, { conta: string; pagamento: PagamentoDeConta }[]>());
+  const apagarLancamento = useCallback((lid: string) => {
+    const { contas: depois, removidos } = semLancamento(contasAgora.current, lid);
+    if (removidos.length) {
+      pagamentosSoltos.current.set(lid, removidos);
+      contasAgora.current = depois;
+      setContas(depois);
+    }
+    setLancamentos((ls) => removerLancamento(ls, lid));
+  }, []);
+  const restaurarLancamento = useCallback((l: Lancamento) => {
+    setLancamentos((ls) => adicionarLancamento(ls, l));
+    const soltos = pagamentosSoltos.current.get(l.id);
+    if (soltos) {
+      pagamentosSoltos.current.delete(l.id);
+      setContas((cs) => soltos.reduce((acc, x) => marcarPaga(acc, x.conta, x.pagamento), cs));
+    }
+  }, []);
+  const criarConta = useCallback((c: ContaLida) => {
+    const nova = novaConta(c);
+    if (!nova.nome || contasAgora.current.some((x) => mesmaConta(x.nome, nova.nome))) return null;
+    setContas((cs) => adicionarConta(cs, nova));
+    return nova;
+  }, []);
+  const editarConta = useCallback((cid: string, m: MudancaDeConta) => setContas((cs) => editarNaLista(cs, cid, m)), []);
+  const apagarConta = useCallback((cid: string) => setContas((cs) => removerConta(cs, cid)), []);
+  const restaurarConta = useCallback((c: Conta) => setContas((cs) => (cs.some((x) => x.id === c.id) ? substituirConta(cs, c) : [...cs, c])), []);
+  const pagarConta = useCallback((cid: string) => {
+    const { contas: depois, pagamento, lancamento } = pagarAgora(contasAgora.current, cid, new Date());
+    if (!pagamento) return null;
+    if (lancamento) setLancamentos((ls) => adicionarLancamento(ls, lancamento));
+    contasAgora.current = depois;
+    setContas(depois);
+    return pagamento;
+  }, []);
+  const desfazerPagamento = useCallback((cid: string, mes: string) => {
+    const c = contasAgora.current.find((x) => x.id === cid);
+    const pagamento = c ? pagamentoDoMes(c, mes) : null;
+    if (!pagamento) return null;
+    const lid = pagamento.lancamento;
+    const lancamento = lid ? lancamentosAgora.current.find((l) => l.id === lid) ?? null : null;
+    contasAgora.current = desmarcarPaga(contasAgora.current, cid, mes);
+    setContas((cs) => desmarcarPaga(cs, cid, mes));
+    if (lid) setLancamentos((ls) => removerLancamento(ls, lid));
+    return { pagamento, lancamento };
+  }, []);
+  const restaurarPagamento = useCallback((cid: string, p: PagamentoDeConta, l: Lancamento | null) => {
+    if (l) setLancamentos((ls) => adicionarLancamento(ls, l));
+    setContas((cs) => marcarPaga(cs, cid, p));
+  }, []);
   const criarHabito = useCallback((nome: string) => setHabitos((hs) => adicionarHabito(hs, novoHabito(nome))), []);
   const alternarHabitoHoje = useCallback((hid: string, dia?: string) => setHabitos((hs) => alternarDia(hs, hid, dia ?? diaEmBrasilia(new Date()))), []);
   const apagarHabito = useCallback((hid: string) => setHabitos((hs) => removerHabito(hs, hid)), []);
@@ -383,8 +501,8 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   }), []);
 
   const value = useMemo(
-    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito }),
-    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito],
+    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento }),
+    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

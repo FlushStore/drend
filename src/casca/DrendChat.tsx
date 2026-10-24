@@ -29,7 +29,7 @@ const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
 
 /** A conversa com o DREND: no PC dentro do painel lateral, no iPhone como tela. */
 export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) => void }) {
-  const { mensagens, falar, guardarIdeia, desfazer, mural, lancamentos, apagarLancamento } = useStore();
+  const { mensagens, falar, guardarIdeia, desfazer, mural, lancamentos, apagarLancamento, contas, desfazerPagamento } = useStore();
   const [texto, setTexto] = useState("");
   // O cérebro: cada pedido é uma rajada, e ele "pensa" por um instante.
   const [atividade, setAtividade] = useState(0);
@@ -78,7 +78,11 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
                   ))}
                 </div>
               )}
-              {m.lancamento && lancamentos.some((l) => l.id === m.lancamento) && (
+              {m.pagamento && contas.some((c) => c.id === m.pagamento!.conta && c.pagamentos.some((p) => p.mes === m.pagamento!.mes && (p.lancamento ?? undefined) === m.lancamento)) ? (
+                <div className="dr-msg-acoes">
+                  <Botao variante="fantasma" compacto onClick={() => desfazerPagamento(m.pagamento!.conta, m.pagamento!.mes)}>Desfazer</Botao>
+                </div>
+              ) : !m.pagamento && m.lancamento && lancamentos.some((l) => l.id === m.lancamento) && (
                 <div className="dr-msg-acoes">
                   <Botao variante="fantasma" compacto onClick={() => apagarLancamento(m.lancamento!)}>Desfazer</Botao>
                 </div>

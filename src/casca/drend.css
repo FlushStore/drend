@@ -373,3 +373,30 @@ li[data-feito="true"] > .dr-vault-caixa { border-color: var(--cos-acento); backg
 .dr-semana-conta a { color: inherit; text-decoration: none; }
 .dr-semana-parte { flex: none; font-size: 13px; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
 .dr-semana-agenda { margin: 18px 4px 0; }
+
+/* Contas do mês (Vida): contas fixas, vencimento e se já foram pagas. */
+.dr-vida-coluna { display: grid; gap: 16px; min-width: 0; }
+@media (min-width: 1024px) { .dr-vida-coluna { gap: 20px; } }
+.dr-contas-falta-rotulo { font-size: 13px; font-weight: 500; color: var(--cos-tinta-3); }
+.dr-contas-item { justify-content: flex-start; gap: 12px; padding: 10px 0; }
+.dr-contas-nome { flex: 1; min-width: 0; }
+.dr-contas-estado { display: block; margin-top: 2px; font-size: 13px; font-weight: 500; color: var(--cos-tinta-3); }
+.dr-contas-estado[data-estado="hoje"] { color: var(--cos-acento-tinta); font-weight: 600; }
+.dr-contas-estado[data-estado="atrasada"] { color: var(--cos-negativo); font-weight: 600; }
+.dr-contas-item[data-estado="paga"] .dr-contas-nome { color: var(--cos-tinta-3); }
+.dr-contas-item[data-estado="pausada"] { opacity: .6; }
+.dr-contas-item .dr-tarefa-check:disabled { cursor: default; border-style: dashed; }
+@media (hover: hover) { .dr-contas-editar-botao:hover { color: var(--cos-tinta); background: var(--cos-linha); } }
+.dr-contas-editar-botao:active { color: var(--cos-tinta); background: var(--cos-linha); }
+.dr-contas-editar { padding: 12px 0; }
+.dr-contas-form { display: grid; gap: 10px; }
+.dr-contas-nova { margin-top: auto; padding: 14px 0 6px; border-top: 1px solid var(--cos-linha); }
+.dr-contas-campos { display: grid; grid-template-columns: minmax(0, 1fr) 76px 112px; gap: 8px; }
+.dr-contas-campos .cos-entrada { height: 44px; padding: 0 12px; font-size: 15px; }
+.dr-contas-campo-nome { color: var(--cos-tinta-3); }
+.dr-contas-campo-nome input { color: var(--cos-tinta); font-weight: 500; }
+.dr-contas-acoes { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.dr-contas-ativa { display: inline-flex; align-items: center; gap: 8px; margin-right: auto; font-size: 14px; font-weight: 500; color: var(--cos-tinta-2); }
+.dr-contas-ativa input { width: 18px; height: 18px; margin: 0; accent-color: var(--cos-acento); }
+.dr-contas-erro { margin: 0; font-size: 13px; color: var(--cos-negativo); }
+@media (max-width: 380px) { .dr-contas-campos { grid-template-columns: minmax(0, 1fr) 64px; } .dr-contas-campo-valor { grid-column: 1 / -1; } }
