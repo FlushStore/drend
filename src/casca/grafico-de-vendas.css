@@ -1,0 +1,115 @@
+/* Vendas por dia (painel aberto pelo botão do topo da Início, 23/10). */
+.ini-cab-lado { gap: 8px; }
+.ini-gv { display: grid; gap: 12px; min-width: 0; --ini-gv-vendido: color-mix(in srgb, var(--cos-acento) 34%, transparent); --ini-gv-lucro: var(--cos-acento-forte); }
+.ini-gv-dias { justify-self: start; }
+.ini-gv-bloco { display: grid; gap: 14px; padding: 16px 16px 12px; min-width: 0; }
+
+/* Totais: a marca da cor é a legenda; a comparação com o período anterior embaixo de cada um. */
+.ini-gv-totais { display: grid; grid-template-columns: repeat(3, minmax(0, auto)); justify-content: start; gap: 4px 24px; margin: 0; }
+.ini-gv-totais > div { display: grid; align-content: start; gap: 2px; min-width: 0; }
+.ini-gv-totais dt { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-2); white-space: nowrap; }
+.ini-gv-totais dd { margin: 0; }
+.ini-gv-totais .cos-valor-m { font-size: 20px; }
+.ini-gv-vendas { font-size: 20px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.ini-gv-marca { width: 8px; height: 8px; border-radius: 2px; }
+.ini-gv-marca[data-serie="vendido"] { background: var(--ini-gv-vendido); }
+.ini-gv-marca[data-serie="lucro"] { background: var(--ini-gv-lucro); }
+@media (max-width: 359px) { .ini-gv-totais { gap: 4px 14px; } .ini-gv-totais .cos-valor-m, .ini-gv-vendas { font-size: 17px; } }
+
+/* Variação contra o período anterior (ou a média): seta e % no tom; a base em cinza. */
+.ini-gv-var { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 6px; font-size: 12.5px; font-weight: 600; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+.ini-gv-var-num { display: inline-flex; align-items: center; gap: 2px; }
+.ini-gv-var[data-tom="sobe"] { color: var(--cos-positivo); }
+.ini-gv-var[data-tom="desce"] { color: var(--cos-negativo); }
+.ini-gv-var-base { font-weight: 400; color: var(--cos-tinta-3); }
+.ini-gv-totais .ini-gv-var-base { display: none; }
+
+/* Gráfico */
+.ini-gv-grafico { position: relative; margin: 0 -4px 0 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.ini-gv-grafico svg { position: absolute; inset: 0; display: block; overflow: visible; outline: none; border-radius: 8px; cursor: pointer; }
+.ini-gv-grafico svg:focus-visible { box-shadow: 0 0 0 2px var(--cos-acento-forte); }
+.ini-gv-grade line { stroke: var(--cos-linha); stroke-width: 1; }
+.ini-gv-grade[data-zero] line { stroke: var(--cos-linha-forte); }
+.ini-gv-grade text, .ini-gv-eixo { font-size: 11px; fill: var(--cos-tinta-3); font-variant-numeric: tabular-nums; }
+.ini-gv-eixo[data-hoje] { fill: var(--cos-tinta-2); font-weight: 600; }
+.ini-gv-eixo[data-ativo] { fill: var(--cos-tinta); font-weight: 700; }
+.ini-gv-topo-valor { font-size: 12px; font-weight: 700; fill: var(--cos-tinta); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--cos-bloco); stroke-width: 3px; }
+.ini-gv-vendido { fill: var(--ini-gv-vendido); }
+.ini-gv-lucro { fill: var(--ini-gv-lucro); }
+.ini-gv-lucro[data-negativo] { fill: var(--cos-negativo); }
+.ini-gv-dia { transition: opacity var(--cos-rapido) var(--cos-curva); }
+.ini-gv-dia[data-apagada] { opacity: .5; }
+.ini-gv-dia:not([data-apagada]) .ini-gv-vendido { fill: color-mix(in srgb, var(--cos-acento) 55%, transparent); }
+/* As barras crescem da linha do zero quando o painel abre. */
+.ini-gv-cresce { transform: scaleY(0); transition: transform 520ms cubic-bezier(.2, .8, .2, 1); }
+.ini-gv-grafico[data-entrou] .ini-gv-cresce { transform: scaleY(1); }
+@media (prefers-reduced-motion: reduce) { .ini-gv-cresce { transform: none; transition: none; } }
+.ini-gv-media line { stroke: var(--cos-tinta-3); stroke-width: 1; stroke-dasharray: 3 4; }
+.ini-gv-media text { font-size: 10.5px; fill: var(--cos-tinta-3); }
+
+/* Detalhe do dia escolhido */
+.ini-gv-detalhe { display: grid; gap: 14px; padding: 12px 12px 16px; }
+.ini-gv-detalhe-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ini-gv-detalhe-cab .cos-circulo { width: 40px; height: 40px; }
+.ini-gv-detalhe-cab .cos-circulo:disabled { opacity: .35; }
+.ini-gv-detalhe-titulo { font-size: 16px; font-weight: 600; text-transform: capitalize; letter-spacing: -.01em; }
+.ini-gv-detalhe-vazio { margin: 0; padding: 16px 4px 4px; text-align: center; font-size: 14px; color: var(--cos-tinta-2); }
+.ini-gv-detalhe-corpo { display: grid; gap: 16px; padding: 0 4px; animation: ini-gv-entra var(--cos-rapido) var(--cos-curva) both; }
+.ini-gv-detalhe-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 10px; margin: 0; }
+.ini-gv-detalhe-numeros > div { display: grid; align-content: start; gap: 2px; min-width: 0; }
+.ini-gv-detalhe-numeros dt { font-size: 12px; font-weight: 500; color: var(--cos-tinta-2); }
+.ini-gv-detalhe-numeros dd { margin: 0; min-width: 0; }
+.ini-gv-detalhe-principal { grid-column: 1 / -1; }
+.ini-gv-detalhe-numeros .cos-valor-m { font-size: 17px; }
+.ini-gv-detalhe-num { font-size: 17px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.ini-gv-produtos { list-style: none; margin: 0; padding: 12px 0 0; display: grid; gap: 10px; border-top: 1px solid var(--cos-linha); }
+.ini-gv-produtos li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; font-size: 13.5px; }
+.ini-gv-produto-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ini-gv-produto-valor { color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+.ini-gv-produto-trilho { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--cos-linha); overflow: hidden; }
+.ini-gv-produto-trilho > span { display: block; height: 100%; border-radius: 3px; background: var(--ini-gv-lucro); }
+
+/* Médias do período: duas colunas de número curto. */
+.ini-gv-mais { padding: 16px; }
+.ini-gv-mais dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; margin: 0; }
+.ini-gv-mais dl > div { display: grid; gap: 2px; min-width: 0; }
+.ini-gv-mais dt { font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-2); }
+.ini-gv-mais dd { margin: 0; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+/* Por dia da semana: sete colunas; a maior no verde cheio. */
+.ini-gv-semana { display: grid; gap: 12px; padding: 16px; }
+.ini-gv-semana-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ini-gv-semana-titulo { font-size: 15px; font-weight: 600; }
+.ini-gv-semana-valor { font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ini-gv-semana-barras { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.ini-gv-semana-op { display: grid; justify-items: center; gap: 6px; padding: 4px 0; border-radius: 10px; }
+.ini-gv-semana-trilho { position: relative; display: block; width: 100%; max-width: 30px; height: 84px; }
+.ini-gv-semana-trilho > span { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px 6px 3px 3px; background: var(--ini-gv-vendido); transition: background var(--cos-rapido) var(--cos-curva); }
+.ini-gv-semana-op[data-melhor] .ini-gv-semana-trilho > span { background: var(--ini-gv-lucro); }
+.ini-gv-semana-op[aria-checked="true"] { background: var(--cos-acento-suave); }
+.ini-gv-semana-rotulo { font-size: 12px; color: var(--cos-tinta-2); }
+.ini-gv-semana-op[aria-checked="true"] .ini-gv-semana-rotulo { color: var(--cos-tinta); font-weight: 600; }
+
+/* Dia a dia: o mais novo primeiro; a faixa de fundo é o tamanho do dia; tocar escolhe o dia. */
+.ini-gv-lista { padding: 4px 8px; }
+.ini-gv-lista ol { list-style: none; margin: 0; padding: 0; }
+.ini-gv-lista li + li { border-top: 1px solid var(--cos-linha); }
+.ini-gv-linha { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) auto 72px 64px; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 8px; border-radius: 10px; font-size: 14px; text-align: left; font-variant-numeric: tabular-nums; }
+.ini-gv-linha-fundo { position: absolute; left: 0; top: 6px; bottom: 6px; z-index: -1; border-radius: 8px; background: color-mix(in srgb, var(--cos-acento) 12%, transparent); }
+.ini-gv-linha[aria-pressed="true"] .ini-gv-linha-fundo { background: color-mix(in srgb, var(--cos-acento) 30%, transparent); }
+.ini-gv-linha[aria-pressed="true"] .ini-gv-lista-dia { font-weight: 600; }
+.ini-gv-linha[data-vazio] { color: var(--cos-tinta-3); }
+.ini-gv-lista-dia { text-transform: capitalize; }
+.ini-gv-lista-qtd { font-size: 12.5px; color: var(--cos-tinta-2); }
+.ini-gv-lista-valor { text-align: right; font-weight: 600; }
+.ini-gv-lista-lucro { text-align: right; color: var(--cos-acento-tinta); }
+.ini-gv-lista-lucro[data-negativo] { color: var(--cos-negativo); }
+@media (max-width: 359px) { .ini-gv-linha { grid-template-columns: minmax(0, 1fr) 64px 56px; } .ini-gv-lista-qtd { display: none; } }
+
+.ini-gv-nota { margin: 0; font-size: var(--cos-texto-rotulo); color: var(--cos-acento-tinta); }
+.ini-gv-velho { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; font-size: 12.5px; color: var(--cos-tinta-2); }
+.ini-gv-erro { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 120px; color: var(--cos-tinta-2); }
+@keyframes ini-gv-entra { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ini-gv-detalhe-corpo { animation: none; } }
+
+@media (min-width: 768px) { .ini-gv-totais .cos-valor-m, .ini-gv-vendas { font-size: 22px; } }

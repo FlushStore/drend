@@ -1,0 +1,210 @@
+/*
+ * DREND: tokens copiados do painel da Flush (Control OS, direção Estúdio) em 24/10/2026,
+ * com o verde da marca trocado pelo azul do DREND. Verde só sobrou no dinheiro que entra.
+ * Origem: Control OS, tokens da direção Estúdio (aprovada na Missão 2A), vindos da VapeMania
+ * (4a3c9bbc, 15/10/2026) com o acento trocado para o verde da Flush e a fonte da marca
+ * da Flush. Trocar a cor da marca é só aqui (e nos pontos fixos listados no PLANO).
+ * Escopo: `.cos-raiz` (a casca e cada camada em portal levam a classe).
+ * Tema: `data-v2-tema="claro" | "escuro"` no <html>, escrito por useAplicarTema
+ * (src/features/preferencias/aplicarTema.ts). Sem atributo, vale o claro.
+ */
+
+/* Archivo (OFL), só o subconjunto latino, servido daqui: o navegador só baixa
+   quando um texto dentro de .cos-raiz pede a fonte, então a vitrine não paga. */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/archivo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Proporção no PC (16/10/2026, docs/AI_DECISIONS.md): o token de escala do painel.
+   Todo px > 1 do design-system, da casca e das features vira
+   calc(Npx * var(--cos-escala, 1)) no build (scripts/postcss-escala-desktop.js).
+   1 no celular e no tablet de toque (nada muda); 0,875 no PC denso, a partir de
+   1024 px com mouse/trackpad. Os breakpoints continuam em px reais. */
+.cos-raiz { --cos-escala: 1; }
+@media (min-width: 1024px) and (pointer: fine) {
+  .cos-raiz { --cos-escala: 0.875; }
+}
+
+.cos-raiz {
+  /* Superfícies */
+  --cos-fundo: #E9E9E5;
+  --cos-app: #F5F5F2;
+  --cos-bloco: #FFFFFF;
+  --cos-palco: #EFEFEB;
+  --cos-palco-papel: var(--cos-palco);
+  --cos-controle: #ECECE8;
+  /* Regra do Rapha para a Flush (11/10): sem preto no tema claro. Seleção em verde-claro. */
+  --cos-controle-ativo: #DDE8FD;
+  --cos-controle-ativo-tinta: #1E3A8A;
+
+  /* Tinta */
+  --cos-tinta: #151515;
+  --cos-tinta-2: #64645E;
+  --cos-tinta-3: #8E8E87;
+  --cos-linha: rgba(21, 21, 21, .07);
+  --cos-linha-forte: rgba(21, 21, 21, .14);
+  --cos-hachura: rgba(21, 21, 21, .11);
+
+  /* Herói: no claro, papel com um toque de verde (sem preto no claro, regra da Flush de 11/10);
+     no escuro, escuro com número e borda no acento. */
+  --cos-heroi: #EEF4FF;
+  --cos-heroi-tinta: #151515;
+  --cos-heroi-tinta-2: #5B6478;
+  --cos-heroi-linha: rgba(30, 64, 175, .12);
+  --cos-heroi-num: #2563EB;
+
+  /* Acento: o verde da Flush (primary-bright da loja) só para ação, seleção e dado */
+  --cos-acento: #2F6FEB;
+  --cos-acento-forte: #2158D6;
+  --cos-acento-tinta: #1D4ED8;
+  --cos-acento-suave: #E4EDFE;
+  --cos-sobre-acento: #FFFFFF;
+
+  /* Sinal do dinheiro: verde = entra/lucro; vermelho = sai/despesa/vencido.
+     Só em número e marcador de dinheiro (nunca fundo de seção nem ação). */
+  --cos-positivo: #13703A;
+  --cos-positivo-suave: #E6F4EA;
+  --cos-negativo: #B42318;
+  --cos-negativo-suave: #FCEBE9;
+
+  /* Navegação flutuante (doca): clara no tema claro, fina e leve (11/10, "muito grossa") */
+  --cos-doca: #FFFFFF;
+  --cos-doca-tinta: #6E6E68; /* 5,1:1 no branco da doca (o #7A7A74 dava 4,3:1, abaixo do AA). */
+  --cos-doca-tinta-ativa: #151515;
+  --cos-doca-ativo: #2563EB;
+  --cos-doca-marca: #E6EEFD;
+  --cos-doca-borda: rgb(0 0 0 / .07);
+  --cos-doca-sombra: 0 10px 28px -14px rgb(0 0 0 / .28);
+  --cos-veu: rgb(12 12 12 / .38);
+  --cos-veu-forte: rgb(12 12 12 / .5);
+
+  /* Forma */
+  --cos-r-moldura: 32px;
+  --cos-r-bloco: 24px;
+  --cos-r-interno: 16px;
+  --cos-r-pilula: 999px;
+  --cos-sombra: 0 1px 2px rgb(0 0 0 / .04), 0 16px 40px -24px rgb(0 0 0 / .18);
+  --cos-sombra-alta: 0 2px 6px rgb(0 0 0 / .06), 0 32px 64px -24px rgb(0 0 0 / .32);
+
+  /* Tipografia (Archivo em tudo; a fonte da marca Flush só na marca) */
+  --cos-fonte: Archivo, system-ui, sans-serif;
+  --cos-fonte-marca: "Space Grotesk", "Space Grotesk Fallback", system-ui, sans-serif;
+  --cos-fonte-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  --cos-texto-rotulo: 13px;
+  --cos-texto-corpo: 15px;
+  --cos-texto-titulo: 28px;
+  --cos-texto-titulo-largo: 34px;
+  --cos-alvo-toque: 44px;
+
+  /* Movimento (espelhado em movimento.ts para o motion) */
+  --cos-curva: cubic-bezier(.2, .8, .2, 1);
+  --cos-rapido: .14s;
+  --cos-medio: .22s;
+  --cos-lento: .3s;
+
+  /* Áreas seguras (notch, barra de gestos) */
+  --cos-seguro-topo: env(safe-area-inset-top, 0px);
+  --cos-seguro-base: env(safe-area-inset-bottom, 0px);
+  --cos-seguro-esq: env(safe-area-inset-left, 0px);
+  --cos-seguro-dir: env(safe-area-inset-right, 0px);
+  /* Distância da doca ao fundo (15/10): 12 px no Safari; no atalho da tela de início, a barra
+     do iPhone (área segura) + 6 px de respiro, para o menu não encostar nela. */
+  --cos-folga-base: max(12px, calc(var(--cos-seguro-base) + 6px));
+
+  font-family: var(--cos-fonte);
+  color: var(--cos-tinta);
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root[data-v2-tema="escuro"] .cos-raiz {
+  --cos-fundo: #0C0C0C;
+  --cos-app: #141414;
+  --cos-bloco: #1C1C1C;
+  /* Palco no escuro (QA de 16/10): sem foto, um degrau acima do bloco. Com foto, o papel
+     claro volta (`--cos-palco-papel`), porque o multiply só apaga o branco do estúdio
+     sobre fundo claro. */
+  --cos-palco: #262624;
+  --cos-palco-papel: #E9E9E4;
+  --cos-controle: #232323;
+  --cos-controle-ativo: #F2F2EE;
+  --cos-controle-ativo-tinta: #151515;
+
+  --cos-tinta: #F2F2EE;
+  --cos-tinta-2: #9A9A93;
+  --cos-tinta-3: #6E6E68;
+  --cos-linha: rgba(255, 255, 255, .07);
+  --cos-linha-forte: rgba(255, 255, 255, .14);
+  --cos-hachura: rgba(255, 255, 255, .1);
+
+  /* Herói no escuro (VapeMania 16/10): escuro com número e borda no acento; antes era um cartão
+     claro invertido que destoava da tela escura. Na Flush, o escuro puxa para o verde. */
+  --cos-heroi: #121A2B;
+  --cos-heroi-tinta: #F4F4F1;
+  --cos-heroi-tinta-2: #9AA3B5;
+  --cos-heroi-linha: rgba(96, 165, 250, .18);
+  --cos-heroi-num: #60A5FA;
+
+  --cos-acento-tinta: #60A5FA;
+  --cos-acento-suave: rgba(96, 165, 250, .14);
+
+  --cos-positivo: #4ADE80;
+  --cos-positivo-suave: rgba(74, 222, 128, .12);
+  --cos-negativo: #F87171;
+  --cos-negativo-suave: rgba(248, 113, 113, .12);
+
+  --cos-doca: #222222;
+  --cos-doca-tinta: #8C8C86;
+  --cos-doca-tinta-ativa: #F4F4F1;
+  --cos-doca-ativo: var(--cos-acento);
+  --cos-doca-marca: rgb(255 255 255 / .07);
+  --cos-doca-borda: rgb(255 255 255 / .07);
+  --cos-doca-sombra: 0 16px 32px -14px rgb(0 0 0 / .6);
+
+  --cos-sombra: 0 1px 2px rgb(0 0 0 / .3), 0 16px 40px -24px rgb(0 0 0 / .6);
+  --cos-sombra-alta: 0 2px 6px rgb(0 0 0 / .4), 0 32px 64px -24px rgb(0 0 0 / .8);
+
+  color-scheme: dark;
+}
+
+/* Celular mais denso (13/10/2026, "mais informação por tela, sem apertar"): menos ar
+   entre blocos e números de destaque menores. Os alvos de toque continuam ≥ 40 px. */
+@media (max-width: 767px) { :root { --cos-texto-titulo: 24px; } }
+
+/* Compatibilidade com as telas do Control OS anterior da Flush que continuam no painel
+   (Artes, Analytics, Auditoria): as medidas de densidade de 11/10 (FS-P5) e as cores por
+   meio. As telas vindas da VapeMania não usam estas variáveis. */
+.cos-raiz {
+  --cos-ritmo: 12px;
+  --cos-pad-bloco: 16px;
+  --cos-altura-topo: 48px;
+  --cos-altura-campo: 44px;
+  --cos-num-heroi: 34px;
+  --cos-num-m: 22px;
+  --cos-atalho: 48px;
+  --cos-reserva-doca: calc(60px + var(--cos-folga-base));
+  --cos-meio-dinheiro: #A9A9A2;
+  --cos-meio-cartao: #D3D3CD;
+}
+@media (min-width: 1024px) {
+  .cos-raiz { --cos-ritmo: 16px; --cos-pad-bloco: 20px; --cos-num-heroi: 36px; }
+}
+:root[data-v2-tema="escuro"] .cos-raiz { --cos-meio-dinheiro: #F2F2EE; --cos-meio-cartao: #9A9A93; }
+
+/* Atenção (QA visual de 16/10): estado de alerta NÃO é acento. Na VapeMania o
+   amarelo do acento servia de "atenção"; o verde da Flush faria o alerta parecer
+   "ok". Atenção = neutro (chip cinza com tinta forte); bloqueio (sem preço,
+   esgotado) = vermelho suave. Uma cor de marca só, para ação, seleção e dado. */
+.cos-raiz {
+  --cos-atencao-fundo: var(--cos-controle);
+  --cos-atencao-tinta: var(--cos-tinta);
+  --cos-bloqueio-fundo: var(--cos-negativo-suave);
+  --cos-bloqueio-tinta: var(--cos-negativo);
+  --cos-alerta-ponto: var(--cos-negativo);
+}

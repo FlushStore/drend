@@ -1,0 +1,6 @@
+/* Ação com o dedo na linha (DeslizarParaAcao, fase Produtividade, 14/10). */
+.cos-deslizar { position: relative; border-radius: 22px; }
+.cos-deslizar-fundo { position: absolute; inset: 0; display: flex; align-items: center; padding-left: 22px; border-radius: inherit;
+  background: var(--cos-controle); color: var(--cos-tinta-2); font-weight: 600; font-size: 15px; }
+.cos-deslizar-fundo[data-pronto] { background: var(--cos-acento); color: var(--cos-sobre-acento); }
+.cos-deslizar-linha { position: relative; border-radius: inherit; background: var(--cos-bloco); will-change: transform; }

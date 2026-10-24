@@ -1,0 +1,36 @@
+/* Control OS — estados: carregando (esqueleto), vazio, erro e aviso (toast). */
+
+.cos-esqueleto { display: grid; gap: 10px; }
+.cos-osso { position: relative; display: block; overflow: hidden; height: 16px; border-radius: var(--cos-r-interno); background: var(--cos-controle); }
+.cos-osso::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, var(--cos-app) 50%, transparent 70%); opacity: .7; transform: translateX(-100%); animation: cos-brilho 1.4s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .cos-osso::after { display: none; } }
+
+.cos-vazio { display: grid; justify-items: center; text-align: center; gap: 10px; padding: 48px 24px; }
+.cos-vazio-arte { display: flex; gap: 6px; margin-bottom: 10px; }
+.cos-vazio-arte span { width: 44px; height: 64px; border-radius: 14px; background-image: repeating-linear-gradient(135deg, var(--cos-hachura) 0 1.5px, transparent 1.5px 7px); box-shadow: inset 0 0 0 1px var(--cos-linha-forte); }
+.cos-vazio-arte span:nth-child(2) { height: 84px; margin-top: -10px; background: var(--cos-acento); box-shadow: none; }
+.cos-estado-titulo { font-size: 20px; font-weight: 600; letter-spacing: -.015em; }
+.cos-estado-texto { font-size: var(--cos-texto-corpo); color: var(--cos-tinta-2); max-width: 40ch; line-height: 1.45; }
+.cos-vazio .cos-estado-texto { margin-bottom: 8px; }
+
+.cos-erro { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+.cos-erro > .cos-botao { grid-column: 1 / -1; justify-self: start; }
+.cos-erro-icone { display: grid; place-items: center; width: 52px; height: 52px; border-radius: var(--cos-r-pilula); background: var(--cos-acento-suave); color: var(--cos-acento-tinta); }
+@media (min-width: 768px) { .cos-erro { grid-template-columns: auto 1fr auto; } .cos-erro > .cos-botao { grid-column: auto; } }
+
+/* Aviso: acima da doca no celular, embaixo no desktop */
+/* A faixa ocupa a largura toda (menos 16 px e a área segura) e centraliza o aviso dentro.
+   Antes era left 50% + translate sem largura: a caixa ficava limitada a meia tela e o
+   aviso com botão quebrava o texto letra por letra (VapeMania, ATLAS-VM-0002 item 12). */
+.cos-aviso-lugar { position: fixed; z-index: 70; left: calc(16px + var(--cos-seguro-esq)); right: calc(16px + var(--cos-seguro-dir)); bottom: calc(100px + var(--cos-seguro-base)); display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+@media (min-width: 1024px) { .cos-aviso-lugar { bottom: 32px; } }
+.cos-aviso { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 18px 12px 12px; border-radius: 28px; background: var(--cos-heroi); color: var(--cos-heroi-tinta); font-size: var(--cos-texto-corpo); font-weight: 500; box-shadow: var(--cos-sombra-alta); max-width: min(100%, 560px); }
+.cos-aviso-texto { min-width: 0; overflow-wrap: break-word; }
+/* Com botão: o texto pede pelo menos 150 px; se não cabe ao lado (320 px), o botão desce para
+   a linha de baixo, à direita, em vez de espremer o texto. 28 px de raio: pílula numa linha,
+   cartão arredondado em duas. */
+.cos-aviso:has(.cos-aviso-acao) .cos-aviso-texto { flex: 1 1 150px; }
+.cos-aviso-marca { display: grid; place-items: center; width: 24px; height: 24px; border-radius: var(--cos-r-pilula); background: var(--cos-acento); color: var(--cos-sobre-acento); flex: none; }
+.cos-aviso-erro .cos-aviso-marca { background: var(--cos-heroi-tinta); color: var(--cos-heroi); }
+/* Aviso com botão (15/10, "Enviar recibo"): o botão recebe o toque; o resto do aviso não. */
+.cos-aviso-acao { pointer-events: auto; margin-left: auto; padding: 8px 14px; min-height: 40px; border: 0; border-radius: var(--cos-r-pilula); background: var(--cos-acento); color: var(--cos-sobre-acento); font: inherit; font-weight: 600; font-size: 14px; white-space: nowrap; cursor: pointer; }

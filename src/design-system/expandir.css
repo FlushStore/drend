@@ -1,0 +1,21 @@
+/* Expandir (16/10): abre e fecha crescendo, sem corte seco. Ver Expandir.tsx.
+   Fluidez: transição curta (.22s), só altura da linha, margem e opacidade (sem transform, que
+   criava camada nova a cada abertura); `contain: layout` limita o recálculo ao próprio bloco. */
+.cos-expandir {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: calc(-1 * var(--cos-expandir-gap, 12px));
+  contain: layout;
+  transition:
+    grid-template-rows var(--cos-medio) var(--cos-curva),
+    margin-top var(--cos-medio) var(--cos-curva),
+    opacity var(--cos-medio) var(--cos-curva);
+  min-width: 0;
+}
+.cos-expandir[data-aberto] { grid-template-rows: 1fr; opacity: 1; margin-top: 0; }
+.cos-expandir-dentro { min-height: 0; min-width: 0; overflow: hidden; display: grid; gap: var(--cos-expandir-gap, 12px); }
+/* Aberto e parado: o anel de foco e as sombras não ficam cortados. */
+.cos-expandir[data-assentado] > .cos-expandir-dentro { overflow: visible; }
+.cos-expandir[data-assentado] { contain: none; }
+@media (prefers-reduced-motion: reduce) { .cos-expandir { transition: none; } }

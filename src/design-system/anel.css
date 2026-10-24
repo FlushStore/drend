@@ -1,0 +1,13 @@
+/* Anel (16/10): progresso e rosca. Ver Anel.tsx. */
+.cos-anel { position: relative; flex: none; display: grid; place-items: center; }
+.cos-anel svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.cos-anel-trilho { fill: none; stroke: var(--cos-controle); }
+.cos-anel-fatia { fill: none; stroke-linecap: butt; animation: cos-anel-cresce .7s var(--cos-curva) var(--atraso, 0ms) both; }
+.cos-anel-fatia[data-tom="acento"] { stroke: var(--cos-acento-forte); }
+/* Flush: sem preto no tema claro (11/10) — o "tinta" do anel é o grafite do dinheiro. */
+.cos-anel-fatia[data-tom="tinta"] { stroke: var(--cos-meio-dinheiro); }
+.cos-anel-fatia[data-tom="suave"] { stroke: var(--cos-tinta-3); }
+.cos-anel-fatia[data-tom="positivo"] { stroke: var(--cos-positivo); }
+.cos-anel-meio { position: relative; display: grid; place-items: center; text-align: center; line-height: 1.1; }
+@keyframes cos-anel-cresce { from { stroke-dasharray: 0 var(--volta); } }
+@media (prefers-reduced-motion: reduce) { .cos-anel-fatia { animation: none; } }

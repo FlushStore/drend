@@ -1,0 +1,88 @@
+/*
+ * Casca do Control OS (/backstage e /lab/v2) — direção Estúdio, só com tokens
+ * do design system (--cos-*). Desktop: moldura arredondada sobre o fundo; celular:
+ * tela cheia, espaço embaixo para a doca flutuante.
+ */
+.cv2-raiz { min-height: 100dvh; background: var(--cos-app); color: var(--cos-tinta); font-size: var(--cos-texto-corpo); }
+/* O documento na cor do app: o "rebote" da rolagem no celular não mostra outra cor. */
+/* html.cv2-ativo (posto pela casca) no lugar de html:has(.cv2-raiz): o :has na raiz era
+   reavaliado a cada mudança do documento, inclusive no meio das animações (16/10). */
+html.cv2-ativo, html.cv2-ativo body { background: #F5F5F2; }
+:root[data-v2-tema="escuro"].cv2-ativo, :root[data-v2-tema="escuro"].cv2-ativo body { background: #141414; }
+
+.cv2-moldura { min-height: 100dvh; padding: calc(10px + var(--cos-seguro-topo)) max(16px, var(--cos-seguro-dir)) calc(112px + var(--cos-seguro-base)) max(16px, var(--cos-seguro-esq)); }
+.cv2-conteudo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; outline: none; }
+@media (min-width: 1024px) {
+  .cv2-raiz { background: var(--cos-fundo); padding: 20px; }
+  .cv2-moldura { max-width: 1400px; margin: 0 auto; min-height: calc(100dvh - 40px); padding: 20px 32px 48px; border-radius: var(--cos-r-moldura); background: var(--cos-app); border: 1px solid var(--cos-linha); box-shadow: 0 1px 0 rgb(255 255 255 / .6) inset, 0 40px 80px -48px rgb(0 0 0 / .25); }
+  .cv2-conteudo { gap: 20px; }
+}
+
+/* Topo */
+.cv2-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; margin-bottom: 8px; }
+.cv2-marca { display: inline-flex; align-items: center; gap: 8px; min-height: var(--cos-alvo-toque); min-width: 0; }
+/* Marca da Flush (19/10/2026): mesma estrutura da VapeMania (nome de título + pílula), com a
+   identidade da loja — a carinha do menu do site e a Bricolage Grotesque 800, baixada só pelo topo
+   do painel (useFonteDaMarca em CabecalhoV2). A Space Grotesk só vem até 700: pedir 800 dela fazia o navegador engrossar na marra. */
+.cv2-marca-carinha { width: 26px; height: 31px; object-fit: cover; object-position: top; flex-shrink: 0; }
+.cv2-marca-nome { font-family: "Bricolage Grotesque", var(--cos-fonte-marca); font-weight: 800; font-size: 28px; font-variation-settings: "opsz" 96; letter-spacing: -.04em; line-height: 1; }
+.cv2-marca-sub { font-size: 12px; font-weight: 500; color: var(--cos-tinta-2); padding: 4px 8px; border-radius: var(--cos-r-pilula); border: 1px solid var(--cos-linha-forte); }
+.cv2-topo-acoes { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 374px) { .cv2-marca-sub { display: none; } .cv2-topo-acoes { gap: 6px; } }
+.cv2-busca { display: inline-grid; place-items: center; width: var(--cos-alvo-toque); height: var(--cos-alvo-toque); border-radius: var(--cos-r-pilula); background: var(--cos-bloco); border: 1px solid var(--cos-linha); color: var(--cos-tinta); transition: transform var(--cos-rapido) var(--cos-curva); }
+.cv2-busca:active { transform: scale(.97); }
+.cv2-busca-texto, .cv2-busca kbd { display: none; }
+.cv2-conta { display: inline-grid; place-items: center; width: var(--cos-alvo-toque); height: var(--cos-alvo-toque); border-radius: var(--cos-r-pilula); background: var(--cos-heroi); color: var(--cos-heroi-tinta); font-weight: 600; font-size: 15px; transition: transform var(--cos-rapido) var(--cos-curva); }
+.cv2-conta:active { transform: scale(.94); }
+.cv2-mais-ancora { position: relative; }
+@media (min-width: 1024px) {
+  .cv2-topo { display: grid; grid-template-columns: 1fr auto 1fr; margin-bottom: 20px; }
+  .cv2-topo-acoes { justify-self: end; }
+  .cv2-busca { display: inline-flex; width: auto; gap: 10px; padding: 0 8px 0 16px; color: var(--cos-tinta-2); font-size: 14px; white-space: nowrap; }
+  .cv2-busca-texto { display: inline; }
+  .cv2-busca kbd { display: inline-block; font: 500 12px var(--cos-fonte); padding: 4px 8px; border-radius: var(--cos-r-pilula); background: var(--cos-controle); color: var(--cos-tinta-2); }
+}
+@media (min-width: 1024px) and (max-width: 1200px) { .cv2-busca-texto { display: none; } .cv2-marca-sub { display: none; } }
+
+
+/* Conta */
+.cv2-conta-corpo { display: grid; gap: 14px; padding-bottom: 8px; }
+/* Sair é a ação mais rara do menu: discreta, sem contorno nem preenchimento (revisão 2, resto e). */
+.cos-botao.cv2-conta-sair { border-color: transparent; background: transparent; color: var(--cos-tinta-2); font-weight: 500; }
+@media (hover: hover) { .cos-botao.cv2-conta-sair:hover:not(:disabled) { background: var(--cos-controle); color: var(--cos-tinta); } }
+.cv2-conta-dados { display: grid; gap: 2px; margin: 0; padding: 4px 16px; border-radius: var(--cos-r-interno); background: var(--cos-bloco); border: 1px solid var(--cos-linha); }
+.cv2-conta-dados div { display: grid; gap: 2px; padding: 10px 0; min-width: 0; }
+.cv2-conta-dados div + div { border-top: 1px solid var(--cos-linha); }
+.cv2-conta-dados dt, .cv2-conta-rotulo { font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
+.cv2-conta-dados dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.cv2-conta-tema { display: grid; gap: 8px; }
+.cv2-conta-alerta { margin: 0; padding: 12px 14px; border-radius: var(--cos-r-interno); background: var(--cos-bloco); border: 1px solid var(--cos-linha); color: var(--cos-tinta); font-size: var(--cos-texto-corpo); line-height: 1.4; }
+.cv2-conta-tema .cos-seg { width: 100%; }
+.cv2-conta-tema .cos-seg-op { flex: 1; justify-content: center; padding: 0 10px; }
+
+/* Guarda do painel simplificado */
+.cv2-guarda { max-width: 32rem; margin: 32px auto; padding: 24px; border-radius: var(--cos-r-bloco); background: var(--cos-bloco); border: 1px solid var(--cos-linha); text-align: center; }
+.cv2-guarda-titulo { font-weight: 600; margin-bottom: 4px; }
+
+/* Celular mais denso (13/10/2026, "mais informação por tela, sem apertar"): menos ar
+   entre blocos e números de destaque menores. Os alvos de toque continuam ≥ 40 px. */
+@media (max-width: 767px) {
+  .cv2-topo { min-height: 48px; margin-bottom: 4px; }
+  .cv2-marca-nome { font-size: 25px; }
+  .cv2-marca-carinha { width: 23px; height: 27px; }
+  .cv2-topo-acoes .cos-circulo, .cv2-busca, .cv2-conta { width: 40px; height: 40px; }
+}
+
+/* Topo enxuto (pedido do Rapha, 11/10): sem o botão de tema (fica na Conta) e avatar mais leve. */
+.cv2-conta { background: var(--cos-acento-suave); color: var(--cos-acento-tinta); box-shadow: inset 0 0 0 1px var(--cos-linha); font-size: 14px; }
+@media (max-width: 1023px) {
+  .cv2-topo-acoes { gap: 4px; }
+  .cv2-busca { background: transparent; border-color: transparent; }
+}
+/* O ⋯ da tela mora no topo, ao lado da busca e da conta (pedido do Rapha, 13/10). */
+.cv2-acoes-da-tela { display: contents; }
+@media (max-width: 1023px) { .cv2-acoes-da-tela .cos-circulo { background: transparent; border-color: transparent; } }
+
+/* Faixa de unidade só para consulta (Flush: gerente em outra filial, ou sem escrita liberada) e da prévia. */
+.cv2-faixa { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 10px 16px; border-radius: var(--cos-r-interno); background: var(--cos-acento-suave); color: var(--cos-acento-tinta); font-size: var(--cos-texto-rotulo); font-weight: 500; }
+.cv2-faixa a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }

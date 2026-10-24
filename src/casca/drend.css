@@ -1,0 +1,137 @@
+/*
+ * O que é só do DREND, escrito com os tokens do painel da Flush (--cos-*). Prefixo dr-.
+ * Direção (24/10, pedido do Rapha: "clean e premium, sem informação desnecessária"):
+ * uma frase grande como a vitrine, um número herói por tela, rótulos curtos e muito ar.
+ * Nada de subtítulo explicando a tela.
+ */
+
+/* Marca: o "D" no azul, no lugar da carinha da Flush. */
+.dr-marca-d { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: var(--cos-acento); color: var(--cos-sobre-acento); font-family: var(--cos-fonte-marca); font-weight: 700; font-size: 18px; line-height: 1; flex-shrink: 0; }
+@media (max-width: 767px) { .dr-marca-d { width: 27px; height: 27px; font-size: 16px; } }
+
+/* Rótulo pequeno de bloco (no lugar de título + subtítulo). */
+.dr-rotulo { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 500; color: var(--cos-tinta-2); letter-spacing: .01em; }
+.dr-conta { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--cos-r-pilula); background: var(--cos-acento-suave); color: var(--cos-acento-tinta); font-size: 11.5px; font-weight: 700; }
+.dr-ponto { display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: var(--cos-tinta-3); vertical-align: middle; }
+.dr-ponto[data-tom="ok"] { background: var(--cos-positivo); box-shadow: 0 0 0 4px var(--cos-positivo-suave); }
+.dr-ponto[data-tom="acento"] { background: var(--cos-acento); box-shadow: 0 0 0 4px var(--cos-acento-suave); }
+
+/* Saudação: o título da vitrine da Flush, em escala de painel. */
+.dr-ola { display: grid; gap: 6px; padding: 12px 0 8px; }
+.dr-ola-data { margin: 0; font-size: 13px; font-weight: 500; color: var(--cos-tinta-3); }
+.dr-ola-titulo { margin: 0; font-family: var(--cos-fonte-marca); font-weight: 500; font-size: 40px; line-height: 1.02; letter-spacing: -.045em; }
+.dr-ola-titulo em { font-style: normal; color: var(--cos-acento); }
+@media (min-width: 1024px) { .dr-ola { padding: 28px 0 16px; } .dr-ola-titulo { font-size: 64px; } }
+
+/* Herói + lista lado a lado no PC; um embaixo do outro no iPhone. */
+.dr-hoje { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 1024px) { .dr-hoje { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 20px; } }
+
+.dr-heroi { display: flex; flex-direction: column; gap: 6px; padding: 22px 22px 18px; color: inherit; transition: transform var(--cos-rapido) var(--cos-curva); }
+a.dr-heroi:active { transform: scale(.99); }
+.dr-heroi-num { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; }
+.dr-heroi-lucro { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--cos-tinta-2); }
+.dr-heroi .ini-semana-grafico { height: 96px; margin-top: 18px; }
+@media (min-width: 1024px) { .dr-heroi { padding: 28px 30px 24px; } .dr-heroi .ini-semana-grafico { height: 132px; } }
+
+/* "Para você" e listas simples: uma linha, uma seta. */
+.dr-para-voce { display: flex; flex-direction: column; gap: 6px; padding: 22px 22px 10px; }
+@media (min-width: 1024px) { .dr-para-voce { padding: 28px 30px 14px; } }
+.dr-lista { list-style: none; margin: 0; padding: 0; }
+.dr-lista li + li { border-top: 1px solid var(--cos-linha); }
+.dr-lista-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 60px; color: inherit; font-size: 15.5px; font-weight: 500; letter-spacing: -.01em; }
+.dr-lista-item .cos-seta { width: 34px; height: 34px; border-color: var(--cos-linha); }
+@media (hover: hover) { .dr-lista-item:hover .cos-seta { rotate: 45deg; border-color: var(--cos-linha-forte); } }
+.dr-lista-estatico small { font-size: 13px; color: var(--cos-tinta-3); font-weight: 500; }
+
+/* Três tiras: rótulo e uma palavra. */
+.dr-tiras { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.dr-tira { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 16px; border-radius: var(--cos-r-bloco); background: var(--cos-bloco); border: 1px solid var(--cos-linha); box-shadow: var(--cos-sombra); color: inherit; }
+.dr-tira strong { font-size: 15px; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.dr-tira .dr-rotulo { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+@media (min-width: 1024px) { .dr-tiras { gap: 20px; } .dr-tira { padding: 20px 24px; } .dr-tira strong { font-size: 17px; } }
+
+/* Negócios. */
+.dr-negocios { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 768px) { .dr-negocios { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dr-proj-flush { grid-column: 1 / -1; } }
+@media (min-width: 1024px) { .dr-negocios { gap: 20px; } }
+.dr-proj { display: flex; flex-direction: column; gap: 14px; padding: 22px; }
+@media (min-width: 1024px) { .dr-proj { padding: 28px 30px; } }
+.dr-proj-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dr-proj-nome { margin: 0; font-family: var(--cos-fonte-marca); font-size: 22px; font-weight: 600; letter-spacing: -.03em; }
+.dr-estado { display: inline-flex; align-items: center; font-size: 13px; font-weight: 500; color: var(--cos-tinta-2); white-space: nowrap; }
+.dr-proj-linha { margin: 0; font-size: 14px; color: var(--cos-tinta-2); }
+.dr-numeros { display: flex; flex-wrap: wrap; gap: 8px 40px; margin: 0; }
+.dr-numeros div { display: grid; gap: 2px; }
+.dr-numeros dt { font-size: 12.5px; color: var(--cos-tinta-3); font-weight: 500; }
+.dr-numeros dd { margin: 0; }
+@media (max-width: 767px) { .dr-proj-flush .dr-numeros { flex-wrap: nowrap; justify-content: space-between; gap: 12px; } .dr-proj-flush .dr-numeros .cos-valor-g { font-size: 25px; } }
+.dr-pausados { display: grid; gap: 4px; padding: 8px 4px 0; }
+
+/* Vida. */
+.dr-barra { height: 6px; margin: 18px 0 14px; border-radius: var(--cos-r-pilula); background: var(--cos-acento-suave); overflow: hidden; }
+.dr-barra i { display: block; height: 100%; width: calc(var(--parte) * 100%); border-radius: inherit; background: var(--cos-acento); }
+.dr-numeros-p .cos-valor-m { font-size: 20px; }
+.dr-metas-bloco { display: flex; flex-direction: column; gap: 18px; padding: 22px; }
+@media (min-width: 1024px) { .dr-metas-bloco { padding: 28px 30px; } }
+.dr-metas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.dr-meta { display: grid; justify-items: center; gap: 12px; text-align: center; font-size: 13.5px; color: var(--cos-tinta-2); }
+.dr-meta-pct { font-family: var(--cos-fonte-marca); font-size: 22px; font-weight: 600; letter-spacing: -.03em; color: var(--cos-tinta); }
+.dr-dia { display: grid; gap: 4px; padding: 8px 4px 0; }
+.dr-dia-lista { list-style: none; margin: 0; padding: 0; }
+.dr-dia-lista li { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: baseline; min-height: 52px; padding: 14px 0; font-size: 15px; font-weight: 500; }
+.dr-dia-lista li + li { border-top: 1px solid var(--cos-linha); }
+.dr-dia-lista time { font-size: 13px; color: var(--cos-tinta-3); font-variant-numeric: tabular-nums; }
+.dr-dia-lista li[data-hipotese] span { color: var(--cos-tinta-2); font-style: italic; }
+
+/* Conversa. */
+.dr-chat { display: flex; flex-direction: column; gap: 12px; min-height: 100%; }
+.dr-chat-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.dr-msg-eu { align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 20px 20px 6px 20px; background: var(--cos-acento); color: var(--cos-sobre-acento); font-size: var(--cos-texto-corpo); line-height: 1.4; }
+.dr-msg-drend { display: grid; gap: 8px; padding: 14px 16px; max-width: 92%; border-radius: 20px 20px 20px 6px; }
+.dr-msg-drend p { margin: 0; font-size: var(--cos-texto-corpo); line-height: 1.45; }
+.dr-msg-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.dr-selo { justify-self: start; display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: var(--cos-r-pilula); font-size: 12px; font-weight: 600; background: var(--cos-controle); color: var(--cos-tinta-2); }
+.dr-selo[data-status="feito"] { background: var(--cos-positivo-suave); color: var(--cos-positivo); }
+.dr-selo[data-status="proposto"], .dr-selo[data-status="pergunta"] { background: var(--cos-acento-suave); color: var(--cos-acento-tinta); }
+.dr-selo[data-status="falhou"] { background: var(--cos-negativo-suave); color: var(--cos-negativo); }
+.dr-chat-campo { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: center; margin-top: auto; padding: 8px 0 4px; background: linear-gradient(to top, var(--cos-app) 70%, transparent); }
+.cos-painel .dr-chat-campo { background: none; }
+.dr-chat-entrada { flex: 1; min-width: 0; font-weight: 500; }
+.dr-chat-enviar { width: 48px; height: 48px; }
+.dr-chat-enviar:disabled { opacity: .45; }
+/* No iPhone a conversa é tela: o campo fica preso logo acima da doca, como num app de mensagens. */
+@media (max-width: 1023px) {
+  .dr-chat { padding-bottom: 72px; }
+  .dr-chat-campo { position: fixed; z-index: 5; left: max(16px, var(--cos-seguro-esq)); right: max(16px, var(--cos-seguro-dir)); bottom: calc(70px + var(--cos-folga-base)); padding: 0; background: none; }
+  .dr-chat-entrada { box-shadow: inset 0 0 0 1px var(--cos-linha-forte), var(--cos-sombra); }
+}
+
+/* Mural. */
+.dr-mural-acoes { display: flex; gap: 8px; }
+.cv2-marca-sub[title] { cursor: help; }
+.dr-canvas { padding: 0; overflow: auto; }
+.dr-canvas-area { position: relative; background-image: radial-gradient(var(--cos-linha-forte) 1px, transparent 1px); background-size: 24px 24px; }
+.dr-canvas-ligacoes { position: absolute; inset: 0; pointer-events: none; }
+.dr-canvas-ligacoes line { stroke: var(--cos-acento); stroke-opacity: .55; stroke-width: 1.5; stroke-dasharray: 5 5; }
+.dr-cartao { display: grid; gap: 6px; padding: 14px 16px; border-radius: var(--cos-r-interno); }
+.dr-canvas .dr-cartao { position: absolute; cursor: grab; touch-action: none; user-select: none; transition: box-shadow var(--cos-rapido) var(--cos-curva); }
+.dr-canvas .dr-cartao[data-arrastando] { cursor: grabbing; box-shadow: var(--cos-sombra-alta); z-index: 2; }
+.dr-cartao-capa { display: grid; place-items: center; height: 96px; margin-bottom: 4px; border-radius: 12px; background-color: var(--cos-palco); color: var(--cos-tinta-3); }
+.dr-cartao-tipo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--cos-tinta-2); }
+.dr-cartao-tipo[data-tipo="campanha"], .dr-cartao-tipo[data-tipo="audio"] { color: var(--cos-acento-tinta); }
+.dr-cartao-titulo { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.dr-cartao-corpo { font-size: 13.5px; line-height: 1.4; color: var(--cos-tinta-2); }
+.dr-mural-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.dr-historico { list-style: none; margin: 0; padding: 0; }
+.dr-historico li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; font-size: 14px; }
+.dr-historico li + li { border-top: 1px solid var(--cos-linha); }
+.dr-historico small { flex: none; font-size: 12.5px; color: var(--cos-tinta-2); }
+.dr-historico li[data-desfeito] span { color: var(--cos-tinta-3); text-decoration: line-through; }
+
+/* Conta: banco e login. */
+.dr-ponto[data-tom="alerta"] { background: var(--cos-negativo); box-shadow: 0 0 0 4px var(--cos-negativo-suave); }
+.dr-nuvem { display: grid; gap: 10px; }
+.dr-nuvem .cv2-conta-dados dd { display: flex; align-items: center; gap: 10px; }
+.dr-nuvem .cos-entrada input { width: 100%; }
+.dr-nuvem-aviso { margin: 0; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
