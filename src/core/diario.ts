@@ -103,20 +103,23 @@ export function lerFraseDoDiario(frase: string): FraseDoDiario | null {
   return null;
 }
 
-/** "hoje" · "ontem" · "anteontem" · "semana" · 0 a 6 (domingo a sábado: o último que passou, hoje incluso). */
+/**
+ * "hoje" · "ontem" · "anteontem" · "semana" · 0 a 6 (domingo a sábado: o último que passou, hoje incluso)
+ * · 7 a 13 ("sábado passado": o dia da semana + 7, nunca hoje).
+ */
 export type QuandoDiario = "hoje" | "ontem" | "anteontem" | "semana" | number;
 
 const DIAS_DA_SEMANA = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
-const DOW = String.raw`(domingo|segunda|terca|quarta|quinta|sexta|sabado)(?: feira)?(?: passad[ao])?`;
+const DOW = String.raw`(domingo|segunda|terca|quarta|quinta|sexta|sabado)(?: feira)?(?: (passad[ao]))?`;
 const QUANDO = String.raw`(?:(?:de|em|na|no|nessa|nesta|essa|esta|da|desta|dessa|a|o|ultima|ultimo) )*(?:(hoje|ontem|anteontem)|(semana|ultimos 7 dias|7 dias)|${DOW})`;
 const ANOTEI = new RegExp(String.raw`^(?:e )?(?:o que )?(?:eu )?(?:anotei|escrevi)(?: no (?:meu )?diario)? ${QUANDO}$`);
 const DIARIO_DE = new RegExp(String.raw`^(?:e )?(?:o |meu |o meu )?diario(?: ${QUANDO})?$`);
 const COMO_FOI = new RegExp(String.raw`^(?:e )?como (?:foi|estava|tava|esteve) (?:o dia )?(?:(?:de|a|o|na|no|essa|esta|ultima|ultimo) )*(?:(hoje|ontem|anteontem)|${DOW})$`);
 
-function quandoDe(dia?: string, semana?: string, dow?: string): QuandoDiario | null {
+function quandoDe(dia?: string, semana?: string, dow?: string, passado?: string): QuandoDiario | null {
   if (dia) return dia as QuandoDiario;
   if (semana) return "semana";
-  if (dow) return DIAS_DA_SEMANA.indexOf(dow);
+  if (dow) return DIAS_DA_SEMANA.indexOf(dow) + (passado ? 7 : 0);
   return null;
 }
 
@@ -124,11 +127,11 @@ function quandoDe(dia?: string, semana?: string, dow?: string): QuandoDiario | n
 export function lerConsultaDoDiario(frase: string): QuandoDiario | null {
   const n = normalizar(frase);
   const a = n.match(ANOTEI);
-  if (a) return quandoDe(a[1], a[2], a[3]);
+  if (a) return quandoDe(a[1], a[2], a[3], a[4]);
   const d = n.match(DIARIO_DE);
-  if (d) return quandoDe(d[1], d[2], d[3]) ?? "semana";
+  if (d) return quandoDe(d[1], d[2], d[3], d[4]) ?? "semana";
   const c = n.match(COMO_FOI);
-  if (c) return quandoDe(c[1], undefined, c[2]);
+  if (c) return quandoDe(c[1], undefined, c[2], c[3]);
   return null;
 }
 
@@ -168,7 +171,9 @@ export function diaDaConsulta(q: Exclude<QuandoDiario, "semana">, agora = new Da
   if (q === "ontem") return somarDias(hoje, -1);
   if (q === "anteontem") return somarDias(hoje, -2);
   const atual = new Date(`${hoje}T12:00:00Z`).getUTCDay();
-  return somarDias(hoje, -((atual - q + 7) % 7));
+  // "sábado passado" no sábado é o de 7 dias atrás, não hoje.
+  const recuo = (atual - (q % 7) + 7) % 7;
+  return somarDias(hoje, -(q >= 7 && recuo === 0 ? 7 : recuo));
 }
 
 export interface SemanaDoDiario {

@@ -115,6 +115,8 @@ describe("entender (diário)", () => {
     ["como foi a sexta-feira?", 5],
     ["como foi ontem?", "ontem"],
     ["como foi o dia de anteontem", "anteontem"],
+    ["como foi sábado passado?", 13],
+    ["o que anotei na terça passada", 9],
   ])("consulta: %s", (frase, quando) => {
     expect(entender(frase)).toEqual({ tipo: "consultaDiario", quando });
   });
@@ -167,6 +169,8 @@ describe("virada do dia em Brasília", () => {
     expect(diaDaConsulta("ontem", madrugadaUTC)).toBe("2026-10-23");
     expect(diaDaConsulta(2, madrugadaUTC)).toBe("2026-10-20"); // a terça que passou
     expect(diaDaConsulta(6, madrugadaUTC)).toBe("2026-10-24"); // sábado = hoje
+    expect(diaDaConsulta(13, madrugadaUTC)).toBe("2026-10-17"); // sábado passado, nunca hoje
+    expect(diaDaConsulta(9, madrugadaUTC)).toBe("2026-10-20"); // terça passada
   });
 
   it("retrato antigo sem `dia` recupera o dia de Brasília pelo horário", () => {
