@@ -34,7 +34,9 @@ export type Comando =
   | { tipo: "dinheiro" }
   | { tipo: "apagarLancamento" }
   | { tipo: "novoHabito"; nome: string }
-  | { tipo: "habitos" };
+  | { tipo: "habitos" }
+  /** "como foi a semana?" · "resumo da semana": a revisão dos últimos 7 dias. */
+  | { tipo: "semana" };
 
 export type Periodo = "hoje" | "ontem" | "semana" | "mes";
 
@@ -145,6 +147,10 @@ export function entender(entrada: string): Comando | null {
   if (quadro) return quadro;
 
   // Perguntas: o texto normalizado já tirou acento, gíria e pontuação.
+  // "como foi a semana?" · "resumo da semana" · "revisão semanal" (antes da agenda e das vendas).
+  if (/^(?:e )?(?:como (?:foi|esta|anda|vai|ficou) (?:a |minha |essa |esta )?semana|(?:me (?:da|de|faz|faca|manda) )?(?:o |um |a )?(?:resumo|revisao|balanco) (?:da|de|desta|dessa) (?:minha )?semana|(?:a )?revisao semanal|(?:a )?semana em resumo)(?: drend)?$/.test(n)) {
+    return { tipo: "semana" };
+  }
   // "minha agenda" · "o que tenho amanhã?" · "próximo compromisso" · "tenho reunião essa semana?"
   if (/\b(?:agenda|compromissos?|reuni(?:ao|oes)|eventos?|marcado|marquei)\b/.test(n) || /^o que (?:eu )?tenho (?:amanha|essa semana|esta semana|na semana)$/.test(n)) {
     const quando: QuandoAgenda = /\bproxim[oa]\b/.test(n) ? "proximo" : /\bamanha\b/.test(n) ? "amanha" : /\bsemana\b/.test(n) ? "semana" : "hoje";

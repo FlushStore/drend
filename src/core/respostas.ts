@@ -141,6 +141,7 @@ export const AJUDA = [
   "• meta: “meta do mês 10 mil”",
   "• seu dinheiro: “gastei 50 no mercado”, “recebi 1.200 do freela”, “quanto gastei?”, “apaga o último lançamento”",
   "• hábitos: “novo hábito academia”, “fiz academia”, “meus hábitos”",
+  "• a semana: “como foi a semana?”, “resumo da semana”",
   "• agenda: “o que tenho amanhã?”, “minha agenda da semana”, “próximo compromisso”",
   "• missões: “anota na missão: terminei o login”, “como está a missão da flush?”",
   "• vault do Obsidian: “o que o vault diz sobre a Black Store?”, “como estão os projetos?”",

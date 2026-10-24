@@ -355,3 +355,21 @@ li[data-feito="true"] > .dr-vault-caixa { border-color: var(--cos-acento); backg
 [data-dr-achado] { outline: 2px solid var(--cos-acento); outline-offset: 3px; border-radius: var(--cos-r-interno); animation: dr-achado 2.4s var(--cos-curva) both; }
 @keyframes dr-achado { 0%, 70% { outline-color: var(--cos-acento); } 100% { outline-color: transparent; } }
 @media (prefers-reduced-motion: reduce) { [data-dr-achado] { animation: none; } }
+
+/* Revisão da semana (/semana): a Flush como herói, depois tarefas, hábitos e dinheiro; a agenda embaixo. */
+.dr-ola-semana { color: var(--cos-acento-tinta); text-decoration: none; }
+@media (hover: hover) { .dr-ola-semana:hover { text-decoration: underline; text-underline-offset: 3px; } }
+.dr-semana { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 8px; }
+@media (min-width: 768px) { .dr-semana { grid-template-columns: repeat(3, minmax(0, 1fr)); } .dr-semana-flush { grid-column: 1 / -1; } }
+@media (min-width: 1024px) { .dr-semana { gap: 20px; align-items: start; } }
+.dr-semana-numeros { margin-top: 14px; }
+.dr-semana-numeros dd + dd { font-size: 12.5px; }
+@media (max-width: 599px) { .dr-semana-numeros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; } }
+.dr-semana-numeros .cos-valor-m { font-size: 20px; }
+.dr-semana-detalhe { font-size: 12.5px; color: var(--cos-tinta-3); }
+.dr-semana-produto { overflow-wrap: anywhere; font-size: 17px; }
+.dr-semana-contas { padding: 6px 0 12px; }
+.dr-semana-conta { font-family: var(--cos-fonte-marca); font-size: 36px; font-weight: 500; letter-spacing: -.04em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+.dr-semana-conta a { color: inherit; text-decoration: none; }
+.dr-semana-parte { flex: none; font-size: 13px; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+.dr-semana-agenda { margin: 18px 4px 0; }
