@@ -64,7 +64,9 @@ if (seMudou) {
   }
   digital = h.digest("hex");
   const antes = await readFile(marca, "utf8").then(JSON.parse, () => null);
-  if (antes?.digital === digital) {
+  // Mesmo sem mudança local, reenvia se outra leitura (ex.: a do GitHub) gravou o vault depois.
+  const remoto = antes?.digital === digital ? (await enviar({ vault, consultar: true })).em : null;
+  if (antes?.digital === digital && remoto && remoto === antes.em) {
     console.log(`[vault] ${VAULTS[vault]}: nada mudou.`);
     process.exit(0);
   }
@@ -96,5 +98,5 @@ for (const n of notas) {
 if (lote.length) enviadas += (await enviar({ vault, rodada, notas: lote })).gravadas;
 
 const fim = await enviar({ vault, rodada, fechar: { commit: git("rev-parse", "HEAD"), commitEm: git("log", "-1", "--format=%cI") } });
-if (digital) await writeFile(marca, JSON.stringify({ digital, em: rodada }));
+if (digital) await writeFile(marca, JSON.stringify({ digital, em: fim.em }));
 console.log(`[vault] ${VAULTS[vault]}: ${enviadas} notas enviadas, ${fora} fora (modelos, anexos ou sensíveis), ${fim.saiu} removidas; ${fim.notas} no DREND.`);
