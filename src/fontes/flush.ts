@@ -91,6 +91,15 @@ const fonte = criarFonte({
 export const lerEstado = fonte.lerEstado;
 export const ouvir = fonte.ouvir;
 export const atualizar = fonte.atualizar;
-export const iniciarFlush = fonte.iniciar;
+let ouvindoDrend = false;
+/** Liga a leitura e, ao entrar no DREND depois de abrir o app, busca a cópia do servidor. */
+export function iniciarFlush() {
+  fonte.iniciar();
+  if (ouvindoDrend || !drend || typeof window === "undefined") return;
+  ouvindoDrend = true;
+  drend.auth.onAuthStateChange((evento) => {
+    if (evento === "SIGNED_IN") void fonte.atualizar();
+  });
+}
 export const entrarNaFlush = fonte.entrar;
 export const sairDaFlush = fonte.sair;

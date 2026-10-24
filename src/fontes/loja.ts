@@ -90,8 +90,10 @@ export function criarFonte(cfg: ConfigLoja): FonteLoja {
     const minha = geracao;
     const anterior = estado.fase === "ok" || estado.fase === "erro" ? estado.resumo : guardado();
     if (anterior) mudar({ fase: "ok", resumo: anterior, atualizando: true });
+    let comSessao = false;
     try {
       const { data } = await db().auth.getSession();
+      comSessao = !!data.session;
       const resumo = data.session ? await cfg.buscar(db(), new Date()) : await cfg.doServidor?.() ?? null;
       if (minha !== geracao) return;
       if (!resumo) {
@@ -103,6 +105,11 @@ export function criarFonte(cfg: ConfigLoja): FonteLoja {
       mudar({ fase: "ok", resumo, atualizando: false });
     } catch (e) {
       if (minha !== geracao) return;
+      // Sem sessão da loja, a falha foi da cópia do servidor: o login direto continua à mão.
+      if (!comSessao) {
+        mudar(anterior?.origem === "servidor" ? { fase: "ok", resumo: anterior, atualizando: false } : { fase: "fora" });
+        return;
+      }
       mudar({ fase: "erro", mensagem: e instanceof Error ? e.message : `Falha ao ler a ${cfg.nome}`, resumo: anterior });
     }
   }
