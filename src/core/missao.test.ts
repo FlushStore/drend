@@ -62,4 +62,13 @@ describe("missões", () => {
     expect(itemParado(drend.itens.agora[0], agora)).toBe(true);
     expect(itemParado({ ...drend.itens.agora[0], em: "2026-10-23T10:00:00Z" }, agora)).toBe(false);
   });
+
+  it("nota de cadastro não conta como passo", () => {
+    const flush = projetos([
+      ev({ missao: "flush", tipo: "nota", titulo: "Notas copiadas", em: "2026-10-12T00:43:00Z" }),
+      ev({ missao: "flush", tipo: "nota", titulo: "Missão da Flush criada" }),
+    ], agora).find((p) => p.missao === "flush")!;
+    expect(flush.ultimo?.titulo).toBe("Notas copiadas");
+    expect(estaParado(flush)).toBe(true);
+  });
 });

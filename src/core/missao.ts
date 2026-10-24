@@ -57,6 +57,12 @@ export const DIAS_PARADO = 5;
 export const CHAVE_PAUSA = "pausa";
 export const CHAVE_RETOMADA = "retomada";
 
+/**
+ * Nota de cadastro ("Missão X criada"): marca o começo do registro, não é trabalho no projeto,
+ * então não conta para "mexido há" nem tira o aviso de parado. As da migração 0003 vieram sem chave.
+ */
+export const ehCadastro = (e: EventoMissao) => e.tipo === "nota" && (e.chave === "cadastro" || /^Missão .+ (criada|cadastrada)$/.test(e.titulo));
+
 export const nomeDaMissao = (m: string) => NOMES[m] ?? m.charAt(0).toUpperCase() + m.slice(1).replace(/-/g, " ");
 
 export function projetos(eventos: readonly EventoMissao[], agora = new Date()): Projeto[] {
@@ -66,7 +72,7 @@ export function projetos(eventos: readonly EventoMissao[], agora = new Date()): 
   for (const e of ordenados) {
     const p = mapa.get(e.missao) ?? { itens: new Map(), ultimo: null, pausado: false };
     mapa.set(e.missao, p);
-    p.ultimo = e;
+    if (!ehCadastro(e)) p.ultimo = e;
     if (e.tipo === "decisao" && e.chave === CHAVE_PAUSA) p.pausado = true;
     if (e.tipo === "decisao" && e.chave === CHAVE_RETOMADA) p.pausado = false;
     if (e.tipo === "item" && e.chave && e.fase) {
