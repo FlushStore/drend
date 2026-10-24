@@ -12,7 +12,7 @@ import {
   ultimos,
   type Lancamento,
 } from "./dinheiro";
-import { diaEmBrasilia, somarDias } from "./brasilia";
+import { diaEmBrasilia, meioDiaEmBrasilia, msAteAmanha, somarDias } from "./brasilia";
 
 const d = (iso: string) => new Date(iso);
 
@@ -92,5 +92,8 @@ describe("brasília", () => {
     expect(diaEmBrasilia(d("2026-10-25T02:59:00Z"))).toBe("2026-10-24");
     expect(diaEmBrasilia(d("2026-10-25T03:00:00Z"))).toBe("2026-10-25");
     expect(somarDias("2026-03-01", -1)).toBe("2026-02-28");
+    expect(msAteAmanha(d("2026-10-25T02:59:00Z"))).toBe(60_000);
+    expect(msAteAmanha(d("2026-10-25T03:00:00Z"))).toBe(864e5);
+    expect(diaEmBrasilia(meioDiaEmBrasilia("2026-10-24"))).toBe("2026-10-24");
   });
 });

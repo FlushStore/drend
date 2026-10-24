@@ -2,7 +2,8 @@
  * Hábitos do Rapha: um nome e os dias em que ele fez (dia de Brasília, "AAAA-MM-DD").
  * Funções puras, no mesmo jeito das tarefas: desfazer é voltar à lista anterior.
  */
-import { normalizar } from "./fala";
+import { acharPorTexto, normalizar } from "./fala";
+import type { Tarefa } from "./tarefas";
 import { diaEmBrasilia, somarDias } from "./brasilia";
 
 export interface Habito {
@@ -71,6 +72,16 @@ export function ultimos7(h: Habito, agora = new Date()): { dia: string; feito: b
     const dia = somarDias(hoje, i - 6);
     return { dia, feito: feitoNoDia(h, dia) };
   });
+}
+
+/**
+ * "fiz academia": o hábito que a frase marca. Tarefa aberta que casa tem prioridade
+ * (inclusive empate entre tarefas): o hábito só entra quando nenhuma tarefa aberta casa.
+ */
+export function habitoParaConcluir(habitos: readonly Habito[], tarefasAbertas: readonly Tarefa[], texto: string): Habito | null {
+  if (acharPorTexto(tarefasAbertas, texto, (t) => t.texto)) return null;
+  const h = acharPorTexto(habitos, texto, (x) => x.nome);
+  return h && "achado" in h ? h.achado : null;
 }
 
 /** Retrato antigo ou corrompido: só entra hábito com forma válida. */

@@ -15,7 +15,7 @@ import { eventosDa, iniciarAgenda, lerAgenda, motivoSemAgenda } from "./fontes/a
 import { responderProjetos, responderVault } from "./core/vault";
 import { iniciarVault, lerVault, motivoSemVault, notasDo } from "./fontes/vault";
 import { adicionarLancamento, confirmarLancamento, lerLancamentos, nomeDoLancamento, novoLancamento, removerLancamento, responderDinheiro, ultimos, type Lancamento } from "./core/dinheiro";
-import { adicionarHabito, alternarDia, feitoNoDia, lerHabitos, marcarHoje, mesmoHabito, novoHabito, removerHabito, responderHabitos, sequencia, textoDaSequencia, type Habito } from "./core/habitos";
+import { adicionarHabito, alternarDia, feitoNoDia, habitoParaConcluir, lerHabitos, marcarHoje, mesmoHabito, novoHabito, removerHabito, responderHabitos, sequencia, textoDaSequencia, type Habito } from "./core/habitos";
 import { diaEmBrasilia } from "./core/brasilia";
 
 /** O vault como a conversa enxerga: o índice das notas, ou o motivo de não ter. */
@@ -75,7 +75,8 @@ interface Store {
   /** Hábitos (Vida). Nível B. */
   habitos: Habito[];
   criarHabito: (nome: string) => void;
-  alternarHabitoHoje: (id: string) => void;
+  /** Marca/desmarca o dia; `dia` é o "hoje" que a tela mostra (padrão: hoje em Brasília). */
+  alternarHabitoHoje: (id: string, dia?: string) => void;
   apagarHabito: (id: string) => void;
   restaurarHabito: (h: Habito) => void;
 }
@@ -254,9 +255,9 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
         : { id: id(), de: "drend", status: "feito", texto: `Hábito novo: “${h.nome}”. Está em Vida; diga “fiz ${h.nome.toLowerCase()}” para marcar hoje.` });
     } else if (cmd?.tipo === "habitos") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderHabitos(habitos) });
-    } else if (cmd?.tipo === "concluir" && habitoDoTexto(habitos, abertas(tarefas), cmd.texto)) {
-      // "fiz academia": se o texto é um hábito (e não uma tarefa aberta), marca o hábito hoje.
-      const h = habitoDoTexto(habitos, abertas(tarefas), cmd.texto)!;
+    } else if (cmd?.tipo === "concluir" && !cmd.tarefa && habitoParaConcluir(habitos, abertas(tarefas), cmd.texto)) {
+      // "fiz academia": só vira hábito quando nenhuma tarefa aberta casa e a frase não disse "tarefa".
+      const h = habitoParaConcluir(habitos, abertas(tarefas), cmd.texto)!;
       const ja = feitoNoDia(h, diaEmBrasilia(new Date()));
       if (!ja) setHabitos((hs) => marcarHoje(hs, h.id));
       const n = ja ? sequencia(h) : sequencia({ ...h, feitos: [...h.feitos, diaEmBrasilia(new Date())] });
@@ -357,7 +358,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const apagarLancamento = useCallback((lid: string) => setLancamentos((ls) => removerLancamento(ls, lid)), []);
   const restaurarLancamento = useCallback((l: Lancamento) => setLancamentos((ls) => adicionarLancamento(ls, l)), []);
   const criarHabito = useCallback((nome: string) => setHabitos((hs) => adicionarHabito(hs, novoHabito(nome))), []);
-  const alternarHabitoHoje = useCallback((hid: string) => setHabitos((hs) => alternarDia(hs, hid, diaEmBrasilia(new Date()))), []);
+  const alternarHabitoHoje = useCallback((hid: string, dia?: string) => setHabitos((hs) => alternarDia(hs, hid, dia ?? diaEmBrasilia(new Date()))), []);
   const apagarHabito = useCallback((hid: string) => setHabitos((hs) => removerHabito(hs, hid)), []);
   const restaurarHabito = useCallback((h: Habito) => setHabitos((hs) => adicionarHabito(hs, h)), []);
   const definirMeta = useCallback((chave: string, valor: number | null) => setMetas((m) => {
@@ -372,14 +373,6 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-/** O hábito que a frase "fiz X" descreve, quando não há tarefa aberta que case melhor. */
-function habitoDoTexto(habitos: readonly Habito[], tarefasAbertas: readonly Tarefa[], texto: string): Habito | null {
-  const h = acharPorTexto(habitos, texto, (x) => x.nome);
-  if (!h || !("achado" in h)) return null;
-  if (mesmoHabito(h.achado.nome, texto)) return h.achado;
-  return acharPorTexto(tarefasAbertas, texto, (t) => t.texto) ? null : h.achado;
 }
 
 export function useStore() {

@@ -40,6 +40,7 @@ describe("entender", () => {
     expect(entender("hábito: beber água")).toEqual({ tipo: "novoHabito", nome: "beber água" });
     expect(entender("meus hábitos")).toEqual({ tipo: "habitos" });
     expect(entender("fiz academia")).toEqual({ tipo: "concluir", texto: "academia" });
+    expect(entender("feito: a tarefa academia")).toEqual({ tipo: "concluir", texto: "academia", tarefa: true });
   });
 
   it("não inventa comando no que não entende", () => {

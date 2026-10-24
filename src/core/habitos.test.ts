@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { adicionarHabito, alternarDia, lerHabitos, marcarHoje, novoHabito, removerHabito, responderHabitos, sequencia, textoDaSequencia, ultimos7, type Habito } from "./habitos";
+import { novaTarefa } from "./tarefas";
+import { adicionarHabito, alternarDia, habitoParaConcluir, lerHabitos, marcarHoje, novoHabito, removerHabito, responderHabitos, sequencia, textoDaSequencia, ultimos7, type Habito } from "./habitos";
 
 // 24/10/2026, 22h em Brasília (já é 25/10 em UTC).
 const agora = new Date("2026-10-25T01:00:00Z");
@@ -48,6 +49,16 @@ describe("hábitos", () => {
   it("responde no chat: como começar, e a lista com sequência", () => {
     expect(responderHabitos([], agora)).toMatch(/novo hábito academia/);
     expect(responderHabitos([{ ...com(["2026-10-23", "2026-10-24"]), nome: "Academia" }], agora)).toBe("Seus hábitos:\n• Academia: 2 dias seguidos, feito hoje");
+  });
+
+  it("tarefa aberta que casa vence o hábito de mesmo nome", () => {
+    const academia = novoHabito("Academia");
+    const ler = novoHabito("Ler");
+    const tarefa = novaTarefa("academia");
+    expect(habitoParaConcluir([academia, ler], [tarefa], "academia")).toBeNull();
+    expect(habitoParaConcluir([academia, ler], [novaTarefa("Pagar luz")], "academia")).toBe(academia);
+    expect(habitoParaConcluir([academia, ler], [], "academia")).toBe(academia);
+    expect(habitoParaConcluir([academia], [], "pagar luz")).toBeNull();
   });
 
   it("texto da sequência", () => {

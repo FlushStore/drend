@@ -14,7 +14,8 @@ export type Comando =
   | { tipo: "desfazer" }
   | { tipo: "ideia"; texto: string }
   | { tipo: "tarefa"; texto: string }
-  | { tipo: "concluir"; texto: string }
+  /** `tarefa`: a frase disse "tarefa" ("feito: a tarefa academia"), então não é hábito. */
+  | { tipo: "concluir"; texto: string; tarefa?: true }
   | { tipo: "reabrir"; texto: string }
   | { tipo: "apagarTarefa"; texto: string }
   | { tipo: "pendencias" }
@@ -132,7 +133,7 @@ export function entender(entrada: string): Comando | null {
     t.match(/^(?:feito|fiz|conclu[ií](?:do|da)?|terminei|acabei|pronto|marca(?:r)?(?:\s+como)?\s+feit[ao])\s*[:,-]?\s+(?:a\s+tarefa\s+)?(.+)$/i) ??
     t.match(/^marca(?:r)?\s+(.+?)\s+como\s+feit[ao]$/i) ??
     t.match(/^j[aá]\s+(.+)$/i);
-  if (feito && resto(feito)) return { tipo: "concluir", texto: resto(feito) };
+  if (feito && resto(feito)) return /\btarefa\b/i.test(t) ? { tipo: "concluir", texto: resto(feito), tarefa: true } : { tipo: "concluir", texto: resto(feito) };
   const reabrir = t.match(/^(?:reabr[ea]|reabrir|desmarca(?:r)?)\s+(?:a\s+tarefa\s+)?(.+)$/i);
   if (reabrir && resto(reabrir)) return { tipo: "reabrir", texto: resto(reabrir) };
   const apagar =

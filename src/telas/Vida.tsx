@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
@@ -10,7 +10,7 @@ import { classesDoBotao } from "@/design-system/classes";
 import { tomDoSinal } from "@/design-system/formato";
 import { gastosPorCategoria, nomeDoLancamento, saldoDoMes, ultimos } from "@/core/dinheiro";
 import { feitoNoDia, sequencia, textoDaSequencia, ultimos7 } from "@/core/habitos";
-import { diaEmBrasilia } from "@/core/brasilia";
+import { diaEmBrasilia, meioDiaEmBrasilia, msAteAmanha } from "@/core/brasilia";
 import { useStore } from "@/store";
 import { AgendaDaSemana } from "./AgendaDaSemana";
 
@@ -40,6 +40,34 @@ export function Vida() {
 }
 
 type Avisar = ReturnType<typeof useAviso>["avisar"];
+
+/**
+ * O "hoje" de Brasília, reativo: vira à meia-noite e é conferido de novo quando o app
+ * volta ao primeiro plano (no iPhone o relógio para com a tela em segundo plano).
+ */
+function useDiaEmBrasilia(): string {
+  const [dia, setDia] = useState(() => diaEmBrasilia(new Date()));
+  useEffect(() => {
+    let relogio: ReturnType<typeof setTimeout>;
+    const conferir = () => {
+      clearTimeout(relogio);
+      setDia(diaEmBrasilia(new Date()));
+      relogio = setTimeout(conferir, msAteAmanha() + 1000);
+    };
+    const aoVoltar = () => {
+      if (document.visibilityState === "visible") conferir();
+    };
+    relogio = setTimeout(conferir, msAteAmanha() + 1000);
+    document.addEventListener("visibilitychange", aoVoltar);
+    window.addEventListener("focus", conferir);
+    return () => {
+      clearTimeout(relogio);
+      document.removeEventListener("visibilitychange", aoVoltar);
+      window.removeEventListener("focus", conferir);
+    };
+  }, []);
+  return dia;
+}
 
 function Dinheiro({ avisar }: { avisar: Avisar }) {
   const { lancamentos, apagarLancamento, restaurarLancamento } = useStore();
@@ -125,8 +153,9 @@ function Dinheiro({ avisar }: { avisar: Avisar }) {
 function Habitos({ avisar }: { avisar: Avisar }) {
   const { habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito } = useStore();
   const [novo, setNovo] = useState("");
-  const agora = new Date();
-  const hoje = diaEmBrasilia(agora);
+  // Tela e toque usam o mesmo dia: o que aparece como hoje é o dia que o toque marca.
+  const hoje = useDiaEmBrasilia();
+  const agora = meioDiaEmBrasilia(hoje);
 
   return (
     <section className="cos-bloco dr-vida-bloco" aria-labelledby="dr-vida-habitos">
@@ -147,8 +176,8 @@ function Habitos({ avisar }: { avisar: Avisar }) {
                   aria-pressed={feito}
                   aria-label={feito ? `Desmarcar hoje: ${h.nome}` : `Feito hoje: ${h.nome}`}
                   onClick={() => {
-                    alternarHabitoHoje(h.id);
-                    if (!feito) avisar(`${h.nome}: feito hoje`, "sucesso", { rotulo: "Desfazer", aoTocar: () => alternarHabitoHoje(h.id) });
+                    alternarHabitoHoje(h.id, hoje);
+                    if (!feito) avisar(`${h.nome}: feito hoje`, "sucesso", { rotulo: "Desfazer", aoTocar: () => alternarHabitoHoje(h.id, hoje) });
                   }}
                 >
                   <Check size={14} strokeWidth={2.5} aria-hidden="true" />

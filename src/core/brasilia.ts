@@ -17,3 +17,11 @@ export function somarDias(dia: string, n: number): string {
   const t = new Date(Date.UTC(a, m - 1, d + n));
   return t.toISOString().slice(0, 10);
 }
+
+/** Meio-dia de Brasília do dia: um instante seguro para as contas "até hoje" (Brasília é UTC−3 o ano todo). */
+export const meioDiaEmBrasilia = (dia: string) => new Date(`${dia}T12:00:00-03:00`);
+
+/** Quanto falta para a próxima meia-noite de Brasília (o dia virar). */
+export function msAteAmanha(agora = new Date()): number {
+  return Date.parse(`${somarDias(diaEmBrasilia(agora), 1)}T00:00:00-03:00`) - agora.getTime();
+}
