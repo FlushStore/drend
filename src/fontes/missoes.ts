@@ -90,7 +90,8 @@ async function carregar() {
 }
 
 let ligado = false;
-function ligar() {
+/** Começa a ler e ouvir as missões (uma vez). A conversa chama na abertura do app. */
+export function iniciarMissoes() {
   if (ligado || !supabase) return;
   ligado = true;
   supabase.auth.onAuthStateChange((_evento, sessao) => {
@@ -117,6 +118,6 @@ export async function registrar(e: Pick<EventoMissao, "missao" | "tipo" | "titul
 }
 
 export function useMissoes(): EstadoMissoes {
-  useEffect(ligar, []);
+  useEffect(iniciarMissoes, []);
   return useSyncExternalStore(ouvir, lerMissoes, lerMissoes);
 }

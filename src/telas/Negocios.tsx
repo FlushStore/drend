@@ -7,6 +7,7 @@ import { outrosProjetos } from "@/data/exemplo";
 import { atualizarStatusVM, rotulo, useStatusVM } from "@/fontes/status";
 import { useFlush } from "@/fontes/useFlush";
 import { CurvaDaSemana } from "./VendasDaSemana";
+import { MesDaFlush } from "./MesDaFlush";
 
 /** Um projeto por bloco: o número que importa e o estado. Operar é no painel do projeto. */
 export function Negocios() {
@@ -29,6 +30,8 @@ export function Negocios() {
           </dl>
           <CurvaDaSemana dias={flush.semana} ultimoEhHoje={flush.ultimoEhHoje} />
         </Bloco>
+
+        {flush.mes && <MesDaFlush mes={flush.mes} />}
 
         <Bloco className="dr-proj" aria-label="Vape Mania">
           <div className="dr-proj-cab">

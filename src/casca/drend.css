@@ -52,7 +52,10 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-tira { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 16px; border-radius: var(--cos-r-bloco); background: var(--cos-bloco); border: 1px solid var(--cos-linha); box-shadow: var(--cos-sombra); color: inherit; }
 .dr-tira strong { font-size: 15px; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .dr-tira .dr-rotulo { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-@media (max-width: 599px) { .dr-tiras { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dr-tira:last-child { grid-column: 1 / -1; } }
+.dr-tiras[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 599px) { .dr-tiras, .dr-tiras[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dr-tiras[data-n="3"] .dr-tira:last-child { grid-column: 1 / -1; } }
+@media (min-width: 600px) and (max-width: 899px) { .dr-tiras[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.dr-tira-extra { font-size: 13px; font-weight: 500; color: var(--cos-tinta-2); }
 @media (min-width: 1024px) { .dr-tiras { gap: 20px; } .dr-tira { padding: 20px 24px; } .dr-tira strong { font-size: 17px; } }
 
 /* Negócios. */
@@ -70,6 +73,14 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-numeros dt { font-size: 12.5px; color: var(--cos-tinta-3); font-weight: 500; }
 .dr-numeros dd { margin: 0; }
 @media (max-width: 767px) { .dr-proj-flush .dr-numeros { flex-wrap: nowrap; justify-content: space-between; gap: 12px; } .dr-proj-flush .dr-numeros .cos-valor-g { font-size: 25px; } }
+/* O mês da Flush (Negócios). */
+.dr-mes-total { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; }
+.dr-mes-num { font-size: 20px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+@media (max-width: 767px) { .dr-mes .dr-numeros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+.dr-meta .dr-barra { margin: 4px 0 10px; }
+.dr-barra[data-batida] i { background: var(--cos-positivo, var(--cos-acento)); }
+.dr-meta-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dr-meta-form .cos-entrada { flex: 1 1 140px; }
 .dr-pausados { display: grid; gap: 4px; padding: 8px 4px 0; }
 
 /* Vida. */

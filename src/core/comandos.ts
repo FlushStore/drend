@@ -5,6 +5,7 @@
  */
 import type { Board, Card, MuralState, Op } from "./mural";
 import { normalizar } from "./fala";
+import { lerValor } from "./financeiro";
 
 export type Comando =
   | { tipo: "criarQuadro"; titulo: string; cartoes: string[]; projeto: string }
@@ -19,9 +20,24 @@ export type Comando =
   | { tipo: "resumo" }
   | { tipo: "saudacao" }
   | { tipo: "agradecimento" }
-  | { tipo: "ajuda" };
+  | { tipo: "ajuda" }
+  | { tipo: "meta"; valor: number }
+  | { tipo: "missaoNota"; missao: string; texto: string }
+  | { tipo: "missaoStatus"; missao: string | null };
 
-export type Periodo = "hoje" | "ontem" | "semana";
+export type Periodo = "hoje" | "ontem" | "semana" | "mes";
+
+/** Nome falado → chave da missão no banco. */
+const MISSOES: ReadonlyArray<[RegExp, string]> = [
+  [/\bflush ?finance\b|\bfinance\b/, "flushfinance"],
+  [/\bflush(?: ?store)?\b/, "flush"],
+  [/\bvape ?mania\b|\bvm\b/, "vape-mania"],
+  [/\bdrend\b|\brapha ?os\b/, "drend"],
+];
+function qualMissao(n: string): string | null {
+  for (const [re, m] of MISSOES) if (re.test(n)) return m;
+  return null;
+}
 
 const PROJETOS: ReadonlyArray<[RegExp, string]> = [
   [/\b(?:da |na |para a |pra )?flush(?:store)?\b/i, "flushstore"],
@@ -48,6 +64,17 @@ export function entender(entrada: string): Comando | null {
   }
   if (/^(?:ajuda|help|socorro|comandos|como (?:funciona|te uso|usar)|o que (?:voce )?(?:faz|sabe fazer|consegue fazer|entende)|preciso de ajuda)(?: drend)?$/.test(n)) {
     return { tipo: "ajuda" };
+  }
+
+  // "anota na missão: X" · "missão flush: X" · "anota na missão da flush: X" (antes da ideia: "anota" é dos dois)
+  const nota = t.match(/^(?:(?:anot[ae]|registr[ae]|coloc[ae]|p[oõ]e)\s+(?:isso\s+)?(?:na|no)\s+)?miss[aã]o\b([^:]*?)\s*[:,-]\s*(.+)$/i);
+  const textoNota = nota?.[2].trim().replace(/^["“”']+|["“”']+$/g, "").trim();
+  if (nota && textoNota) return { tipo: "missaoNota", missao: qualMissao(normalizar(nota[1])) ?? "drend", texto: textoNota };
+  // "meta do mês 10 mil" · "minha meta é 8000" · "meta: R$ 12.000"
+  const meta = t.match(/^(?:(?:minha|a|nossa)\s+)?meta(?:\s+(?:do|desse|deste|pro|para o)\s+m[eê]s)?(?:\s+(?:da|de)\s+(?:flush|vendas?))?\s*(?:[:=-]|(?:é|e|vai ser|fica|agora é)(?=\s|$))?\s*(?:de\s+)?(.+)$/i);
+  if (meta) {
+    const valor = lerValor(meta[1]);
+    if (valor) return { tipo: "meta", valor };
   }
 
   const ideia = t.match(/^tive uma ideia[:,]?\s*(.*)$/i);
@@ -79,15 +106,19 @@ export function entender(entrada: string): Comando | null {
   if (quadro) return quadro;
 
   // Perguntas: o texto normalizado já tirou acento, gíria e pontuação.
+  // "como está a missão?" · "missão da flush" · "o que falta no drend?" (antes das vendas: "flush" é dos dois)
+  if (/\bmiss(?:ao|oes)\b/.test(n) || (/^o que falta (?:no|na|em) /.test(n) && qualMissao(n))) return { tipo: "missaoStatus", missao: qualMissao(n) };
   const loja = /\bflush\b/.test(n);
   if (
     /\b(?:vend\w*|fatur\w*|lucr\w*|pedidos?)\b/.test(n) ||
     (loja && /\b(?:como|hoje|ontem|semana|quanto|status|numeros?)\b|^(?:e )?a flush$/.test(n)) ||
-    /^e (?:a |o )?(?:semana|ontem)$/.test(n)
+    /^e (?:a |o )?(?:semana|ontem|mes)$/.test(n) ||
+    /^(?:como (?:esta|ta|vai) )?(?:o |esse |este )?mes$/.test(n)
   ) {
-    const periodo: Periodo = /\bsemana\b|\b7 dias\b/.test(n) ? "semana" : /\bontem\b/.test(n) ? "ontem" : "hoje";
+    const periodo: Periodo = /\bmes\b|\bmensal\b/.test(n) ? "mes" : /\bsemana\b|\b7 dias\b/.test(n) ? "semana" : /\bontem\b/.test(n) ? "ontem" : "hoje";
     return { tipo: "vendas", periodo };
   }
+  if (/\bmeta\b/.test(n)) return { tipo: "vendas", periodo: "mes" };
   if (/\b(?:resumo|me atualiza|novidades?|como (?:esta|foi|anda) (?:o )?meu dia|o que (?:ha|tem) de novo)\b/.test(n)) return { tipo: "resumo" };
   if (/\b(?:pendencias?|pendente|minhas tarefas|tarefas|afazeres|o que (?:eu )?tenho|o que falta|o que (?:eu )?preciso fazer|tem algo para fazer|(?:minha|a) lista)\b/.test(n)) {
     return { tipo: "pendencias" };

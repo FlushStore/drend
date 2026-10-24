@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { flush as exemplo } from "@/data/exemplo";
 import { diaLocal } from "./flush-regras";
+import { resumirMes, type MesFlush } from "@/core/financeiro";
 import { iniciarFlush, lerEstado, ouvir, type EstadoFlush } from "./flush";
 
 export interface NumerosFlush {
@@ -14,6 +15,8 @@ export interface NumerosFlush {
   dia: string;
   ultimoEhHoje: boolean;
   atualizadoEm: string | null;
+  /** O mês até hoje e a comparação. null sem leitura real (o mês não tem exemplo). */
+  mes: MesFlush | null;
   estado: EstadoFlush;
 }
 
@@ -23,10 +26,11 @@ export function useFlush(): NumerosFlush {
   const estado = useSyncExternalStore(ouvir, lerEstado, lerEstado);
   const resumo = estado.fase === "ok" || estado.fase === "erro" ? estado.resumo : null;
   if (!resumo) {
-    return { exemplo: true, hoje: exemplo.faturamento, lucro: exemplo.lucro, pedidos: null, semana: exemplo.semana, dia: "hoje", ultimoEhHoje: true, atualizadoEm: null, estado };
+    return { exemplo: true, hoje: exemplo.faturamento, lucro: exemplo.lucro, pedidos: null, semana: exemplo.semana, dia: "hoje", ultimoEhHoje: true, atualizadoEm: null, mes: null, estado };
   }
   const hoje = resumo.dias[resumo.dias.length - 1];
   const ehHoje = hoje.dia === diaLocal(new Date().toISOString());
   const dia = ehHoje ? "hoje" : new Date(`${hoje.dia}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "long" }).replace("-feira", "");
-  return { exemplo: false, hoje: hoje.valor, lucro: hoje.lucro, pedidos: hoje.pedidos, semana: resumo.dias, dia, ultimoEhHoje: ehHoje, atualizadoEm: resumo.atualizadoEm, estado };
+  const mes = resumo.historico ? resumirMes(resumo.historico) : null;
+  return { exemplo: false, hoje: hoje.valor, lucro: hoje.lucro, pedidos: hoje.pedidos, semana: resumo.dias, dia, ultimoEhHoje: ehHoje, atualizadoEm: resumo.atualizadoEm, mes, estado };
 }

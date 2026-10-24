@@ -112,3 +112,15 @@ export function ultimosDias(n: number, agora = new Date()): string[] {
     return diaLocal(d.toISOString());
   });
 }
+
+/** Cada dia local de `inicio` (AAAA-MM-DD) até hoje, em ordem. */
+export function diasDesde(inicio: string, agora = new Date()): string[] {
+  const fim = diaLocal(agora.toISOString());
+  const d = new Date(`${inicio}T12:00:00`);
+  const dias: string[] = [];
+  for (let dia = diaLocal(d.toISOString()); dia <= fim && dias.length < 400; dia = diaLocal(d.toISOString())) {
+    dias.push(dia);
+    d.setDate(d.getDate() + 1);
+  }
+  return dias;
+}

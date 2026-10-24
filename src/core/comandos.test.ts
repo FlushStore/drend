@@ -61,3 +61,37 @@ describe("criar quadro por comando", () => {
     expect(entender("tarefa:")).toBeNull();
   });
 });
+
+describe("rodada 5: mês, meta e missões", () => {
+  it("pergunta do mês", () => {
+    for (const f of ["quanto vendi no mês?", "e o mês?", "faturamento do mês", "como tá o mês", "e a meta?", "quanto falta pra bater a meta"]) {
+      expect(entender(f), f).toEqual({ tipo: "vendas", periodo: "mes" });
+    }
+  });
+
+  it("define a meta", () => {
+    expect(entender("meta do mês 10 mil")).toEqual({ tipo: "meta", valor: 10000 });
+    expect(entender("minha meta é 8000")).toEqual({ tipo: "meta", valor: 8000 });
+    expect(entender("Meta: R$ 12.500")).toEqual({ tipo: "meta", valor: 12500 });
+    expect(entender("meta da flush 15k")).toEqual({ tipo: "meta", valor: 15000 });
+  });
+
+  it("anota na missão certa", () => {
+    expect(entender("anota na missão: terminei o login")).toEqual({ tipo: "missaoNota", missao: "drend", texto: "terminei o login" });
+    expect(entender("missão flush: subir fotos novas")).toEqual({ tipo: "missaoNota", missao: "flush", texto: "subir fotos novas" });
+    expect(entender("anota na missão da vape mania: site no ar")).toEqual({ tipo: "missaoNota", missao: "vape-mania", texto: "site no ar" });
+  });
+
+  it("pergunta da missão", () => {
+    expect(entender("como está a missão da flush?")).toEqual({ tipo: "missaoStatus", missao: "flush" });
+    expect(entender("missões")).toEqual({ tipo: "missaoStatus", missao: null });
+    expect(entender("o que falta no drend?")).toEqual({ tipo: "missaoStatus", missao: "drend" });
+    expect(entender("o que falta?")).toEqual({ tipo: "pendencias" });
+  });
+
+  it("não confunde com o que já existia", () => {
+    expect(entender("anota: kit de natal")).toEqual({ tipo: "ideia", texto: "kit de natal" });
+    expect(entender("quanto vendi hoje?")).toEqual({ tipo: "vendas", periodo: "hoje" });
+    expect(entender("como está a flush?")).toEqual({ tipo: "vendas", periodo: "hoje" });
+  });
+});

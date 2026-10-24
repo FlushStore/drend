@@ -6,9 +6,11 @@
 import type { DiaFlush } from "../fontes/flush-regras";
 import type { Periodo } from "./comandos";
 import { abertas, type Tarefa } from "./tarefas";
+import { progressoMeta, resumirMes, type MesFlush } from "./financeiro";
+import { DIAS_PARADO, nomeDaMissao, projetos, type EventoMissao } from "./missao";
 
 /** O que a conversa sabe da Flush: `null` quando ela não está ligada neste aparelho. */
-export type LeituraFlush = { fase: "carregando" } | { fase: "ok" | "erro"; dias: readonly DiaFlush[]; atualizadoEm: string } | null;
+export type LeituraFlush = { fase: "carregando" } | { fase: "ok" | "erro"; dias: readonly DiaFlush[]; historico?: readonly DiaFlush[]; atualizadoEm: string } | null;
 
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: v % 1 ? 2 : 0 });
 const pedidos = (n: number) => `${n} ${n === 1 ? "pedido" : "pedidos"}`;
@@ -36,12 +38,17 @@ function frase(d: DiaFlush, quando: string) {
   return `${quando} a Flush vendeu ${reais(d.valor)} em ${pedidos(d.pedidos)}, com ${lucro}.`;
 }
 
-export function responderVendas(periodo: Periodo, leitura: LeituraFlush, agora = new Date()): string {
+export function responderVendas(periodo: Periodo, leitura: LeituraFlush, agora = new Date(), meta: number | null = null): string {
   if (!leitura) return "A Flush ainda não está ligada aqui. Ligue em Sua conta → Ligar a FlushStore, que eu passo a responder com os números de verdade.";
   if (leitura.fase === "carregando") return "Estou lendo a Flush agora. Pergunte de novo em instantes.";
   const dias = leitura.dias;
   if (!dias.length) return "Não consegui ler a Flush agora.";
   const aviso = leitura.fase === "erro" ? " (Não consegui atualizar agora: é a última leitura.)" : "";
+
+  if (periodo === "mes") {
+    const mes = leitura.historico ? resumirMes(leitura.historico, agora) : null;
+    return mes ? responderMes(mes, meta) + aviso : "Ainda não tenho o mês inteiro da Flush. Abra o app com internet que eu leio.";
+  }
 
   if (periodo === "semana") {
     const total = dias.reduce((s, d) => s + d.valor, 0);
@@ -60,6 +67,43 @@ export function responderVendas(periodo: Periodo, leitura: LeituraFlush, agora =
   const quando = nomeDoDia(ultimo.dia);
   if (!ultimo.valor) return `Não tenho a leitura de ${periodo}. Na última, de ${quando}, não teve venda.`;
   return `Não tenho a leitura de ${periodo}. Na última, de ${quando}: ${reais(ultimo.valor)} em ${pedidos(ultimo.pedidos)}, ${reais(ultimo.lucro)} de lucro.`;
+}
+
+const pct = (v: number) => `${Math.round(v * 100)}%`;
+
+/** O mês em três linhas: quanto, contra o mês passado, e a meta (quando tem). */
+export function responderMes(mes: MesFlush, meta: number | null): string {
+  const { atual, anterior } = mes;
+  if (!atual.valor) return `Em ${mes.nome} a Flush ainda não vendeu.${meta ? ` Meta: ${reais(meta)}.` : ""}`;
+  const linhas = [`Em ${mes.nome}, até hoje: ${reais(atual.valor)} em ${pedidos(atual.pedidos)}, ${reais(atual.lucro)} de lucro${mes.margem !== null ? ` (margem de ${pct(mes.margem)})` : ""}.`];
+  if (mes.variacao !== null) {
+    const v = mes.variacao;
+    const sentido = Math.abs(v) < 0.005 ? "igual a" : v > 0 ? `${pct(v)} acima de` : `${pct(-v)} abaixo de`;
+    linhas.push(`Está ${sentido} ${anterior.nome} no mesmo ponto (${reais(anterior.ateHoje.valor)}).`);
+  }
+  if (meta) {
+    const p = progressoMeta(mes, meta);
+    linhas.push(p.falta === 0
+      ? `Meta de ${reais(meta)} batida.`
+      : `Meta de ${reais(meta)}: ${pct(p.feito)} feito, faltam ${reais(p.falta)}${p.porDia ? `, ${reais(p.porDia)} por dia` : ""}.${p.noRitmo ? " No ritmo de agora, bate." : ""}`);
+  } else {
+    linhas.push(`No ritmo de agora, o mês fecha em ${reais(mes.projecao)}. Para ter meta, diga “meta do mês 10 mil”.`);
+  }
+  return linhas.join("\n");
+}
+
+/** O que está andando numa missão (ou em todas), para a conversa. */
+export function responderMissao(eventos: readonly EventoMissao[] | null, missao: string | null, agora = new Date()): string {
+  if (!eventos) return "Não consegui ler as Missões agora. Entre na sua conta do DREND e tente de novo.";
+  const ps = projetos(eventos, agora).filter((p) => (missao ? p.missao === missao : p.ultimo));
+  if (!ps.length) return missao ? `A missão ${nomeDaMissao(missao)} ainda não tem nada.` : "Nenhuma missão ainda.";
+  if (missao) {
+    const p = ps[0];
+    const agoraItens = p.itens.agora.slice(0, 5).map((i) => `• ${i.titulo}`).join("\n");
+    const parado = p.parado !== null && p.parado >= DIAS_PARADO ? `\nParada há ${p.parado} dias.` : "";
+    return `${p.nome}: ${p.itens.agora.length} em andamento, ${p.itens.feito.length} feitos, ${p.itens.depois.length} para depois.${agoraItens ? `\n${agoraItens}` : ""}${parado}`;
+  }
+  return ps.map((p) => `• ${p.nome}: ${p.itens.agora.length} em andamento${p.parado !== null && p.parado >= DIAS_PARADO ? `, parada há ${p.parado} dias` : ""}`).join("\n");
 }
 
 export function responderPendencias(tarefas: readonly Tarefa[], ideiasSoltas: number): string {
@@ -93,7 +137,9 @@ export const AJUDA = [
   "• anotar: “me lembra de pagar o fornecedor”",
   "• concluir: “feito: pagar o fornecedor”",
   "• ver o que falta: “o que tenho hoje?”",
-  "• números da Flush: “quanto vendi hoje?”, “e a semana?”",
+  "• números da Flush: “quanto vendi hoje?”, “e a semana?”, “e o mês?”",
+  "• meta: “meta do mês 10 mil”",
+  "• missões: “anota na missão: terminei o login”, “como está a missão da flush?”",
   "• guardar ideia: “tive uma ideia: kit de natal”",
   "• montar quadro: “crie um quadro Natal com cartões vídeo, cupom e stories”",
   "• voltar atrás: “desfaz”",

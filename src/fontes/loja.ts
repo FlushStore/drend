@@ -16,6 +16,8 @@ export interface DiaLoja {
 export interface ResumoLoja {
   dias: DiaLoja[];
   atualizadoEm: string;
+  /** Dia a dia desde o 1º do mês passado (para o mês e a comparação). Cache antigo não tem. */
+  historico?: DiaLoja[];
   /** Vendas registradas desde sempre (só quando a loja informa). 0 = ainda não abriu. */
   totalVendas?: number;
 }
