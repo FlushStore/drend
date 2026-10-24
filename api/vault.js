@@ -32,12 +32,19 @@ async function ler(db, caminho) {
 }
 
 async function gravar(req, res, db) {
-  if (!autorizado(req)) return res.status(401).json({ erro: "token inválido" });
+  // O PC do Rapha grava com um token só do vault (DREND_VAULT_TOKEN); as tarefas, com o dos agentes.
+  if (!autorizado(req) && !autorizado(req, "DREND_VAULT_TOKEN")) return res.status(401).json({ erro: "token inválido" });
   const corpo = typeof req.body === "string" ? safeJson(req.body) : req.body;
   const vault = corpo?.vault;
   if (!VAULTS[vault]) return res.status(400).json({ erro: "vault desconhecido" });
-  const rodada = typeof corpo.rodada === "string" && !Number.isNaN(Date.parse(corpo.rodada)) ? new Date(corpo.rodada).toISOString() : null;
+  const rodada = corpo.consultar ? new Date().toISOString() : typeof corpo.rodada === "string" && !Number.isNaN(Date.parse(corpo.rodada)) ? new Date(corpo.rodada).toISOString() : null;
   if (!rodada) return res.status(400).json({ erro: "rodada precisa ser uma data ISO" });
+
+  if (corpo.consultar) {
+    // Quando o vault foi gravado pela última vez (o PC confere antes de pular um envio).
+    const [linha] = await ler(db, `drend_vault_leitura?vault=eq.${vault}&select=atualizado_em`);
+    return res.status(200).json({ vault, em: linha?.atualizado_em ?? null });
+  }
 
   if (corpo.fechar) {
     // Fim da leitura: o que não foi regravado nesta rodada saiu do vault.
@@ -64,7 +71,7 @@ async function gravar(req, res, db) {
       body: JSON.stringify(linha),
     });
     if (!r.ok) return res.status(r.status).json({ erro: "não consegui registrar a leitura" });
-    return res.status(200).json({ vault, notas, saiu });
+    return res.status(200).json({ vault, notas, saiu, em: linha.atualizado_em });
   }
 
   if (!Array.isArray(corpo.notas) || corpo.notas.length > 100) return res.status(400).json({ erro: "notas precisa ser uma lista de até 100" });
