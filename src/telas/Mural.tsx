@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FileText, Image, Link2, Megaphone, Mic, Plus, StickyNote, Undo2, type LucideIcon } from "lucide-react";
-import { Bloco, TituloBloco } from "@/design-system/Bloco";
-import { Botao } from "@/design-system/Botao";
+import { FileText, History, Image, Link2, Megaphone, Mic, Plus, StickyNote, Undo2, type LucideIcon } from "lucide-react";
+import { Bloco } from "@/design-system/Bloco";
+import { BotaoCirculo } from "@/design-system/BotaoCirculo";
+import { Painel } from "@/design-system/Painel";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { FiltroDeLista } from "@/design-system/FiltroDeLista";
 import { useTelaLarga } from "@/design-system/useTelaLarga";
@@ -45,7 +46,8 @@ export function Mural() {
   const quadro = mural.state.boards[ativo] ?? quadros[0];
   const cards = quadro ? mural.cardsOf(quadro.id) : [];
   const links = quadro ? mural.linksOf(quadro.id) : [];
-  const historico = [...mural.log].reverse().slice(0, 6);
+  const historico = [...mural.log].reverse().slice(0, 12);
+  const [verHistorico, setVerHistorico] = useState(false);
 
   // Arrastar: a posição muda só na tela; ao soltar vira um moveCard no log (dá para desfazer).
   const arrasto = useRef<{ id: string; dx: number; dy: number } | null>(null);
@@ -96,10 +98,11 @@ export function Mural() {
 
   return (
     <>
-      <CabecalhoDeTela titulo="Mural" sub={quadro ? `${quadro.title} · ${cards.length} cartões` : "Sem quadros"}>
+      <CabecalhoDeTela titulo="Mural">
         <div className="dr-mural-acoes">
-          <Botao variante="fantasma" compacto icone={<Undo2 size={16} strokeWidth={1.75} />} onClick={desfazer}>Desfazer</Botao>
-          <Botao compacto icone={<Plus size={16} strokeWidth={2} />} onClick={novaNota} disabled={!quadro}>Nota</Botao>
+          <BotaoCirculo rotulo="Histórico" onClick={() => setVerHistorico(true)}><History size={18} strokeWidth={1.75} /></BotaoCirculo>
+          <BotaoCirculo rotulo="Desfazer a última ação" onClick={desfazer}><Undo2 size={18} strokeWidth={1.75} /></BotaoCirculo>
+          <BotaoCirculo rotulo="Nova nota" tom="acento" onClick={novaNota} disabled={!quadro}><Plus size={18} strokeWidth={2} /></BotaoCirculo>
         </div>
       </CabecalhoDeTela>
 
@@ -107,7 +110,7 @@ export function Mural() {
         rotulo="Quadros"
         valor={quadro?.id ?? ""}
         aoMudar={setAtivo}
-        opcoes={quadros.map((b) => ({ valor: b.id, rotulo: b.title, conta: mural.cardsOf(b.id).length }))}
+        opcoes={quadros.map((b) => ({ valor: b.id, rotulo: b.title }))}
       />
 
       {largo ? (
@@ -146,10 +149,9 @@ export function Mural() {
         </ul>
       )}
 
-      <Bloco aria-label="Histórico">
-        <TituloBloco titulo="Histórico" sub="Tudo que você e o DREND fizeram. Desfazer volta o último." />
+      <Painel aberto={verHistorico} aoFechar={() => setVerHistorico(false)} titulo="Histórico">
         {historico.length === 0 ? (
-          <p className="ini-vazio-bloco cos-hachura">Nada mudou ainda nesta visita.</p>
+          <p className="ini-vazio-bloco cos-hachura">Nada mudou ainda.</p>
         ) : (
           <ol className="dr-historico">
             {historico.map((e) => (
@@ -160,7 +162,7 @@ export function Mural() {
             ))}
           </ol>
         )}
-      </Bloco>
+      </Painel>
     </>
   );
 }

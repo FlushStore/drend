@@ -1,54 +1,54 @@
-import type { CSSProperties } from "react";
-import { Bloco, TituloBloco } from "@/design-system/Bloco";
+import { Bloco } from "@/design-system/Bloco";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
-import { ListaDeAtalhos } from "@/design-system/ListaDeAtalhos";
 import { Valor } from "@/design-system/Valor";
 import { drendStatus, flush, outrosProjetos, vapeMania } from "@/data/exemplo";
-import { Estado, Linhas } from "./partes";
-import { VendasDaSemana } from "./VendasDaSemana";
+import { CurvaDaSemana } from "./VendasDaSemana";
 
+/** Um projeto por bloco: o número que importa e o estado. Operar é no painel do projeto. */
 export function Negocios() {
+  const semana = flush.semana.reduce((t, d) => t + d.valor, 0);
   return (
     <>
-      <CabecalhoDeTela titulo="Negócios" sub="A saúde de cada projeto. Para operar, abra o painel do próprio projeto." />
-      <div className="ini-grade">
-        <div className="ini-lugar" style={{ "--ini-cl": 5, "--ini-cm": 1 } as CSSProperties}>
-          <Bloco className="dr-proj" data-proj="flushstore" aria-label="FlushStore">
-            <TituloBloco titulo="FlushStore" sub="Loja de pods em Unaí" acao={<Estado tom="ok">Operando</Estado>} />
-            <dl className="ini-dia-numeros dr-proj-num">
-              <div className="ini-dia-principal"><dt>Faturamento hoje</dt><dd><Valor valor={flush.faturamento} tamanho="g" centavos={false} /></dd></div>
-              <div><dt>Lucro</dt><dd><Valor valor={flush.lucro} tamanho="m" centavos={false} /></dd></div>
-            </dl>
-            <Linhas linhas={[...flush.saude, ["Próxima tarefa", flush.proximaTarefa]]} />
-          </Bloco>
-        </div>
-        <div className="ini-lugar" style={{ "--ini-cl": 7, "--ini-cm": 1 } as CSSProperties}>
-          <VendasDaSemana titulo="FlushStore na semana" dias={flush.semana} />
-        </div>
-        <div className="ini-lugar" style={{ "--ini-cl": 6, "--ini-cm": 1 } as CSSProperties}>
-          <Bloco className="dr-proj" data-proj="vape-mania" aria-label="Vape Mania">
-            <TituloBloco titulo="Vape Mania" sub="O DREND só olha a saúde do sistema" acao={<Estado tom="ok">No ar</Estado>} />
-            <Linhas linhas={vapeMania.saude} />
-          </Bloco>
-        </div>
-        <div className="ini-lugar" style={{ "--ini-cl": 6, "--ini-cm": 1 } as CSSProperties}>
-          <Bloco className="dr-proj" data-proj="drend" aria-label="DREND">
-            <TituloBloco titulo="DREND" sub="Este painel" acao={<Estado tom="acento">{drendStatus.fase}</Estado>} />
-            <Linhas linhas={drendStatus.saude} />
-          </Bloco>
-        </div>
+      <CabecalhoDeTela titulo="Negócios" />
+      <div className="dr-negocios">
+        <Bloco className="dr-proj dr-proj-flush" aria-label="FlushStore">
+          <div className="dr-proj-cab">
+            <h2 className="dr-proj-nome">FlushStore</h2>
+            <span className="dr-estado"><i className="dr-ponto" data-tom="ok" aria-hidden="true" />Operando</span>
+          </div>
+          <dl className="dr-numeros">
+            <div><dt>Hoje</dt><dd><Valor valor={flush.faturamento} tamanho="g" centavos={false} /></dd></div>
+            <div><dt>Lucro</dt><dd><Valor valor={flush.lucro} tamanho="g" centavos={false} /></dd></div>
+            <div><dt>Semana</dt><dd><Valor valor={semana} tamanho="g" centavos={false} /></dd></div>
+          </dl>
+          <CurvaDaSemana dias={flush.semana} />
+        </Bloco>
+
+        <Bloco className="dr-proj" aria-label="Vape Mania">
+          <div className="dr-proj-cab">
+            <h2 className="dr-proj-nome">Vape Mania</h2>
+            <span className="dr-estado"><i className="dr-ponto" data-tom="ok" aria-hidden="true" />No ar</span>
+          </div>
+          <p className="dr-proj-linha">{vapeMania.saude[2][0]} · {vapeMania.saude[2][1]}</p>
+        </Bloco>
+
+        <Bloco className="dr-proj" aria-label="DREND">
+          <div className="dr-proj-cab">
+            <h2 className="dr-proj-nome">DREND</h2>
+            <span className="dr-estado"><i className="dr-ponto" data-tom="acento" aria-hidden="true" />{drendStatus.fase}</span>
+          </div>
+          <p className="dr-proj-linha">{drendStatus.saude[1][1]}</p>
+        </Bloco>
       </div>
-      <Bloco aria-label="Outros projetos">
-        <TituloBloco titulo="Outros projetos" />
-        <Linhas linhas={outrosProjetos} />
-      </Bloco>
-      <ListaDeAtalhos
-        rotulo="Painéis dos projetos"
-        itens={[
-          { para: "/negocios", titulo: "Painel da Flush", descricao: "Pedidos, produtos, caixa e financeiro" },
-          { para: "/negocios", titulo: "Painel da Vape Mania", descricao: "Vitrine, estoque e deploys" },
-        ]}
-      />
+
+      <section className="dr-pausados" aria-label="Outros projetos">
+        <h2 className="dr-rotulo">Outros</h2>
+        <ul className="dr-lista">
+          {outrosProjetos.map(([nome, estado]) => (
+            <li key={nome} className="dr-lista-item dr-lista-estatico"><span>{nome}</span><small>{estado}</small></li>
+          ))}
+        </ul>
+      </section>
     </>
   );
 }

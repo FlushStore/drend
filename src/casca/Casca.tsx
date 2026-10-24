@@ -92,7 +92,7 @@ export function Casca() {
           <Link to="/" className="cv2-marca" aria-label="DREND, ir para Hoje">
             <span className="dr-marca-d" aria-hidden="true">D</span>
             <span className="cv2-marca-nome" aria-hidden="true">DREND</span>
-            <span className="cv2-marca-sub" aria-hidden="true">Pessoal</span>
+            <span className="cv2-marca-sub" title={EXEMPLO ? "Dados de exemplo: nenhuma integração ligada ainda" : undefined}>{EXEMPLO ? "Exemplo" : "Pessoal"}</span>
           </Link>
           {largo && <AbasTopo itens={itens} ativo={ativoDe(pathname)} />}
           <div className="cv2-topo-acoes">
@@ -111,8 +111,6 @@ export function Casca() {
             </button>
           </div>
         </header>
-
-        {EXEMPLO && <p className="cv2-faixa">Dados de exemplo: nenhuma integração está ligada ainda.</p>}
 
         <main id="main-content" className="cv2-conteudo" tabIndex={-1}>
           <Outlet />
