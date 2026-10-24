@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { maiorSequencia, proximos7, responderSemana, semanaDaFlush, semanaDasTarefas, semanaDoDinheiro, semanaDosHabitos, seteDias, textoDaVariacao } from "./semana";
+import { maiorSequencia, periodoDaFlush, proximos7, responderSemana, semanaDaFlush, semanaDasTarefas, semanaDoDinheiro, semanaDosHabitos, seteDias, textoDaVariacao } from "./semana";
 import { entender } from "./comandos";
 import type { DiaFlush } from "../fontes/flush-regras";
 import type { Tarefa } from "./tarefas";
@@ -34,7 +34,7 @@ describe("seteDias", () => {
 
 describe("semanaDaFlush", () => {
   it("7 dias contra os 7 anteriores, melhor dia e mais vendido", () => {
-    const s = semanaDaFlush(historico, [], [{ nome: "Ignite V80", unidades: 6, faturamento: 540 }])!;
+    const s = semanaDaFlush(historico, [], [{ nome: "Ignite V80", unidades: 6, faturamento: 540 }], agora)!;
     expect(s.dias).toHaveLength(7);
     expect(s.faturamento).toEqual({ atual: 840, anterior: 700, variacao: 0.2 });
     expect(s.lucro.atual).toBe(240);
@@ -45,7 +45,7 @@ describe("semanaDaFlush", () => {
   });
 
   it("sem histórico de 14 dias, não compara (nada inventado)", () => {
-    const s = semanaDaFlush(undefined, historico.slice(-7))!;
+    const s = semanaDaFlush(undefined, historico.slice(-7), null, agora)!;
     expect(s.faturamento.atual).toBe(840);
     expect(s.faturamento.anterior).toBeNull();
     expect(s.faturamento.variacao).toBeNull();
@@ -54,9 +54,29 @@ describe("semanaDaFlush", () => {
 
   it("sem venda: sem melhor dia; sem base positiva: sem variação", () => {
     const zerado = historico.map((d) => ({ ...d, valor: 0, lucro: 0, pedidos: 0 }));
-    const s = semanaDaFlush(zerado)!;
+    const s = semanaDaFlush(zerado, [], null, agora)!;
     expect(s.melhorDia).toBeNull();
     expect(s.faturamento.variacao).toBeNull();
+  });
+
+  it("leitura de hoje: período até hoje, sem aviso", () => {
+    const s = semanaDaFlush(historico, [], null, agora)!;
+    expect(s).toMatchObject({ de: "2026-10-18", ate: "2026-10-24", defasada: false });
+    expect(periodoDaFlush(s, agora)).toBeNull();
+  });
+
+  it("leitura antiga: o período real, sem dias zerados inventados", () => {
+    const antiga = historico.slice(0, -1); // termina em 23/10
+    const s = semanaDaFlush(antiga, [], null, agora)!;
+    expect(s.dias).toHaveLength(7);
+    expect(s.dias.map((d) => d.dia)).not.toContain("2026-10-24");
+    expect(s).toMatchObject({ de: "2026-10-17", ate: "2026-10-23", defasada: true });
+    expect(s.faturamento.atual).toBe(850);
+    expect(periodoDaFlush(s, agora)).toBe("17–23 out · leitura de ontem");
+    // Mais antiga ainda, virando o mês.
+    const velha = semanaDaFlush(historico.slice(0, 9), [], null, agora)!;
+    expect(periodoDaFlush(velha, agora)).toBe("13–19 out · leitura de 19 out");
+    expect(periodoDaFlush({ de: "2026-09-28", ate: "2026-10-04", defasada: true }, agora)).toBe("28 set–4 out · leitura de 4 out");
   });
 
   it("sem leitura, null", () => {
@@ -152,7 +172,7 @@ describe("textoDaVariacao", () => {
 describe("responderSemana", () => {
   it("3–4 linhas com os números reais", () => {
     const texto = sp(responderSemana({
-      flush: semanaDaFlush(historico, [], [{ nome: "Ignite V80", unidades: 6, faturamento: 540 }]),
+      flush: semanaDaFlush(historico, [], [{ nome: "Ignite V80", unidades: 6, faturamento: 540 }], agora),
       tarefas: [tarefa("a"), tarefa("c", "2026-10-24T12:00:00-03:00")],
       habitos: [habito("Academia", ["2026-10-23", "2026-10-24"])],
       lancamentos: [lanc("gasto", 50, "Mercado", "2026-10-20T10:00:00-03:00"), lanc("entrada", 300, "Freela", "2026-10-22T10:00:00-03:00")],
@@ -164,6 +184,13 @@ describe("responderSemana", () => {
     expect(linhas[1]).toBe("1 tarefa concluída, 1 aberta; hábitos: Academia 2/7.");
     expect(linhas[2]).toBe("Seu dinheiro: entrou R$ 300, saiu R$ 50, saldo R$ 250. Mais em Mercado (R$ 50).");
     expect(linhas[3]).toBe("Próximos 7 dias: agenda livre.");
+  });
+
+  it("leitura antiga: o chat diz o período real da Flush", () => {
+    const texto = sp(responderSemana({ flush: semanaDaFlush(historico.slice(0, -1), [], null, agora), tarefas: [], habitos: [], lancamentos: [], agenda: null }, agora));
+    expect(texto.split("\n")[0]).toBe("Flush, 17–23 out (leitura de ontem): R$ 850, R$ 240 de lucro, 8 pedidos. Melhor dia: quinta.");
+    const zerada = historico.slice(0, -1).map((d) => ({ ...d, valor: 0, lucro: 0, pedidos: 0 }));
+    expect(responderSemana({ flush: semanaDaFlush(zerada, [], null, agora), tarefas: [], habitos: [], lancamentos: [], agenda: null }, agora).split("\n")[0]).toBe("Flush, 17–23 out (leitura de ontem): nenhuma venda.");
   });
 
   it("sem fonte, diz o que falta e não mostra número de exemplo", () => {

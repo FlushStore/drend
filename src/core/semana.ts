@@ -44,13 +44,18 @@ export interface SemanaFlush {
   melhorDia: DiaFlush | null;
   /** O mais vendido em unidades; null sem a leitura direta dos produtos ou sem venda. */
   maisVendido: ProdutoVendido | null;
+  /** O período real lido (AAAA-MM-DD): termina no dia da leitura, que pode não ser hoje. */
+  de: string;
+  ate: string;
+  /** true quando a leitura termina antes de hoje (cópia antiga ou do servidor). */
+  defasada: boolean;
 }
 
 /**
  * Últimos 7 dias da Flush contra os 7 anteriores, do histórico diário que a leitura já traz.
  * Sem histórico usa os 7 `dias` (aí não há comparação). null sem dia nenhum.
  */
-export function semanaDaFlush(historico: readonly DiaFlush[] | null | undefined, dias: readonly DiaFlush[] = [], maisVendidos: readonly ProdutoVendido[] | null = null): SemanaFlush | null {
+export function semanaDaFlush(historico: readonly DiaFlush[] | null | undefined, dias: readonly DiaFlush[] = [], maisVendidos: readonly ProdutoVendido[] | null = null, agora = new Date()): SemanaFlush | null {
   const base = historico && historico.length ? historico : dias;
   if (!base.length) return null;
   const atual = base.slice(-7);
@@ -64,7 +69,25 @@ export function semanaDaFlush(historico: readonly DiaFlush[] | null | undefined,
     pedidos: comparar(soma(atual, "pedidos"), antes && soma(antes, "pedidos")),
     melhorDia: melhor,
     maisVendido: maisVendidos?.[0] ?? null,
+    de: atual[0].dia,
+    ate: atual[atual.length - 1].dia,
+    defasada: atual[atual.length - 1].dia < diaEmBrasilia(agora),
   };
+}
+
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const diaMes = (dia: string) => `${Number(dia.slice(8, 10))} ${MESES[Number(dia.slice(5, 7)) - 1]}`;
+
+/**
+ * O período da Flush como ele é: "17–23 out · leitura de ontem". null quando a leitura vai até
+ * hoje (aí são os mesmos 7 dias do resto da revisão). Nada de completar com dias zerados.
+ */
+export function periodoDaFlush(s: Pick<SemanaFlush, "de" | "ate" | "defasada">, agora = new Date()): string | null {
+  if (!s.defasada) return null;
+  const mesmoMes = s.de.slice(0, 7) === s.ate.slice(0, 7);
+  const faixa = s.de === s.ate ? diaMes(s.ate) : mesmoMes ? `${Number(s.de.slice(8, 10))}–${diaMes(s.ate)}` : `${diaMes(s.de)}–${diaMes(s.ate)}`;
+  const ontem = somarDias(diaEmBrasilia(agora), -1);
+  return `${faixa} · leitura de ${s.ate === ontem ? "ontem" : diaMes(s.ate)}`;
 }
 
 export interface SemanaTarefas {
@@ -210,13 +233,17 @@ export function responderSemana(e: EntradaDaSemana, agora = new Date()): string 
   const f = e.flush;
   if (f === "carregando") linhas.push("Flush: estou lendo as vendas agora.");
   else if (!f) linhas.push("Flush: sem leitura (ligue em Sua conta).");
-  else if (!f.faturamento.atual) linhas.push("Flush: nenhuma venda nos últimos 7 dias.");
   else {
+    const periodo = periodoDaFlush(f, agora);
+    const cab = periodo ? `Flush, ${periodo.replace(" · ", " (")})` : "Flush, 7 dias";
+    if (!f.faturamento.atual) linhas.push(`${cab}: nenhuma venda.`);
+    else {
     const v = textoDaVariacao(f.faturamento.variacao);
     const comp = v ? ` (${v === "igual" ? "igual aos" : `${v} contra os`} 7 dias antes)` : "";
     const melhor = f.melhorDia ? ` Melhor dia: ${nomeDoDia(f.melhorDia.dia)}.` : "";
     const top = f.maisVendido ? ` Mais vendido: ${f.maisVendido.nome}.` : "";
-    linhas.push(`Flush, 7 dias: ${reais(f.faturamento.atual)}${comp}, ${reais(f.lucro.atual)} de lucro, ${vezes(f.pedidos.atual, "pedido", "pedidos")}.${melhor}${top}`);
+    linhas.push(`${cab}: ${reais(f.faturamento.atual)}${comp}, ${reais(f.lucro.atual)} de lucro, ${vezes(f.pedidos.atual, "pedido", "pedidos")}.${melhor}${top}`);
+    }
   }
 
   const t = semanaDasTarefas(e.tarefas, agora);

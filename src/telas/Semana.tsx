@@ -5,7 +5,7 @@ import { Valor } from "@/design-system/Valor";
 import { tomDoSinal } from "@/design-system/formato";
 import { eventosDa, useAgenda } from "@/fontes/agenda";
 import { useFlush, type NumerosFlush } from "@/fontes/useFlush";
-import { semanaDaFlush, semanaDasTarefas, semanaDoDinheiro, semanaDosHabitos, seteDias } from "@/core/semana";
+import { periodoDaFlush, semanaDaFlush, semanaDasTarefas, semanaDoDinheiro, semanaDosHabitos, seteDias } from "@/core/semana";
 import { textoDaSequencia } from "@/core/habitos";
 import { moneyBRL } from "@/lib/store-utils";
 import { useStore } from "@/store";
@@ -53,7 +53,7 @@ function FlushDaSemana({ flush }: { flush: NumerosFlush }) {
 
   return (
     <section className="cos-bloco dr-heroi dr-semana-flush" aria-labelledby="dr-sem-flush">
-      <h2 id="dr-sem-flush" className="dr-rotulo">FlushStore · 7 dias</h2>
+      <h2 id="dr-sem-flush" className="dr-rotulo">FlushStore · {(s && periodoDaFlush(s)) ?? "7 dias"}</h2>
       {!s ? (
         <p className="dr-vazio">{flush.estado.fase === "carregando" ? "Lendo as vendas…" : "Sem leitura da Flush. Ligue em Sua conta."}</p>
       ) : (
