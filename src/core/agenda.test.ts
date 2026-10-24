@@ -39,3 +39,12 @@ describe("agenda", () => {
     expect(responderAgenda([], "amanha", agora)).toBe("Amanhã está livre.");
   });
 });
+
+describe("evento de vários dias", () => {
+  it("aparece em cada dia enquanto dura", () => {
+    const viagem: Compromisso = { id: "v", titulo: "Viagem", local: null, inicio: new Date("2026-10-24T00:00:00").toISOString(), fim: new Date("2026-10-28T00:00:00").toISOString(), diaInteiro: true, dia: "2026-10-24" };
+    expect(responderAgenda([viagem], "amanha", agora)).toBe("Amanhã:\n• o dia todo: Viagem");
+    expect(responderAgenda([viagem], "semana", agora).split("\n").length).toBe(4);
+    expect(proximo([viagem], new Date(2026, 9, 26, 10))?.titulo).toBe("Viagem");
+  });
+});

@@ -90,3 +90,15 @@ describe("agenda iCal", () => {
     expect(lista.filter((e) => e.titulo === "Estudo").map((e) => e.dia)).toEqual(["2026-11-03"]);
   });
 });
+
+describe("cancelamento de uma ocorrência", () => {
+  it("RECURRENCE-ID cancelado apaga só aquela ocorrência", () => {
+    const cancelado = ics.replace("END:VCALENDAR", [
+      "BEGIN:VEVENT", "UID:d", "STATUS:CANCELLED",
+      "RECURRENCE-ID;TZID=America/Sao_Paulo:20261103T193000",
+      "DTSTART;TZID=America/Sao_Paulo:20261103T193000",
+      "SUMMARY:Estudo", "END:VEVENT", "END:VCALENDAR"].join("\r\n"));
+    const lista = compromissos(cancelado, Date.parse("2026-11-01T03:00:00Z"), Date.parse("2026-11-08T03:00:00Z"));
+    expect(lista.filter((e) => e.titulo === "Estudo").map((e) => e.dia)).toEqual(["2026-11-05"]);
+  });
+});

@@ -75,7 +75,8 @@ export function lerEventos(ics) {
   for (const l of ls) {
     if (l === "BEGIN:VEVENT") atual = { exdatas: [] };
     else if (l === "END:VEVENT") {
-      if (atual?.inicio && atual.status !== "CANCELLED") eventos.push(atual);
+      // Cancelado só fica quando é exceção de uma recorrência: serve para apagar aquela ocorrência.
+      if (atual?.inicio && (atual.status !== "CANCELLED" || atual.recorrencia)) eventos.push(atual);
       atual = null;
     } else if (atual) {
       const c = campo(l);
@@ -131,7 +132,7 @@ export function compromissos(ics, de, ate, limite = 300) {
 
   for (const e of eventos) {
     if (e.recorrencia) {
-      emitir(e, e.inicio.parede);
+      if (e.status !== "CANCELLED") emitir(e, e.inicio.parede);
       continue;
     }
     if (!e.rrule) {

@@ -28,12 +28,18 @@ function maisDias(agora: Date, n: number) {
   return diaDe(d);
 }
 
-export const doDia = (lista: readonly Compromisso[], dia: string) => lista.filter((c) => c.dia === dia);
+/** O que acontece no dia, inclusive o que começou antes e ainda está rolando (viagem de 4 dias). */
+export function doDia(lista: readonly Compromisso[], dia: string): Compromisso[] {
+  const ini = new Date(`${dia}T00:00:00`);
+  const fim = new Date(ini);
+  fim.setDate(fim.getDate() + 1);
+  return lista.filter((c) => c.dia === dia || (new Date(c.inicio) < fim && new Date(c.fim) > ini));
+}
 
 /** O próximo com hora que ainda não acabou; sem ele, o de dia inteiro de hoje. */
 export function proximo(lista: readonly Compromisso[], agora = new Date()): Compromisso | null {
   const t = agora.getTime();
-  return lista.find((c) => !c.diaInteiro && new Date(c.fim).getTime() > t) ?? lista.find((c) => c.diaInteiro && c.dia === diaDe(agora)) ?? null;
+  return lista.find((c) => !c.diaInteiro && new Date(c.fim).getTime() > t) ?? doDia(lista, diaDe(agora)).find((c) => c.diaInteiro) ?? null;
 }
 
 /** "14:00 Reunião" · "o dia todo: Aniversário" · com "agora" quando já começou. */
