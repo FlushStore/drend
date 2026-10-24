@@ -66,7 +66,8 @@ if (seMudou) {
   const antes = await readFile(marca, "utf8").then(JSON.parse, () => null);
   // Mesmo sem mudança local, reenvia se outra leitura (ex.: a do GitHub) gravou o vault depois.
   const remoto = antes?.digital === digital ? (await enviar({ vault, consultar: true })).em : null;
-  if (antes?.digital === digital && remoto && remoto === antes.em) {
+  // Compara como data: o banco devolve "+00:00" onde o Node grava "Z".
+  if (antes?.digital === digital && remoto && Date.parse(remoto) === Date.parse(antes.em)) {
     console.log(`[vault] ${VAULTS[vault]}: nada mudou.`);
     process.exit(0);
   }
