@@ -82,6 +82,9 @@ describe("detectarHumor", () => {
 
   it("data não é humor; número fora de 1 a 5 também não", () => {
     expect(detectarHumor("entrega no dia 4 de novembro")).toBeNull();
+    expect(detectarHumor("entrega no dia 4/5")).toBeNull();
+    expect(detectarHumor("entrega no dia 4/5/2026, dia 3")).toBe(3);
+    expect(detectarHumor("reunião dia 12.11")).toBeNull();
     expect(detectarHumor("vence dia 15")).toBeNull();
     expect(detectarHumor("humor 7")).toBeNull();
   });

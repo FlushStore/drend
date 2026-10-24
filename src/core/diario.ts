@@ -50,7 +50,8 @@ const CLAUSULA_DE_HUMOR = /^(?:(?:hoje|o dia|meu dia|o dia de hoje)\s+)?(?:(?:fo
 
 /** O humor que ele disse, ou null. Número explícito vale mais que palavra; duas palavras diferentes = null. */
 export function detectarHumor(texto: string): number | null {
-  const n = normalizar(texto);
+  // Data com barra/ponto/hífen ("dia 4/5", "dia 12.11") sai antes de normalizar, que apagaria o separador.
+  const n = normalizar(texto.replace(/\bdia\s+\d{1,2}\s*[/.-]\s*\d{1,2}(?:\s*[/.-]\s*\d{2,4})?/gi, " "));
   const numero = n.match(HUMOR_NUMERO);
   if (numero) return Number(numero[1]);
   const achados = new Set<number>();
