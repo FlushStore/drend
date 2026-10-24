@@ -12,7 +12,8 @@ param(
 $ErrorActionPreference = "Stop"
 if (-not (Test-Path $Pasta)) { throw "Pasta não encontrada: $Pasta" }
 if (-not [Environment]::GetEnvironmentVariable("DREND_VAULT_TOKEN", "User")) { throw "Falta DREND_VAULT_TOKEN nas variáveis do usuário." }
-$node = (Get-Command node).Source
+# Caminho curto (C:\PROGRA~1\...): com espaço no caminho, o conhost --headless falha calado.
+$node = (New-Object -ComObject Scripting.FileSystemObject).GetFile((Get-Command node).Source).ShortPath
 $script = Join-Path $PSScriptRoot "vault-enviar.mjs"
 $log = Join-Path $env:USERPROFILE ".drend-vault-$Vault.log"
 
