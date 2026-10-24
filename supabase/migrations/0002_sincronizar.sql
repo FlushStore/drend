@@ -24,3 +24,17 @@ create policy so_rapha on cards        as restrictive for all using (drend_e_o_r
 create policy so_rapha on links        as restrictive for all using (drend_e_o_rapha()) with check (drend_e_o_rapha());
 create policy so_rapha on inbox_items  as restrictive for all using (drend_e_o_rapha()) with check (drend_e_o_rapha());
 create policy so_rapha on action_log   as restrictive for all using (drend_e_o_rapha()) with check (drend_e_o_rapha());
+
+-- Ninguém além do Rapha cria conta no Auth do DREND.
+create or replace function public.drend_barrar_cadastro() returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if lower(new.email) <> 'raphaelkhevenn@gmail.com' then
+    raise exception 'DREND é pessoal: cadastro fechado';
+  end if;
+  return new;
+end $$;
+
+create trigger drend_so_rapha before insert on auth.users
+  for each row execute function public.drend_barrar_cadastro();

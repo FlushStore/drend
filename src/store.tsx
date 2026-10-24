@@ -1,14 +1,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { entender, opCriarQuadro } from "./core/comandos";
 import { Mural, MuralError, type Op, type LogEntry } from "./core/mural";
-import { repositorioLocal, type Repositorio } from "./core/persistencia";
+import { VERSAO, repositorioLocal, type Repositorio, type Retrato } from "./core/persistencia";
+import { baixar, maisRecente, subir, supabase, type Session } from "./core/nuvem";
 import { muralExemplo } from "./data/exemplo";
 
 export type Mensagem =
   | { id: string; de: "rapha"; texto: string }
   | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string };
 
+/** Banco: "sem-banco" quando o build não tem as chaves; "fora" sem login. */
+export type Sincronia = "sem-banco" | "fora" | "sincronizando" | "ok" | "erro";
+
 interface Store {
+  sincronia: Sincronia;
+  email: string | null;
+  entrar: (email: string, senha: string) => Promise<string | null>;
+  criarAcesso: (email: string, senha: string) => Promise<string | null>;
+  sair: () => void;
   mural: Mural;
   versao: number;
   mensagens: Mensagem[];
@@ -42,6 +51,76 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   useEffect(() => {
     repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens });
   }, [repo, mural, versao, caixaDeEntrada, mensagens]);
+
+  // Banco: ao entrar, a versão mais nova (aparelho ou banco) vence; depois cada mudança sobe em ~1 s.
+  const [sessao, setSessao] = useState<Session | null>(null);
+  const [sincronia, setSincronia] = useState<Sincronia>(supabase ? "fora" : "sem-banco");
+  const conciliado = useRef(false);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => setSessao(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_evento, s) => setSessao(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  const usuario = sessao?.user.id;
+  useEffect(() => {
+    conciliado.current = false;
+    if (!usuario) {
+      if (supabase) setSincronia("fora");
+      return;
+    }
+    let vivo = true;
+    setSincronia("sincronizando");
+    (async () => {
+      try {
+        const remoto = await baixar<Mensagem>();
+        const local = repo.carregar();
+        if (!vivo) return;
+        if (maisRecente(local, remoto) === "remoto" && remoto) {
+          muralRef.current = Mural.restaurar(remoto.mural);
+          setCaixa(remoto.caixaDeEntrada);
+          setMensagens(remoto.mensagens.length ? remoto.mensagens : BOAS_VINDAS);
+          setVersao((v) => v + 1);
+        } else if (local) {
+          await subir(local);
+        }
+        conciliado.current = true;
+        if (vivo) setSincronia("ok");
+      } catch {
+        if (vivo) setSincronia("erro");
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [usuario, repo]);
+
+  useEffect(() => {
+    if (!usuario || !conciliado.current) return;
+    const t = setTimeout(() => {
+      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens };
+      subir(r).then(() => setSincronia("ok"), () => setSincronia("erro"));
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [usuario, mural, versao, caixaDeEntrada, mensagens]);
+
+  const entrar = useCallback(async (email: string, senha: string) => {
+    if (!supabase) return "O banco ainda não está ligado.";
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
+    return error ? (error.message.includes("Invalid") ? "E-mail ou senha errados." : error.message) : null;
+  }, []);
+
+  const criarAcesso = useCallback(async (email: string, senha: string) => {
+    if (!supabase) return "O banco ainda não está ligado.";
+    const { error } = await supabase.auth.signUp({ email: email.trim(), password: senha, options: { emailRedirectTo: window.location.origin } });
+    return error ? error.message : null;
+  }, []);
+
+  const sair = useCallback(() => {
+    void supabase?.auth.signOut();
+  }, []);
 
   const executar = useCallback((op: Op, ator: LogEntry["actor"], resumo: string) => {
     const e = mural.run(op, ator, resumo);
@@ -110,8 +189,8 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   );
 
   const value = useMemo(
-    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia }),
-    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia],
+    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair }),
+    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

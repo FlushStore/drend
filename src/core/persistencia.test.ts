@@ -46,3 +46,15 @@ describe("repositorioLocal", () => {
     expect(repo.carregar()?.mensagens).toHaveLength(LIMITE_MENSAGENS);
   });
 });
+
+describe("maisRecente", () => {
+  const r = (salvoEm: string) => ({ v: 1 as const, salvoEm, mural: { state: emptyMural(), log: [] }, caixaDeEntrada: [], mensagens: [] });
+  it("fica com a versão mais nova", async () => {
+    const { maisRecente } = await import("./nuvem");
+    expect(maisRecente(r("2026-10-24T05:00:00Z"), r("2026-10-24T04:00:00Z"))).toBe("local");
+    expect(maisRecente(r("2026-10-24T04:00:00Z"), r("2026-10-24T05:00:00Z"))).toBe("remoto");
+    expect(maisRecente(null, r("2026-10-24T05:00:00Z"))).toBe("remoto");
+    expect(maisRecente(r("2026-10-24T05:00:00Z"), null)).toBe("local");
+    expect(maisRecente(null, null)).toBe("nenhum");
+  });
+});

@@ -13,6 +13,7 @@ import type { ItemDeNavegacao } from "@/design-system/navegacao";
 import { useTelaLarga } from "@/design-system/useTelaLarga";
 import { EXEMPLO } from "@/data/exemplo";
 import { useStore } from "@/store";
+import { ContaNuvem } from "./ContaNuvem";
 import { DrendChat } from "./DrendChat";
 import { useTema, type Tema } from "./tema";
 import "@/design-system/tokens.css";
@@ -134,6 +135,7 @@ export function Casca() {
             <div><dt>Nome</dt><dd>Raphael Khevenn</dd></div>
             <div><dt>Uso</dt><dd>Só você. Ninguém da equipe vê este painel.</dd></div>
           </dl>
+          <ContaNuvem />
           <div className="cv2-conta-tema">
             <span className="cv2-conta-rotulo">Aparência</span>
             <Segmentado<Tema> opcoes={TEMAS} valor={tema} aoMudar={escolher} rotulo="Aparência" />
