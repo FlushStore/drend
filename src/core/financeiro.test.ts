@@ -64,3 +64,15 @@ describe("lerValor", () => {
     expect(lerValor("0")).toBeNull();
   });
 });
+
+describe("leitura antiga", () => {
+  it("o mês vale até o último dia lido, não até hoje", () => {
+    const dia20 = new Date(2026, 9, 20, 15, 0);
+    const ate10 = historico.filter((d) => d.dia <= "2026-10-10");
+    const m = resumirMes(ate10, dia20)!;
+    expect(m.diasPassados).toBe(10);
+    expect(m.anterior.ateHoje.valor).toBe(1000);
+    expect(m.variacao).toBeCloseTo(0.5);
+    expect(m.projecao).toBe(4650);
+  });
+});

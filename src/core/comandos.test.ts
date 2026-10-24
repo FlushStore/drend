@@ -95,3 +95,11 @@ describe("rodada 5: mês, meta e missões", () => {
     expect(entender("como está a flush?")).toEqual({ tipo: "vendas", periodo: "hoje" });
   });
 });
+
+describe("missão com hífen no nome", () => {
+  it("vape-mania continua inteiro", () => {
+    expect(entender("missão vape-mania: site no ar")).toEqual({ tipo: "missaoNota", missao: "vape-mania", texto: "site no ar" });
+    expect(entender("anota na missão da vape-mania: banco ok")).toEqual({ tipo: "missaoNota", missao: "vape-mania", texto: "banco ok" });
+    expect(entender("missão flush - fotos novas")).toEqual({ tipo: "missaoNota", missao: "flush", texto: "fotos novas" });
+  });
+});

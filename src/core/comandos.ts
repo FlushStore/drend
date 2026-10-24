@@ -66,8 +66,9 @@ export function entender(entrada: string): Comando | null {
     return { tipo: "ajuda" };
   }
 
-  // "anota na missão: X" · "missão flush: X" · "anota na missão da flush: X" (antes da ideia: "anota" é dos dois)
-  const nota = t.match(/^(?:(?:anot[ae]|registr[ae]|coloc[ae]|p[oõ]e)\s+(?:isso\s+)?(?:na|no)\s+)?miss[aã]o\b([^:]*?)\s*[:,-]\s*(.+)$/i);
+  // "anota na missão: X" · "missão flush: X" · "anota na missão da flush: X" (antes da ideia: "anota" é dos dois).
+  // Hífen só separa com espaço antes: "vape-mania" é nome.
+  const nota = t.match(/^(?:(?:anot[ae]|registr[ae]|coloc[ae]|p[oõ]e)\s+(?:isso\s+)?(?:na|no)\s+)?miss[aã]o\b([^:]*?)(?:\s*[:,]|\s+-)\s*(.+)$/i);
   const textoNota = nota?.[2].trim().replace(/^["“”']+|["“”']+$/g, "").trim();
   if (nota && textoNota) return { tipo: "missaoNota", missao: qualMissao(normalizar(nota[1])) ?? "drend", texto: textoNota };
   // "meta do mês 10 mil" · "minha meta é 8000" · "meta: R$ 12.000"

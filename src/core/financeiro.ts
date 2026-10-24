@@ -55,7 +55,10 @@ export function resumirMes(historico: readonly DiaFlush[], agora = new Date()): 
   const ano = agora.getFullYear();
   const mes = agora.getMonth();
   const prefixo = `${ano}-${dois(mes + 1)}-`;
-  const hoje = agora.getDate();
+  // Leitura antiga (aberto sem internet, atualização falhou): o mês vale até o último dia lido,
+  // senão a comparação e a projeção dividem dias que não estão no histórico.
+  const ultimo = historico.length ? historico[historico.length - 1].dia : "";
+  const hoje = ultimo.startsWith(prefixo) ? Math.min(agora.getDate(), Number(ultimo.slice(8))) : agora.getDate();
   const ant = new Date(ano, mes - 1, 1, 12);
   const prefixoAnt = `${ant.getFullYear()}-${dois(ant.getMonth() + 1)}-`;
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
