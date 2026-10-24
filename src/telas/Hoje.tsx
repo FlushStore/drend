@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Plus } from "lucide-react";
 import { Aviso } from "@/design-system/Aviso";
@@ -15,6 +15,8 @@ import { useFlush } from "@/fontes/useFlush";
 import { META_FLUSH_MES, useStore } from "@/store";
 import { moneyBRL } from "@/lib/store-utils";
 import { CurvaDaSemana } from "./VendasDaSemana";
+import { cortarAtencao, montarAtencao, textoDosEsgotados, type ItemDeAtencao } from "@/core/atencao";
+import { useDiaEmBrasilia } from "@/lib/useDiaEmBrasilia";
 
 function saudacao(agora: Date) {
   const h = agora.getHours();
@@ -26,7 +28,7 @@ function saudacao(agora: Date) {
  * Regra do painel da Flush: um herói por tela, nada de texto explicando a tela.
  */
 export function Hoje() {
-  const { caixaDeEntrada, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas } = useStore();
+  const { caixaDeEntrada, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, contas, habitos, pagarConta, desfazerPagamento, alternarHabitoHoje } = useStore();
   const numeros = useFlush();
   const vm = useStatusVM();
   const missoes = useMissoes();
@@ -39,13 +41,34 @@ export function Hoje() {
   })();
   const { aviso, avisar, limpar } = useAviso();
   const [nova, setNova] = useState("");
+  // O dia de Brasília vira à meia-noite; o minuto mantém o "compromisso já já" em dia.
+  const hoje = useDiaEmBrasilia();
+  const [, setMinuto] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setMinuto((m) => m + 1), 60_000);
+    return () => clearInterval(t);
+  }, []);
   const agora = new Date();
   const longa = agora.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
   const data = longa.charAt(0).toUpperCase() + longa.slice(1);
   const lista = abertas(tarefas);
-  const total = lista.length + caixaDeEntrada.length;
   const agendaEstado = useAgenda();
   const eventos = eventosDa(agendaEstado);
+  const acabando = numeros.produtos?.acabando;
+  const atencao = cortarAtencao(
+    montarAtencao({ contas, habitos, compromissos: eventos, esgotados: acabando ? acabando.filter((x) => x.quantidade === 0).length : null, agora }),
+  );
+  const total = atencao.visiveis.length + atencao.escondidos + lista.length + caixaDeEntrada.length;
+
+  function tocar(i: ItemDeAtencao) {
+    if (i.tipo === "conta") {
+      const p = pagarConta(i.contaId, i.mes);
+      if (p) avisar(p.lancamento ? `${i.nome} paga · gasto lançado` : `${i.nome} paga`, "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazerPagamento(i.contaId, p.mes) });
+    } else if (i.tipo === "habito") {
+      alternarHabitoHoje(i.habitoId, hoje);
+      avisar(`${i.nome}: feito hoje`, "sucesso", { rotulo: "Desfazer", aoTocar: () => alternarHabitoHoje(i.habitoId, hoje) });
+    }
+  }
   const prox = eventos ? proximo(eventos, agora) : null;
   const amanha = (() => { const d = new Date(agora); d.setHours(12); d.setDate(d.getDate() + 1); return diaDe(d); })();
   const tiraAgenda = prox
@@ -86,6 +109,35 @@ export function Hoje() {
         <section className="cos-bloco dr-para-voce" aria-labelledby="dr-pv">
           <h2 id="dr-pv" className="dr-rotulo">Para você {total > 0 && <span className="dr-conta">{total}</span>}</h2>
           <ul className="dr-lista">
+            {atencao.visiveis.map((i) =>
+              i.tipo === "conta" || i.tipo === "habito" ? (
+                <li key={i.chave} className="dr-lista-item dr-tarefa">
+                  <button
+                    type="button"
+                    className="dr-tarefa-check"
+                    aria-label={i.tipo === "conta" ? `Marcar paga: ${i.nome}` : `Feito hoje: ${i.nome}`}
+                    onClick={() => tocar(i)}
+                  >
+                    <Check size={14} strokeWidth={2.5} aria-hidden="true" />
+                  </button>
+                  <span className="dr-tarefa-texto">
+                    <small className="dr-lista-tipo" data-estado={i.tipo === "conta" ? i.estado : undefined}>{i.rotulo}</small>
+                    {i.nome}
+                  </span>
+                  {i.tipo === "conta" && i.valor !== null && <span className="dr-atencao-valor"><Valor valor={i.valor} tamanho="p" /></span>}
+                </li>
+              ) : (
+                <li key={i.chave}>
+                  <Link to={i.tela} className="dr-lista-item">
+                    <span>
+                      <small className="dr-lista-tipo" data-estado={i.tipo === "compromisso" && i.comecou ? "hoje" : undefined}>{i.rotulo}</small>
+                      {i.tipo === "compromisso" ? i.titulo : textoDosEsgotados(i.n)}
+                    </span>
+                    <SetaCirculo />
+                  </Link>
+                </li>
+              ),
+            )}
             {lista.map((t) => (
               <li key={t.id} className="dr-lista-item dr-tarefa">
                 <button
@@ -111,7 +163,12 @@ export function Hoje() {
               </li>
             ))}
           </ul>
-          {total === 0 && <p className="dr-vazio">Nada esperando por você.</p>}
+          {atencao.verTudo && (
+            <Link to={atencao.verTudo} className="dr-ver-tudo">
+              Ver tudo <small>+{atencao.escondidos}</small>
+            </Link>
+          )}
+          {total === 0 && <p className="dr-vazio">Tudo em dia.</p>}
           <form
             className="dr-tarefa-nova"
             onSubmit={(e) => {
