@@ -8,7 +8,7 @@ export function Drend() {
   return (
     <>
       <CabecalhoDeTela titulo="DREND" voltar={{ para: "/", rotulo: "Voltar para Hoje" }} />
-      <DrendChat aoAbrirMural={() => navigate("/mural")} />
+      <DrendChat aoAbrirMural={(q) => navigate(q ? `/mural?quadro=${q}` : "/mural")} />
     </>
   );
 }

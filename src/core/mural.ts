@@ -197,6 +197,14 @@ export class Mural {
     this.state = state;
   }
 
+  /** Volta um mural salvo (estado + log), para o desfazer continuar valendo depois de fechar o app. */
+  static restaurar(salvo: { state: MuralState; log: LogEntry[] }, now?: () => Date): Mural {
+    const m = new Mural(salvo.state, now);
+    m.log = salvo.log;
+    m.seq = salvo.log.reduce((max, e) => Math.max(max, Number(e.id.replace("log-", "")) || 0), 0);
+    return m;
+  }
+
   run(op: Op, actor: LogEntry["actor"], summary: string): LogEntry {
     const r = apply(this.state, op);
     this.state = r.state;

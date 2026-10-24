@@ -42,7 +42,7 @@ export function Mural() {
   const largo = useTelaLarga();
   const [busca, setBusca] = useSearchParams();
   const quadros = Object.values(mural.state.boards);
-  const [ativo, setAtivo] = useState(quadros[0]?.id ?? "");
+  const [ativo, setAtivo] = useState(busca.get("quadro") ?? quadros[0]?.id ?? "");
   const quadro = mural.state.boards[ativo] ?? quadros[0];
   const cards = quadro ? mural.cardsOf(quadro.id) : [];
   const links = quadro ? mural.linksOf(quadro.id) : [];
@@ -84,6 +84,19 @@ export function Mural() {
     );
   }
 
+  // Vindo do DREND com ?quadro=: abre o quadro recém-criado.
+  useEffect(() => {
+    const q = busca.get("quadro");
+    if (!q) return;
+    if (mural.state.boards[q]) setAtivo(q);
+    setBusca({}, { replace: true });
+  }, [busca, mural, setBusca]);
+
+  // No iPhone a fileira de quadros rola de lado: o quadro aberto fica à vista.
+  useEffect(() => {
+    document.querySelector(".dr-mural-filtros [aria-checked='true']")?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [quadro?.id]);
+
   // "Nota no Mural" do +: chega com ?nova=1, cria a nota e limpa o endereço.
   useEffect(() => {
     if (busca.get("nova") !== "1") return;
@@ -101,12 +114,13 @@ export function Mural() {
       <CabecalhoDeTela titulo="Mural">
         <div className="dr-mural-acoes">
           <BotaoCirculo rotulo="Histórico" onClick={() => setVerHistorico(true)}><History size={18} strokeWidth={1.75} /></BotaoCirculo>
-          <BotaoCirculo rotulo="Desfazer a última ação" onClick={desfazer}><Undo2 size={18} strokeWidth={1.75} /></BotaoCirculo>
+          <BotaoCirculo rotulo="Desfazer a última ação" onClick={() => desfazer()}><Undo2 size={18} strokeWidth={1.75} /></BotaoCirculo>
           <BotaoCirculo rotulo="Nova nota" tom="acento" onClick={novaNota} disabled={!quadro}><Plus size={18} strokeWidth={2} /></BotaoCirculo>
         </div>
       </CabecalhoDeTela>
 
       <FiltroDeLista
+        className="dr-mural-filtros"
         rotulo="Quadros"
         valor={quadro?.id ?? ""}
         aoMudar={setAtivo}

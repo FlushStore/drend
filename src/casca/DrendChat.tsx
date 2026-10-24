@@ -13,10 +13,11 @@ const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
   proposto: "Precisa do seu ok",
   falhou: "Não deu",
   pergunta: "Preciso de você",
+  dica: "",
 };
 
 /** A conversa com o DREND: no PC dentro do painel lateral, no iPhone como tela. */
-export function DrendChat({ aoAbrirMural }: { aoAbrirMural: () => void }) {
+export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) => void }) {
   const { mensagens, falar, guardarIdeia, desfazer, mural } = useStore();
   const [texto, setTexto] = useState("");
   const fim = useRef<HTMLDivElement>(null);
@@ -35,7 +36,7 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: () => void }) {
             <li key={m.id} className="dr-msg-eu">{m.texto}</li>
           ) : (
             <li key={m.id} className="dr-msg-drend cos-bloco">
-              <span className="dr-selo" data-status={m.status}>{SELO[m.status]}</span>
+              {SELO[m.status] && <span className="dr-selo" data-status={m.status}>{SELO[m.status]}</span>}
               <p>{m.texto}</p>
               {m.ideia && (
                 <div className="dr-msg-acoes">
@@ -46,8 +47,8 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: () => void }) {
               )}
               {m.logId && mural.log.some((e) => e.id === m.logId && !e.undone) && (
                 <div className="dr-msg-acoes">
-                  <Botao variante="secundaria" compacto onClick={aoAbrirMural}>Ver no Mural</Botao>
-                  {ultima?.id === m.logId && <Botao variante="fantasma" compacto onClick={desfazer}>Desfazer</Botao>}
+                  <Botao variante="secundaria" compacto onClick={() => aoAbrirMural(m.quadro)}>Ver no Mural</Botao>
+                  {ultima?.id === m.logId && <Botao variante="fantasma" compacto onClick={() => desfazer()}>Desfazer</Botao>}
                 </div>
               )}
             </li>

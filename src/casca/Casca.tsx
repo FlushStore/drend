@@ -125,7 +125,7 @@ export function Casca() {
       )}
 
       <Painel aberto={conversa} aoFechar={() => setConversa(false)} titulo="DREND" lado="direita">
-        <DrendChat aoAbrirMural={() => { setConversa(false); navigate("/mural"); }} />
+        <DrendChat aoAbrirMural={(q) => { setConversa(false); navigate(q ? `/mural?quadro=${q}` : "/mural"); }} />
       </Painel>
 
       <Painel aberto={conta} aoFechar={() => setConta(false)} titulo="Sua conta">
