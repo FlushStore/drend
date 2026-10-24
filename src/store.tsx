@@ -251,6 +251,17 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     return e;
   }, [mural]);
 
+  // Apagar um gasto que quitava uma conta devolve a conta para "a pagar"; o desfazer do gasto quita de novo.
+  const pagamentosSoltos = useRef(new Map<string, { conta: string; pagamento: PagamentoDeConta }[]>());
+  const apagarLancamento = useCallback((lid: string) => {
+    const { contas: depois, removidos } = semLancamento(contasAgora.current, lid);
+    if (removidos.length) {
+      pagamentosSoltos.current.set(lid, removidos);
+      contasAgora.current = depois;
+      setContas(depois);
+    }
+    setLancamentos((ls) => removerLancamento(ls, lid));
+  }, []);
   const falar = useCallback((texto: string) => {
     const limpo = texto.trim();
     if (!limpo) return;
@@ -308,7 +319,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderDinheiro(lancamentos) });
     } else if (cmd?.tipo === "apagarLancamento") {
       const [l] = ultimos(lancamentos, 1);
-      if (l) setLancamentos((ls) => removerLancamento(ls, l.id));
+      if (l) apagarLancamento(l.id);
       novas.push(l
         ? { id: id(), de: "drend", status: "feito", texto: `Apaguei o último lançamento: ${nomeDoLancamento(l).toLowerCase()}, ${l.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.` }
         : { id: id(), de: "drend", status: "falhou", texto: "Não há lançamento para apagar." });
@@ -416,7 +427,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Não entendi isso como pedido. Se for uma ideia, escolha onde eu guardo. Diga “ajuda” para ver o que eu entendo.", ideia: limpo });
     }
     setMensagens((ms) => [...ms, ...novas]);
-  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos, contas]);
+  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos, contas, apagarLancamento]);
 
   const guardarIdeia = useCallback(
     (ideia: string, projeto: string) => {
@@ -438,17 +449,6 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const criarTarefa = useCallback((texto: string) => setTarefas((l) => adicionar(l, novaTarefa(texto))), []);
   const concluirTarefa = useCallback((tid: string) => setTarefas((l) => concluir(l, tid)), []);
   const reabrirTarefa = useCallback((tid: string) => setTarefas((l) => reabrir(l, tid)), []);
-  // Apagar um gasto que quitava uma conta devolve a conta para "a pagar"; o desfazer do gasto quita de novo.
-  const pagamentosSoltos = useRef(new Map<string, { conta: string; pagamento: PagamentoDeConta }[]>());
-  const apagarLancamento = useCallback((lid: string) => {
-    const { contas: depois, removidos } = semLancamento(contasAgora.current, lid);
-    if (removidos.length) {
-      pagamentosSoltos.current.set(lid, removidos);
-      contasAgora.current = depois;
-      setContas(depois);
-    }
-    setLancamentos((ls) => removerLancamento(ls, lid));
-  }, []);
   const restaurarLancamento = useCallback((l: Lancamento) => {
     setLancamentos((ls) => adicionarLancamento(ls, l));
     const soltos = pagamentosSoltos.current.get(l.id);
