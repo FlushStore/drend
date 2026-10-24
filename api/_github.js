@@ -8,8 +8,8 @@ export const PUBLICO = "drend.vercel.app";
 export const REPO = "flushstore/drend";
 
 let chaves = null;
-async function chavesDoGitHub(buscar) {
-  if (chaves && chaves.ate > Date.now()) return chaves.jwks;
+async function chavesDoGitHub(buscar, renovar = false) {
+  if (!renovar && chaves && chaves.ate > Date.now()) return chaves.jwks;
   const r = await buscar(`${EMISSOR}/.well-known/jwks`);
   if (!r.ok) throw new Error("jwks indisponível");
   chaves = { jwks: await r.json(), ate: Date.now() + 60 * 60 * 1000 };
@@ -30,8 +30,9 @@ export async function conferirOidc(jwt, { buscar = fetch, jwks = null, agora = D
     return null;
   }
   if (cab.alg !== "RS256" || !cab.kid) return null;
-  const lista = (jwks ?? (await chavesDoGitHub(buscar))).keys ?? [];
-  const jwk = lista.find((k) => k.kid === cab.kid);
+  let jwk = (jwks ?? (await chavesDoGitHub(buscar))).keys?.find((k) => k.kid === cab.kid);
+  // O GitHub trocou de chave dentro da hora do cache: busca de novo antes de recusar.
+  if (!jwk && !jwks) jwk = (await chavesDoGitHub(buscar, true)).keys?.find((k) => k.kid === cab.kid);
   if (!jwk) return null;
   const ok = verify("RSA-SHA256", Buffer.from(`${partes[0]}.${partes[1]}`), createPublicKey({ key: jwk, format: "jwk" }), b64url(partes[2]));
   if (!ok) return null;

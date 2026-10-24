@@ -16,8 +16,9 @@ function useAgora() {
   return agora;
 }
 
-function Item({ item, novo, agora }: { item: ItemMissao; novo: boolean; agora: Date }) {
-  const atrasado = itemParado(item, agora);
+function Item({ item, novo, agora, pausado = false }: { item: ItemMissao; novo: boolean; agora: Date; pausado?: boolean }) {
+  // Projeto na gaveta não cobra nada, nem item por item.
+  const atrasado = !pausado && itemParado(item, agora);
   const corpo = (
     <>
       <span className="dr-mi-titulo">{item.titulo}</span>
@@ -53,7 +54,7 @@ function CartaoProjeto({ p, agora, novo }: { p: Projeto; agora: Date; novo: numb
       </div>
       {p.itens.agora.length > 0 ? (
         <ul className="dr-mi-lista" aria-label="Em andamento">
-          {p.itens.agora.map((i) => <Item key={i.chave} item={i} novo={novoAqui(i)} agora={agora} />)}
+          {p.itens.agora.map((i) => <Item key={i.chave} item={i} novo={novoAqui(i)} agora={agora} pausado={p.pausado} />)}
         </ul>
       ) : (
         <p className="dr-proj-linha">{p.ultimo ? p.ultimo.titulo : "Nada em andamento."}</p>

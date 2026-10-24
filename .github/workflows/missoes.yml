@@ -31,5 +31,7 @@ jobs:
           fi
           jq -n --arg n "$PR_NUMERO" --arg t "$PR_TITULO" --arg r "$PR_LINK" --arg f "$FASE" --arg x "$TEXTO" \
             '{missao:"drend", agente:"drend", tipo:"item", chave:("pr-"+$n), fase:$f, titulo:($t|.[0:200]), texto:$x, ref:$r}' > evento.json
+          # Aviso não trava o PR: se o DREND não responder, fica só o alerta no log.
           curl -sS --fail-with-body -X POST https://drend.vercel.app/api/missao \
-            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data @evento.json
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data @evento.json \
+            || echo "::warning::O DREND não registrou o PR nas Missões"

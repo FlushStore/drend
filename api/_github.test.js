@@ -31,4 +31,11 @@ describe("api/_github: token OIDC do Actions", () => {
     expect(eventoDePr({ ...pr, chave: "cerebro" })).toBe(false);
     expect(eventoDePr({ ...pr, tipo: "nota" })).toBe(false);
   });
+  it("busca as chaves de novo quando chega um kid desconhecido", async () => {
+    let buscas = 0;
+    const publicadas = [{ keys: [{ ...jwks.keys[0], kid: "velha" }] }, jwks];
+    const buscar = async () => ({ ok: true, json: async () => publicadas[Math.min(buscas++, 1)] });
+    expect(await conferirOidc(jwt(bom), { buscar, agora })).toMatchObject({ repository: "FlushStore/drend" });
+    expect(buscas).toBe(2);
+  });
 });
