@@ -32,7 +32,8 @@ async function ler(db, caminho) {
 }
 
 async function gravar(req, res, db) {
-  if (!autorizado(req)) return res.status(401).json({ erro: "token inválido" });
+  // O PC do Rapha grava com um token só do vault (DREND_VAULT_TOKEN); as tarefas, com o dos agentes.
+  if (!autorizado(req) && !autorizado(req, "DREND_VAULT_TOKEN")) return res.status(401).json({ erro: "token inválido" });
   const corpo = typeof req.body === "string" ? safeJson(req.body) : req.body;
   const vault = corpo?.vault;
   if (!VAULTS[vault]) return res.status(400).json({ erro: "vault desconhecido" });
