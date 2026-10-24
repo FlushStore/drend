@@ -22,6 +22,12 @@ const LEVELS: Record<string, Level> = {
   "arquivo.mover": "C",
   "arquivo.apagar": "C",
   "tarefa.criar": "C",
+  // Dinheiro e hábitos pessoais: só anota o que o Rapha contou (não move dinheiro). Automático, com desfazer.
+  "dinheiro.anotar": "B",
+  "dinheiro.apagar": "B",
+  "habito.criar": "B",
+  "habito.marcar": "B",
+  "habito.apagar": "B",
   "dinheiro.mover": "D",
   "deploy": "D",
   "migration": "D",

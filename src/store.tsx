@@ -14,6 +14,9 @@ import { responderAgenda } from "./core/agenda";
 import { eventosDa, iniciarAgenda, lerAgenda, motivoSemAgenda } from "./fontes/agenda";
 import { responderProjetos, responderVault } from "./core/vault";
 import { iniciarVault, lerVault, motivoSemVault, notasDo } from "./fontes/vault";
+import { adicionarLancamento, confirmarLancamento, lerLancamentos, nomeDoLancamento, novoLancamento, removerLancamento, responderDinheiro, ultimos, type Lancamento } from "./core/dinheiro";
+import { adicionarHabito, alternarDia, feitoNoDia, lerHabitos, marcarHoje, mesmoHabito, novoHabito, removerHabito, responderHabitos, sequencia, textoDaSequencia, type Habito } from "./core/habitos";
+import { diaEmBrasilia } from "./core/brasilia";
 
 /** O vault como a conversa enxerga: o índice das notas, ou o motivo de não ter. */
 function vaultDaConversa() {
@@ -39,7 +42,7 @@ function leituraDaFlush(): LeituraFlush {
 
 export type Mensagem =
   | { id: string; de: "rapha"; texto: string }
-  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string };
+  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string };
 
 /** Banco: "sem-banco" quando o build não tem as chaves; "fora" sem login. */
 export type Sincronia = "sem-banco" | "fora" | "sincronizando" | "ok" | "erro";
@@ -65,6 +68,16 @@ interface Store {
   /** Metas em reais ("flush-mes"). Moram no retrato: vão para o banco junto com o resto. */
   metas: Record<string, number>;
   definirMeta: (chave: string, valor: number | null) => void;
+  /** Dinheiro pessoal (Vida), contado pelo chat. Nível B: automático, com desfazer. */
+  lancamentos: Lancamento[];
+  apagarLancamento: (id: string) => void;
+  restaurarLancamento: (l: Lancamento) => void;
+  /** Hábitos (Vida). Nível B. */
+  habitos: Habito[];
+  criarHabito: (nome: string) => void;
+  alternarHabitoHoje: (id: string) => void;
+  apagarHabito: (id: string) => void;
+  restaurarHabito: (h: Habito) => void;
 }
 
 export const META_FLUSH_MES = "flush-mes";
@@ -94,10 +107,12 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const [mensagens, setMensagens] = useState<Mensagem[]>(salvo?.mensagens.length ? salvo.mensagens : BOAS_VINDAS);
   const [tarefas, setTarefas] = useState<Tarefa[]>(() => podar(salvo?.tarefas ?? []));
   const [metas, setMetas] = useState<Record<string, number>>(salvo?.metas ?? {});
+  const [lancamentos, setLancamentos] = useState<Lancamento[]>(() => lerLancamentos(salvo?.lancamentos));
+  const [habitos, setHabitos] = useState<Habito[]>(() => lerHabitos(salvo?.habitos));
 
   useEffect(() => {
-    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas });
-  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas, metas]);
+    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos });
+  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos]);
 
   // As missões ficam ouvindo desde a abertura: a conversa responde sem precisar abrir a tela.
   useEffect(iniciarMissoes, []);
@@ -137,6 +152,8 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
           setMensagens(remoto.mensagens.length ? remoto.mensagens : BOAS_VINDAS);
           setTarefas(podar(remoto.tarefas ?? []));
           setMetas(remoto.metas ?? {});
+          setLancamentos(lerLancamentos(remoto.lancamentos));
+          setHabitos(lerHabitos(remoto.habitos));
           setVersao((v) => v + 1);
         } else if (local) {
           await subir(local);
@@ -155,11 +172,11 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   useEffect(() => {
     if (!usuario || !conciliado.current) return;
     const t = setTimeout(() => {
-      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas };
+      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos };
       subir(r).then(() => setSincronia("ok"), () => setSincronia("erro"));
     }, 1000);
     return () => clearTimeout(t);
-  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas, metas]);
+  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos]);
 
   const entrar = useCallback(async (email: string, senha: string) => {
     if (!supabase) return "O banco ainda não está ligado.";
@@ -215,6 +232,35 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push(repetida
         ? { id: id(), de: "drend", status: "dica", texto: `“${repetida.texto}” já está na sua lista.` }
         : { id: id(), de: "drend", status: "feito", texto: `Anotei: “${t.texto}”. Está em Para você, no Hoje.` });
+    } else if (cmd?.tipo === "lancamento") {
+      // Nível B (dinheiro.anotar): grava na hora; o Desfazer da mensagem tira o lançamento.
+      const l = novoLancamento(cmd.lancamento);
+      setLancamentos((ls) => adicionarLancamento(ls, l));
+      novas.push({ id: id(), de: "drend", status: "feito", texto: confirmarLancamento(l, [...lancamentos, l]), lancamento: l.id });
+    } else if (cmd?.tipo === "dinheiro") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderDinheiro(lancamentos) });
+    } else if (cmd?.tipo === "apagarLancamento") {
+      const [l] = ultimos(lancamentos, 1);
+      if (l) setLancamentos((ls) => removerLancamento(ls, l.id));
+      novas.push(l
+        ? { id: id(), de: "drend", status: "feito", texto: `Apaguei o último lançamento: ${nomeDoLancamento(l).toLowerCase()}, ${l.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.` }
+        : { id: id(), de: "drend", status: "falhou", texto: "Não há lançamento para apagar." });
+    } else if (cmd?.tipo === "novoHabito") {
+      const h = novoHabito(cmd.nome);
+      const repetido = habitos.find((x) => mesmoHabito(x.nome, h.nome));
+      if (!repetido) setHabitos((hs) => adicionarHabito(hs, h));
+      novas.push(repetido
+        ? { id: id(), de: "drend", status: "dica", texto: `“${repetido.nome}” já é um hábito seu. Diga “fiz ${repetido.nome.toLowerCase()}” para marcar hoje.` }
+        : { id: id(), de: "drend", status: "feito", texto: `Hábito novo: “${h.nome}”. Está em Vida; diga “fiz ${h.nome.toLowerCase()}” para marcar hoje.` });
+    } else if (cmd?.tipo === "habitos") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderHabitos(habitos) });
+    } else if (cmd?.tipo === "concluir" && habitoDoTexto(habitos, abertas(tarefas), cmd.texto)) {
+      // "fiz academia": se o texto é um hábito (e não uma tarefa aberta), marca o hábito hoje.
+      const h = habitoDoTexto(habitos, abertas(tarefas), cmd.texto)!;
+      const ja = feitoNoDia(h, diaEmBrasilia(new Date()));
+      if (!ja) setHabitos((hs) => marcarHoje(hs, h.id));
+      const n = ja ? sequencia(h) : sequencia({ ...h, feitos: [...h.feitos, diaEmBrasilia(new Date())] });
+      novas.push({ id: id(), de: "drend", status: ja ? "dica" : "feito", texto: ja ? `“${h.nome}” já estava marcado hoje. ${textoDaSequencia(n)}.` : `Marquei “${h.nome}” hoje. ${textoDaSequencia(n)}.` });
     } else if (cmd?.tipo === "concluir" || cmd?.tipo === "reabrir" || cmd?.tipo === "apagarTarefa") {
       // Concluir e apagar procuram nas abertas; reabrir, nas feitas. Empate vira pergunta, nunca chute.
       const base = cmd.tipo === "reabrir" ? tarefas.filter((t) => t.feitaEm) : abertas(tarefas);
@@ -286,7 +332,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Não entendi isso como pedido. Se for uma ideia, escolha onde eu guardo. Diga “ajuda” para ver o que eu entendo.", ideia: limpo });
     }
     setMensagens((ms) => [...ms, ...novas]);
-  }, [mural, tarefas, caixaDeEntrada.length, metas]);
+  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos]);
 
   const guardarIdeia = useCallback(
     (ideia: string, projeto: string) => {
@@ -308,6 +354,12 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const criarTarefa = useCallback((texto: string) => setTarefas((l) => adicionar(l, novaTarefa(texto))), []);
   const concluirTarefa = useCallback((tid: string) => setTarefas((l) => concluir(l, tid)), []);
   const reabrirTarefa = useCallback((tid: string) => setTarefas((l) => reabrir(l, tid)), []);
+  const apagarLancamento = useCallback((lid: string) => setLancamentos((ls) => removerLancamento(ls, lid)), []);
+  const restaurarLancamento = useCallback((l: Lancamento) => setLancamentos((ls) => adicionarLancamento(ls, l)), []);
+  const criarHabito = useCallback((nome: string) => setHabitos((hs) => adicionarHabito(hs, novoHabito(nome))), []);
+  const alternarHabitoHoje = useCallback((hid: string) => setHabitos((hs) => alternarDia(hs, hid, diaEmBrasilia(new Date()))), []);
+  const apagarHabito = useCallback((hid: string) => setHabitos((hs) => removerHabito(hs, hid)), []);
+  const restaurarHabito = useCallback((h: Habito) => setHabitos((hs) => adicionarHabito(hs, h)), []);
   const definirMeta = useCallback((chave: string, valor: number | null) => setMetas((m) => {
     const novas = { ...m };
     if (valor) novas[chave] = valor;
@@ -316,10 +368,18 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   }), []);
 
   const value = useMemo(
-    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta }),
-    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta],
+    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito }),
+    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+/** O hábito que a frase "fiz X" descreve, quando não há tarefa aberta que case melhor. */
+function habitoDoTexto(habitos: readonly Habito[], tarefasAbertas: readonly Tarefa[], texto: string): Habito | null {
+  const h = acharPorTexto(habitos, texto, (x) => x.nome);
+  if (!h || !("achado" in h)) return null;
+  if (mesmoHabito(h.achado.nome, texto)) return h.achado;
+  return acharPorTexto(tarefasAbertas, texto, (t) => t.texto) ? null : h.achado;
 }
 
 export function useStore() {
