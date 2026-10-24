@@ -5,14 +5,14 @@
  * O dia é sempre o de Brasília.
  */
 import type { Compromisso } from "./agenda";
-import { contasDoMes, reais, textoDoEstado, type Conta, type EstadoDaConta } from "./contas";
+import { contasDoMes, pagamentoDoMes, reais, textoDoEstado, vencimentoNoMes, type Conta, type EstadoDaConta } from "./contas";
 import { feitoNoDia, type Habito } from "./habitos";
-import { diaEmBrasilia } from "./brasilia";
+import { diaEmBrasilia, somarDias } from "./brasilia";
 
 export type Tela = "/vida" | "/negocios";
 
 export type ItemDeAtencao =
-  | { tipo: "conta"; chave: string; contaId: string; nome: string; estado: Exclude<EstadoDaConta, "paga">; dias: number; valor: number | null; rotulo: string; tela: Tela }
+  | { tipo: "conta"; chave: string; contaId: string; /** "AAAA-MM" que esta ocorrência quita (o "marcar paga" usa este mês). */ mes: string; nome: string; estado: Exclude<EstadoDaConta, "paga">; dias: number; valor: number | null; rotulo: string; tela: Tela }
   | { tipo: "compromisso"; chave: string; titulo: string; inicio: string; comecou: boolean; rotulo: string; tela: Tela }
   | { tipo: "esgotados"; chave: string; n: number; rotulo: string; tela: Tela }
   | { tipo: "habito"; chave: string; habitoId: string; nome: string; rotulo: string; tela: Tela };
@@ -40,9 +40,38 @@ export function compromissosProximos(lista: readonly Compromisso[], agora: Date,
     .sort((a, b) => a.inicio.localeCompare(b.inicio));
 }
 
-/** Contas atrasadas, de hoje e de amanhã (o resto do mês fica em Vida). */
-function contasUrgentes(contas: readonly Conta[], agora: Date) {
-  return contasDoMes(contas, agora).filter((i) => i.estado === "atrasada" || i.estado === "hoje" || (i.estado === "futura" && i.dias === 1));
+export interface ContaUrgente {
+  conta: Conta;
+  /** O mês de cobrança desta ocorrência. */
+  mes: string;
+  estado: Exclude<EstadoDaConta, "paga">;
+  dias: number;
+  valor: number | null;
+}
+
+/**
+ * Contas atrasadas, de hoje e de amanhã (o resto do mês fica em Vida). No último dia do mês,
+ * "amanhã" é no mês seguinte: a conta do dia 1 entra como "Vence amanhã" com o mês de lá.
+ */
+export function contasUrgentes(contas: readonly Conta[], agora: Date): ContaUrgente[] {
+  const hoje = diaEmBrasilia(agora);
+  const mes = hoje.slice(0, 7);
+  const amanha = somarDias(hoje, 1);
+  const mesAmanha = amanha.slice(0, 7);
+  const itens: ContaUrgente[] = [];
+  for (const i of contasDoMes(contas, agora)) {
+    if (i.estado === "atrasada" || i.estado === "hoje" || (i.estado === "futura" && i.dias === 1)) {
+      itens.push({ conta: i.conta, mes, estado: i.estado, dias: i.dias, valor: i.valor });
+    }
+  }
+  if (mesAmanha !== mes) {
+    for (const c of contas) {
+      if (c.ativa && vencimentoNoMes(c, mesAmanha) === amanha && !pagamentoDoMes(c, mesAmanha)) {
+        itens.push({ conta: c, mes: mesAmanha, estado: "futura", dias: 1, valor: c.valor });
+      }
+    }
+  }
+  return itens;
 }
 
 /** Peso de urgência: menor vem antes. */
@@ -63,7 +92,7 @@ export function montarAtencao(f: FontesDeAtencao): ItemDeAtencao[] {
     itens.push({ tipo: "compromisso", chave: `ag-${c.id}`, titulo: c.titulo, inicio: c.inicio, comecou, rotulo: comecou ? "Agora" : `Às ${hhmm(c.inicio)}`, tela: "/vida" });
   }
   for (const i of contasUrgentes(f.contas, f.agora)) {
-    itens.push({ tipo: "conta", chave: `ct-${i.conta.id}`, contaId: i.conta.id, nome: i.conta.nome, estado: i.estado as Exclude<EstadoDaConta, "paga">, dias: i.dias, valor: i.valor, rotulo: textoDoEstado(i), tela: "/vida" });
+    itens.push({ tipo: "conta", chave: `ct-${i.conta.id}-${i.mes}`, contaId: i.conta.id, mes: i.mes, nome: i.conta.nome, estado: i.estado, dias: i.dias, valor: i.valor, rotulo: textoDoEstado(i), tela: "/vida" });
   }
   if (f.esgotados && f.esgotados > 0) {
     itens.push({ tipo: "esgotados", chave: "esgotados", n: f.esgotados, rotulo: "Flush", tela: "/negocios" });
@@ -96,7 +125,7 @@ export function responderAtencao(contas: readonly Conta[], habitos: readonly Hab
   const partes: string[] = [];
   const urgentes = contasUrgentes(contas, agora);
   if (urgentes.length) {
-    const ordem = { atrasada: 0, hoje: 1, futura: 2, paga: 3 } as const;
+    const ordem = { atrasada: 0, hoje: 1, futura: 2 } as const;
     const lista = [...urgentes].sort((a, b) => ordem[a.estado] - ordem[b.estado] || (a.estado === "atrasada" ? b.dias - a.dias : 0));
     partes.push(`Contas:\n${lista.map((i) => `• ${i.conta.nome}: ${textoDoEstado(i).toLowerCase()}${i.valor !== null ? ` (${reais(i.valor)})` : ""}`).join("\n")}`);
   }

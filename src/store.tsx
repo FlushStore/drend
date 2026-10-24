@@ -100,8 +100,8 @@ interface Store {
   apagarConta: (id: string) => void;
   /** Volta a conta como estava (desfazer de editar ou de apagar). */
   restaurarConta: (c: Conta) => void;
-  /** Marca paga no mês de agora e lança o gasto (quando tem valor). Devolve o pagamento para o desfazer. */
-  pagarConta: (id: string) => PagamentoDeConta | null;
+  /** Marca paga no mês de agora (ou no `mes` dado, "AAAA-MM") e lança o gasto (quando tem valor). Devolve o pagamento para o desfazer. */
+  pagarConta: (id: string, mes?: string) => PagamentoDeConta | null;
   /** Desmarca e tira o gasto que o pagamento lançou. Devolve o que tirou, para refazer. */
   desfazerPagamento: (id: string, mes: string) => { pagamento: PagamentoDeConta; lancamento: Lancamento | null } | null;
   restaurarPagamento: (id: string, p: PagamentoDeConta, l: Lancamento | null) => void;
@@ -110,9 +110,9 @@ interface Store {
 export const META_FLUSH_MES = "flush-mes";
 
 /** Quita a conta no mês de agora: com valor, o gasto nasce junto e fica vinculado. Já paga: nada muda. */
-function pagarAgora(contas: readonly Conta[], cid: string, agora: Date): { contas: Conta[]; pagamento: PagamentoDeConta | null; lancamento: Lancamento | null } {
+function pagarAgora(contas: readonly Conta[], cid: string, agora: Date, mesDado?: string): { contas: Conta[]; pagamento: PagamentoDeConta | null; lancamento: Lancamento | null } {
   const c = contas.find((x) => x.id === cid);
-  const mes = mesEmBrasilia(agora);
+  const mes = mesDado && /^\d{4}-\d{2}$/.test(mesDado) ? mesDado : mesEmBrasilia(agora);
   if (!c || pagamentoDoMes(c, mes)) return { contas: [...contas], pagamento: null, lancamento: null };
   const lancamento = c.valor ? novoLancamento({ tipo: "gasto", valor: c.valor, descricao: c.nome }, agora) : null;
   const pagamento: PagamentoDeConta = { mes, em: agora.toISOString(), valor: c.valor, lancamento: lancamento?.id ?? null };
@@ -469,8 +469,8 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const editarConta = useCallback((cid: string, m: MudancaDeConta) => setContas((cs) => editarNaLista(cs, cid, m)), []);
   const apagarConta = useCallback((cid: string) => setContas((cs) => removerConta(cs, cid)), []);
   const restaurarConta = useCallback((c: Conta) => setContas((cs) => (cs.some((x) => x.id === c.id) ? substituirConta(cs, c) : [...cs, c])), []);
-  const pagarConta = useCallback((cid: string) => {
-    const { contas: depois, pagamento, lancamento } = pagarAgora(contasAgora.current, cid, new Date());
+  const pagarConta = useCallback((cid: string, mes?: string) => {
+    const { contas: depois, pagamento, lancamento } = pagarAgora(contasAgora.current, cid, new Date(), mes);
     if (!pagamento) return null;
     if (lancamento) setLancamentos((ls) => adicionarLancamento(ls, lancamento));
     contasAgora.current = depois;

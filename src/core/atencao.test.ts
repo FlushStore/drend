@@ -49,7 +49,7 @@ describe("montarAtencao", () => {
       esgotados: 3,
       agora,
     });
-    expect(tipos(l)).toEqual(["ag-Reunião", "ct-luz", "ct-agua", "ct-aluguel", "ct-internet", "esgotados", "hb-academia", "hb-agua"]);
+    expect(tipos(l)).toEqual(["ag-Reunião", "ct-luz-2026-10", "ct-agua-2026-10", "ct-aluguel-2026-10", "ct-internet-2026-10", "esgotados", "hb-academia", "hb-agua"]);
     const luz = l[1];
     expect(luz.tipo === "conta" && luz.rotulo).toBe("Atrasada há 14 dias");
     expect(l[3].rotulo).toBe("Vence hoje");
@@ -106,5 +106,37 @@ describe("no chat", () => {
   it("“o que tenho pra hoje?” e “pendências” caem na mesma resposta (sem comando novo)", () => {
     expect(entender("o que tenho pra hoje?")).toEqual({ tipo: "pendencias" });
     expect(entender("pendências")).toEqual({ tipo: "pendencias" });
+  });
+});
+
+describe("virada do mês", () => {
+  // 15h em Brasília do último dia do mês.
+  const fim = (dia: string) => new Date(`${dia}T18:00:00Z`);
+  const contaDia1 = (pagaEm: string | null) => conta("Aluguel", 1, 1500, pagaEm);
+
+  it.each([
+    ["2026-10-31", "2026-10", "2026-11"],
+    ["2026-11-30", "2026-11", "2026-12"],
+    ["2026-12-31", "2026-12", "2027-01"],
+  ])("em %s, a conta do dia 1 já paga no mês aparece como “Vence amanhã” do mês seguinte", (dia, mesAtual, proximo) => {
+    const l = montarAtencao({ contas: [contaDia1(mesAtual)], habitos: [], compromissos: null, esgotados: null, agora: fim(dia) });
+    expect(l).toHaveLength(1);
+    expect(l[0]).toMatchObject({ tipo: "conta", mes: proximo, estado: "futura", dias: 1, rotulo: "Vence amanhã", chave: `ct-aluguel-${proximo}` });
+    expect(sp(responderAtencao([contaDia1(mesAtual)], [], fim(dia)))).toBe("Contas:\n• Aluguel: vence amanhã (R$ 1.500)");
+  });
+
+  it("sem pagar o mês atual, as duas ocorrências aparecem, cada uma com o seu mês", () => {
+    const l = montarAtencao({ contas: [contaDia1(null)], habitos: [], compromissos: null, esgotados: null, agora: fim("2026-10-31") });
+    expect(l.map((i) => i.tipo === "conta" && [i.mes, i.rotulo])).toEqual([["2026-10", "Atrasada há 30 dias"], ["2026-11", "Vence amanhã"]]);
+  });
+
+  it("já paga no mês seguinte ou pausada: não entra", () => {
+    const paga: Conta = { ...contaDia1("2026-10"), pagamentos: [...contaDia1("2026-10").pagamentos, { mes: "2026-11", em: "2026-10-30T12:00:00Z", valor: 1500, lancamento: null }] };
+    expect(montarAtencao({ contas: [paga], habitos: [], compromissos: null, esgotados: null, agora: fim("2026-10-31") })).toEqual([]);
+    expect(montarAtencao({ contas: [{ ...contaDia1("2026-10"), ativa: false }], habitos: [], compromissos: null, esgotados: null, agora: fim("2026-10-31") })).toEqual([]);
+  });
+
+  it("fora do último dia, nada do mês seguinte entra", () => {
+    expect(montarAtencao({ contas: [contaDia1("2026-10")], habitos: [], compromissos: null, esgotados: null, agora: fim("2026-10-30") })).toEqual([]);
   });
 });

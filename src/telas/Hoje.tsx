@@ -62,7 +62,7 @@ export function Hoje() {
 
   function tocar(i: ItemDeAtencao) {
     if (i.tipo === "conta") {
-      const p = pagarConta(i.contaId);
+      const p = pagarConta(i.contaId, i.mes);
       if (p) avisar(p.lancamento ? `${i.nome} paga · gasto lançado` : `${i.nome} paga`, "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazerPagamento(i.contaId, p.mes) });
     } else if (i.tipo === "habito") {
       alternarHabitoHoje(i.habitoId, hoje);
