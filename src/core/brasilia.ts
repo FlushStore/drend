@@ -32,3 +32,13 @@ export function diasRestantesNoMes(agora = new Date()): number {
   const [a, m, d] = hoje.split("-").map(Number);
   return new Date(Date.UTC(a, m, 0)).getUTCDate() - d + 1;
 }
+
+const HORA = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+/** "21:14": a hora do instante em Brasília. */
+export function horarioEmBrasilia(d: Date | string): string {
+  return HORA.format(typeof d === "string" ? new Date(d) : d);
+}
+
+/** A hora cheia (0 a 23) do instante em Brasília. */
+export const horaEmBrasilia = (d: Date | string) => Number(horarioEmBrasilia(d).slice(0, 2));

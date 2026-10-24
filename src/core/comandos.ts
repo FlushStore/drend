@@ -10,6 +10,7 @@ import type { QuandoAgenda } from "./agenda";
 import { lerLancamento, type LancamentoLido } from "./dinheiro";
 import { lerConta, lerPagamentoDeConta, type ContaLida } from "./contas";
 import { lerLimite, lerTirar } from "./metas";
+import { lerConsultaDoDiario, lerFraseDoDiario, type QuandoDiario } from "./diario";
 
 export type Comando =
   | { tipo: "criarQuadro"; titulo: string; cartoes: string[]; projeto: string }
@@ -52,7 +53,11 @@ export type Comando =
   /** "paguei a luz": `texto` é a conta; `frase`, o que vira "concluir" se nenhuma conta casar. */
   | { tipo: "pagarConta"; texto: string; frase: string }
   /** "como foi a semana?" · "resumo da semana": a revisão dos últimos 7 dias. */
-  | { tipo: "semana" };
+  | { tipo: "semana" }
+  /** "diário: dia puxado" · "hoje foi bom" · "como me sinto: cansado": anotação do dia; `humor` só quando ele disse. */
+  | { tipo: "diario"; texto: string; humor: number | null }
+  /** "o que anotei ontem?" · "meu diário da semana" · "como foi terça?" */
+  | { tipo: "consultaDiario"; quando: QuandoDiario };
 
 export type Periodo = "hoje" | "ontem" | "semana" | "mes";
 
@@ -94,6 +99,11 @@ export function entender(entrada: string): Comando | null {
   if (/^(?:ajuda|help|socorro|comandos|como (?:funciona|te uso|usar)|o que (?:voce )?(?:faz|sabe fazer|consegue fazer|entende)|preciso de ajuda)(?: drend)?$/.test(n)) {
     return { tipo: "ajuda" };
   }
+  // Diário do dia (antes de tudo que começa igual: "anota…", "o que eu anotei…" do vault).
+  const diario = lerFraseDoDiario(t);
+  if (diario) return { tipo: "diario", ...diario };
+  const consultaDiario = lerConsultaDoDiario(t);
+  if (consultaDiario !== null) return { tipo: "consultaDiario", quando: consultaDiario };
 
   // Dinheiro pessoal: "gastei 50 no mercado" · "recebi 1.200 do freela" (só com valor na frase).
   const lancamento = lerLancamento(t);

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { EstadoVazio } from "@/design-system/EstadoVazio";
@@ -11,6 +11,7 @@ import { tomDoSinal } from "@/design-system/formato";
 import { gastosPorCategoria, nomeDoLancamento, saldoDoMes, ultimos } from "@/core/dinheiro";
 import { feitoNoDia, sequencia, textoDaSequencia, ultimos7 } from "@/core/habitos";
 import { meioDiaEmBrasilia } from "@/core/brasilia";
+import { LIMITE_DO_TEXTO, dataCurta, diasAnotadosAntes, doDia, horario, humorDoDia } from "@/core/diario";
 import { useDiaEmBrasilia } from "@/lib/useDiaEmBrasilia";
 import { useStore } from "@/store";
 import { AgendaDaSemana } from "./AgendaDaSemana";
@@ -25,7 +26,7 @@ const quando = (iso: string) => {
 const letraDoDia = (dia: string) => new Date(`${dia}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC", weekday: "narrow" }).toUpperCase();
 const nomeDoDia = (dia: string) => new Date(`${dia}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC", weekday: "long", day: "numeric" });
 
-/** Vida: dinheiro pessoal, contas do mês e hábitos (o que o Rapha conta) e a agenda. Só dado real: sem lançamento, a tela ensina a lançar. */
+/** Vida: dinheiro pessoal, contas do mês, diário e hábitos (o que o Rapha conta) e a agenda. Só dado real: sem lançamento, a tela ensina a lançar. */
 export function Vida() {
   // Um aviso só para a tela: o Desfazer de dinheiro e de hábito aparece no mesmo lugar.
   const { aviso, avisar, limpar } = useAviso();
@@ -40,7 +41,10 @@ export function Vida() {
           <LimitesDoMes hoje={hoje} avisar={avisar} />
           <ContasDoMes hoje={hoje} avisar={avisar} />
         </div>
-        <Habitos avisar={avisar} hoje={hoje} />
+        <div className="dr-vida-coluna">
+          <Diario avisar={avisar} hoje={hoje} />
+          <Habitos avisar={avisar} hoje={hoje} />
+        </div>
       </div>
       <AgendaDaSemana />
       <Aviso aviso={aviso} aoSumir={limpar} />
@@ -205,6 +209,82 @@ function Habitos({ avisar, hoje }: { avisar: Avisar; hoje: string }) {
           <input value={novo} onChange={(e) => setNovo(e.target.value)} placeholder="Novo hábito" enterKeyHint="done" />
         </label>
       </form>
+    </section>
+  );
+}
+
+/** O humor como um ponto discreto: a cor diz, o leitor de tela lê o número. */
+function Humor({ h }: { h: number }) {
+  return (
+    <>
+      <i className="dr-diario-humor" data-humor={h} aria-hidden="true" title={`Humor ${h} de 5`} />
+      <span className="cos-sr">humor {h} de 5</span>
+    </>
+  );
+}
+
+/** Diário do dia: o que ele anotou hoje, o campo para escrever e os últimos 7 dias com anotação. */
+function Diario({ avisar, hoje }: { avisar: Avisar; hoje: string }) {
+  const { diario, anotarNoDiario, desfazerDiario } = useStore();
+  const [texto, setTexto] = useState("");
+  const bloco = useRef<HTMLElement>(null);
+  const campo = useRef<HTMLInputElement>(null);
+  // "Anotar o dia" (Hoje) e o toque na Semana chegam com ?diario: rola até aqui e abre o campo.
+  const [params] = useSearchParams();
+  const pedido = params.has("diario");
+  useEffect(() => {
+    if (!pedido) return;
+    const reduzido = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    bloco.current?.scrollIntoView({ block: "center", behavior: reduzido ? "auto" : "smooth" });
+    campo.current?.focus({ preventScroll: true });
+  }, [pedido]);
+
+  const deHoje = doDia(diario, hoje);
+  const humorDeHoje = humorDoDia(deHoje);
+  const antes = diasAnotadosAntes(diario, hoje, 7);
+
+  return (
+    <section ref={bloco} className="cos-bloco dr-vida-bloco dr-diario" aria-labelledby="dr-vida-diario">
+      <h2 id="dr-vida-diario" className="dr-rotulo">Diário {humorDeHoje !== null && <Humor h={humorDeHoje} />}</h2>
+      {deHoje.length > 0 && (
+        <ul className="dr-lista" aria-label="Hoje">
+          {deHoje.map((a) => (
+            <li key={a.id} className="dr-diario-item">
+              <small className="dr-lista-tipo">{horario(a)}</small>
+              <span className="dr-diario-texto">{a.texto}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form
+        className="dr-tarefa-nova dr-diario-campo"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const m = anotarNoDiario(texto);
+          if (!m) return;
+          setTexto("");
+          avisar("Anotado no diário", "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazerDiario(m) });
+        }}
+      >
+        <Plus size={16} strokeWidth={2} aria-hidden="true" />
+        <label className="dr-tarefa-nova-campo">
+          <span className="cos-sr">Anotar o dia</span>
+          <input ref={campo} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Como foi o dia?" maxLength={LIMITE_DO_TEXTO} enterKeyHint="done" />
+        </label>
+      </form>
+      {antes.length > 0 && (
+        <>
+          <h3 className="dr-rotulo dr-vida-sub">Últimos dias</h3>
+          <ul className="dr-lista">
+            {antes.map((d) => (
+              <li key={d.dia} className="dr-diario-dia">
+                <span className="dr-diario-data">{dataCurta(d.dia)}{d.humor !== null && <Humor h={d.humor} />}</span>
+                <span className="dr-diario-texto">{d.anotacoes.map((a) => a.texto).join(" · ")}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   );
 }

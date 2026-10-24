@@ -142,6 +142,7 @@ export const AJUDA = [
   "• seu dinheiro: “gastei 50 no mercado”, “recebi 1.200 do freela”, “quanto gastei?”, “apaga o último lançamento”",
   "• contas do mês: “conta de luz todo dia 10, 200 reais”, “paguei a luz”, “quais contas vencem?”",
   "• hábitos: “novo hábito academia”, “fiz academia”, “meus hábitos”",
+  "• diário do dia: “diário: dia puxado, fechei 3 pedidos”, “hoje foi bom”, “como me sinto: cansado”, “o que anotei ontem?”, “meu diário da semana”, “como foi terça?”",
   "• a semana: “como foi a semana?”, “resumo da semana”",
   "• agenda: “o que tenho amanhã?”, “minha agenda da semana”, “próximo compromisso”",
   "• missões: “anota na missão: terminei o login”, “como está a missão da flush?”",

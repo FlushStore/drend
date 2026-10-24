@@ -22,6 +22,7 @@ import { adicionarConta, confirmarConta, confirmarPagamento, contaParaPagar, des
 import { responderSemana, semanaDaFlush, type SemanaFlush } from "./core/semana";
 import type { ResumoFlush } from "./fontes/flush";
 import { resumirMes } from "./core/financeiro";
+import { anotar, confirmarAnotacao, desfazerAnotacao, detectarHumor, lerAnotacoes, novaAnotacao, responderDiario, type Anotacao, type MudancaDoDiario } from "./core/diario";
 import { META_FLUSH_MES, chaveDoLimite, confirmarLimite, desfazerMudanca, lerMetas, limitesDoMes, nomeDoLimiteNaFrase, registrarMudanca, responderMetas, type Carimbos, type Metas, type MesParaMeta, type MudancaDeMeta } from "./core/metas";
 
 /** O vault como a conversa enxerga: o índice das notas, ou o motivo de não ter. */
@@ -65,7 +66,7 @@ function semanaDaConversa(): SemanaFlush | null | "carregando" {
 
 export type Mensagem =
   | { id: string; de: "rapha"; texto: string }
-  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string; pagamento?: { conta: string; mes: string }; /** Meta ou limite que a mensagem mudou: o Desfazer só vale enquanto esta for a mudança mais recente da chave. */ meta?: MudancaDeMeta };
+  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string; pagamento?: { conta: string; mes: string }; /** Meta ou limite que a mensagem mudou: o Desfazer só vale enquanto esta for a mudança mais recente da chave. */ meta?: MudancaDeMeta; /** Anotação do diário que a mensagem gravou: o Desfazer só vale enquanto for a mudança mais recente do diário. */ diario?: MudancaDoDiario };
 
 /** Banco: "sem-banco" quando o build não tem as chaves; "fora" sem login. */
 export type Sincronia = "sem-banco" | "fora" | "sincronizando" | "ok" | "erro";
@@ -119,6 +120,14 @@ interface Store {
   /** Desmarca e tira o gasto que o pagamento lançou. Devolve o que tirou, para refazer. */
   desfazerPagamento: (id: string, mes: string) => { pagamento: PagamentoDeConta; lancamento: Lancamento | null } | null;
   restaurarPagamento: (id: string, p: PagamentoDeConta, l: Lancamento | null) => void;
+  /** Diário do dia (Vida). Nível B: grava na hora, com desfazer da mudança mais recente. */
+  diario: Anotacao[];
+  /** Anota o texto no dia de hoje (Brasília); o humor só entra quando o texto diz. null com texto vazio. */
+  anotarNoDiario: (texto: string) => MudancaDoDiario | null;
+  /** Carimbo da última mudança do diário (só na memória, como o das metas). */
+  carimboDoDiario: string | null;
+  /** Tira a anotação se ela ainda for a mudança mais recente. */
+  desfazerDiario: (m: MudancaDoDiario) => void;
 }
 
 export { META_FLUSH_MES };
@@ -172,6 +181,17 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const [lancamentos, setLancamentos] = useState<Lancamento[]>(() => lerLancamentos(salvo?.lancamentos));
   const [habitos, setHabitos] = useState<Habito[]>(() => lerHabitos(salvo?.habitos));
   const [contas, setContas] = useState<Conta[]>(() => lerContas(salvo?.contas));
+  const [diario, setDiario] = useState<Anotacao[]>(() => lerAnotacoes(salvo?.diario));
+  const [carimboDoDiario, setCarimboDoDiario] = useState<string | null>(null);
+  // Lidos por anotar/desfazer, que rodam fora do render (toque, aviso), como nas metas.
+  const diarioAgora = useRef(diario);
+  const carimboDoDiarioAgora = useRef(carimboDoDiario);
+  const aplicarDiario = useCallback((d: Anotacao[], c: string | null) => {
+    diarioAgora.current = d;
+    carimboDoDiarioAgora.current = c;
+    setDiario(d);
+    setCarimboDoDiario(c);
+  }, []);
   // O Desfazer de um aviso roda depois de outros toques: lê sempre a lista de agora, não a do toque.
   const contasAgora = useRef(contas);
   const lancamentosAgora = useRef(lancamentos);
@@ -181,8 +201,8 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   }, [contas, lancamentos]);
 
   useEffect(() => {
-    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas });
-  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas]);
+    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas, diario });
+  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas, diario]);
 
   // As missões ficam ouvindo desde a abertura: a conversa responde sem precisar abrir a tela.
   useEffect(iniciarMissoes, []);
@@ -225,6 +245,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
           setLancamentos(lerLancamentos(remoto.lancamentos));
           setHabitos(lerHabitos(remoto.habitos));
           setContas(lerContas(remoto.contas));
+          aplicarDiario(lerAnotacoes(remoto.diario), null);
           setVersao((v) => v + 1);
         } else if (local) {
           await subir(local);
@@ -238,16 +259,16 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     return () => {
       vivo = false;
     };
-  }, [usuario, repo, aplicarMetas]);
+  }, [usuario, repo, aplicarMetas, aplicarDiario]);
 
   useEffect(() => {
     if (!usuario || !conciliado.current) return;
     const t = setTimeout(() => {
-      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas };
+      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas, diario };
       subir(r).then(() => setSincronia("ok"), () => setSincronia("erro"));
     }, 1000);
     return () => clearTimeout(t);
-  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas]);
+  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas, metas, lancamentos, habitos, contas, diario]);
 
   const entrar = useCallback(async (email: string, senha: string) => {
     if (!supabase) return "O banco ainda não está ligado.";
@@ -453,9 +474,17 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     } else if (cmd?.tipo === "missaoStatus") {
       const m = lerMissoes();
       novas.push({ id: id(), de: "drend", status: "dica", texto: m.fase === "carregando" ? "Estou lendo as Missões. Pergunte de novo em instantes." : responderMissao(m.fase === "ok" ? m.eventos : null, cmd.missao) });
+    } else if (cmd?.tipo === "diario") {
+      // Nível B: grava na hora no dia de Brasília; o Desfazer da mensagem tira só esta anotação.
+      const a = novaAnotacao(cmd);
+      const r = anotar(diarioAgora.current, a, id());
+      aplicarDiario(r.diario, r.carimbo);
+      novas.push({ id: id(), de: "drend", status: "feito", diario: r.mudanca, texto: confirmarAnotacao(a, r.diario) });
+    } else if (cmd?.tipo === "consultaDiario") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderDiario(diarioAgora.current, cmd.quando) });
     } else if (cmd?.tipo === "semana") {
       const { eventos } = agendaDaConversa();
-      novas.push({ id: id(), de: "drend", status: "dica", texto: responderSemana({ flush: semanaDaConversa(), tarefas, habitos, lancamentos, agenda: eventos }) });
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderSemana({ flush: semanaDaConversa(), tarefas, habitos, lancamentos, agenda: eventos, diario: diarioAgora.current }) });
     } else if (cmd?.tipo === "resumo") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderResumo(tarefas, leituraDaFlush(), new Date(), "Resumo de agora:") });
     } else if (cmd?.tipo === "saudacao") {
@@ -475,7 +504,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Não entendi isso como pedido. Se for uma ideia, escolha onde eu guardo. Diga “ajuda” para ver o que eu entendo.", ideia: limpo });
     }
     setMensagens((ms) => [...ms, ...novas]);
-  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos, contas, apagarLancamento, aplicarMetas]);
+  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos, contas, apagarLancamento, aplicarMetas, aplicarDiario]);
 
   const guardarIdeia = useCallback(
     (ideia: string, projeto: string) => {
@@ -551,9 +580,21 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     if (r) aplicarMetas(r.metas, r.carimbos);
   }, [aplicarMetas]);
 
+  const anotarNoDiario = useCallback((texto: string) => {
+    const limpo = texto.trim();
+    if (!limpo) return null;
+    const r = anotar(diarioAgora.current, novaAnotacao({ texto: limpo, humor: detectarHumor(limpo) }), id());
+    aplicarDiario(r.diario, r.carimbo);
+    return r.mudanca;
+  }, [aplicarDiario]);
+  const desfazerDiario = useCallback((m: MudancaDoDiario) => {
+    const r = desfazerAnotacao(diarioAgora.current, carimboDoDiarioAgora.current, m, id());
+    if (r) aplicarDiario(r.diario, r.carimbo);
+  }, [aplicarDiario]);
+
   const value = useMemo(
-    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, carimbosDeMeta, desfazerMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento }),
-    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, carimbosDeMeta, desfazerMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento],
+    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, carimbosDeMeta, desfazerMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento, diario, anotarNoDiario, carimboDoDiario, desfazerDiario }),
+    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, carimbosDeMeta, desfazerMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento, diario, anotarNoDiario, carimboDoDiario, desfazerDiario],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
