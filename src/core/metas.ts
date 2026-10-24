@@ -245,3 +245,36 @@ export function confirmarLimite(chave: string, metas: Metas, lancamentos: readon
 export function nomeDoLimiteNaFrase(chave: string): string {
   return chave === LIMITE_GERAL ? "o limite do mês" : `o limite de ${chave.slice(PREFIXO.length)}`;
 }
+
+// ——— Desfazer ———
+
+/** Chave → carimbo da última mudança. Só a mudança mais recente de cada chave pode ser desfeita. */
+export type Carimbos = Record<string, string>;
+
+/** Uma mudança de meta ou limite, com identidade própria (o `carimbo`). */
+export interface MudancaDeMeta {
+  chave: string;
+  antes: number | null;
+  depois: number | null;
+  carimbo: string;
+}
+
+/** Aplica a mudança e passa a ser a mais recente da chave (vale para chat, tela e o próprio desfazer). */
+export function registrarMudanca(metas: Metas, carimbos: Carimbos, chave: string, valor: number | null, carimbo: string): { metas: Metas; carimbos: Carimbos; mudanca: MudancaDeMeta } {
+  const depois = valor && valor > 0 ? valor : null;
+  return {
+    metas: mudarMeta(metas, chave, depois),
+    carimbos: { ...carimbos, [chave]: carimbo },
+    mudanca: { chave, antes: metas[chave] ?? null, depois, carimbo },
+  };
+}
+
+/** Só a mais recente da chave: um valor que se repete não reativa uma mudança antiga. */
+export const podeDesfazer = (m: MudancaDeMeta, carimbos: Carimbos) => carimbos[m.chave] === m.carimbo;
+
+/** Volta a chave para `antes`. A volta é uma mudança nova (não dá para desfazer duas vezes). null quando não é a mais recente. */
+export function desfazerMudanca(metas: Metas, carimbos: Carimbos, m: MudancaDeMeta, carimbo: string): { metas: Metas; carimbos: Carimbos } | null {
+  if (!podeDesfazer(m, carimbos)) return null;
+  const r = registrarMudanca(metas, carimbos, m.chave, m.antes, carimbo);
+  return { metas: r.metas, carimbos: r.carimbos };
+}

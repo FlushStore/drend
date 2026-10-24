@@ -22,7 +22,7 @@ import { adicionarConta, confirmarConta, confirmarPagamento, contaParaPagar, des
 import { responderSemana, semanaDaFlush, type SemanaFlush } from "./core/semana";
 import type { ResumoFlush } from "./fontes/flush";
 import { resumirMes } from "./core/financeiro";
-import { META_FLUSH_MES, chaveDoLimite, confirmarLimite, lerMetas, limitesDoMes, mudarMeta, nomeDoLimiteNaFrase, responderMetas, type Metas, type MesParaMeta } from "./core/metas";
+import { META_FLUSH_MES, chaveDoLimite, confirmarLimite, desfazerMudanca, lerMetas, limitesDoMes, nomeDoLimiteNaFrase, registrarMudanca, responderMetas, type Carimbos, type Metas, type MesParaMeta, type MudancaDeMeta } from "./core/metas";
 
 /** O vault como a conversa enxerga: o índice das notas, ou o motivo de não ter. */
 function vaultDaConversa() {
@@ -65,7 +65,7 @@ function semanaDaConversa(): SemanaFlush | null | "carregando" {
 
 export type Mensagem =
   | { id: string; de: "rapha"; texto: string }
-  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string; pagamento?: { conta: string; mes: string }; /** Meta ou limite que a mensagem mudou: o Desfazer volta a chave para `antes` enquanto ela ainda vale `depois`. */ meta?: { chave: string; antes: number | null; depois: number | null } };
+  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string; pagamento?: { conta: string; mes: string }; /** Meta ou limite que a mensagem mudou: o Desfazer só vale enquanto esta for a mudança mais recente da chave. */ meta?: MudancaDeMeta };
 
 /** Banco: "sem-banco" quando o build não tem as chaves; "fora" sem login. */
 export type Sincronia = "sem-banco" | "fora" | "sincronizando" | "ok" | "erro";
@@ -91,6 +91,10 @@ interface Store {
   /** Metas em reais: "flush-mes" e os limites ("limite:mercado", "limite:geral"). Moram no retrato: vão para o banco junto com o resto. */
   metas: Metas;
   definirMeta: (chave: string, valor: number | null) => void;
+  /** Carimbo da última mudança de cada chave (só na memória: depois de reabrir, nenhuma mudança antiga é desfeita). */
+  carimbosDeMeta: Carimbos;
+  /** Desfaz a mudança se ela ainda for a mais recente da chave. */
+  desfazerMeta: (m: MudancaDeMeta) => void;
   /** Dinheiro pessoal (Vida), contado pelo chat. Nível B: automático, com desfazer. */
   lancamentos: Lancamento[];
   apagarLancamento: (id: string) => void;
@@ -154,6 +158,17 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const [mensagens, setMensagens] = useState<Mensagem[]>(salvo?.mensagens.length ? salvo.mensagens : BOAS_VINDAS);
   const [tarefas, setTarefas] = useState<Tarefa[]>(() => podar(salvo?.tarefas ?? []));
   const [metas, setMetas] = useState<Metas>(() => lerMetas(salvo?.metas));
+  const [carimbosDeMeta, setCarimbos] = useState<Carimbos>({});
+  // Lidos por definirMeta/desfazerMeta, que rodam fora do render (toque, aviso).
+  const metasAgora = useRef(metas);
+  const carimbosAgora = useRef(carimbosDeMeta);
+  /** Toda mudança de meta passa por aqui: grava o valor e o carimbo juntos. */
+  const aplicarMetas = useCallback((m: Metas, c: Carimbos) => {
+    metasAgora.current = m;
+    carimbosAgora.current = c;
+    setMetas(m);
+    setCarimbos(c);
+  }, []);
   const [lancamentos, setLancamentos] = useState<Lancamento[]>(() => lerLancamentos(salvo?.lancamentos));
   const [habitos, setHabitos] = useState<Habito[]>(() => lerHabitos(salvo?.habitos));
   const [contas, setContas] = useState<Conta[]>(() => lerContas(salvo?.contas));
@@ -206,7 +221,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
           setCaixa(remoto.caixaDeEntrada);
           setMensagens(remoto.mensagens.length ? remoto.mensagens : BOAS_VINDAS);
           setTarefas(podar(remoto.tarefas ?? []));
-          setMetas(lerMetas(remoto.metas));
+          aplicarMetas(lerMetas(remoto.metas), {});
           setLancamentos(lerLancamentos(remoto.lancamentos));
           setHabitos(lerHabitos(remoto.habitos));
           setContas(lerContas(remoto.contas));
@@ -223,7 +238,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     return () => {
       vivo = false;
     };
-  }, [usuario, repo]);
+  }, [usuario, repo, aplicarMetas]);
 
   useEffect(() => {
     if (!usuario || !conciliado.current) return;
@@ -402,19 +417,18 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.periodo, leituraDaFlush(), new Date(), metas[META_FLUSH_MES] ?? null) });
     } else if (cmd?.tipo === "meta") {
       // Nível B: grava na hora; o Desfazer da mensagem volta a meta de antes.
-      const antes = metas[META_FLUSH_MES] ?? null;
-      setMetas((m) => mudarMeta(m, META_FLUSH_MES, cmd.valor));
+      const r = registrarMudanca(metasAgora.current, carimbosAgora.current, META_FLUSH_MES, cmd.valor, id());
+      aplicarMetas(r.metas, r.carimbos);
       const leitura = leituraDaFlush();
       const valor = cmd.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-      novas.push({ id: id(), de: "drend", status: "feito", meta: { chave: META_FLUSH_MES, antes, depois: cmd.valor }, texto: leitura && leitura.fase !== "carregando"
+      novas.push({ id: id(), de: "drend", status: "feito", meta: r.mudanca, texto: leitura && leitura.fase !== "carregando"
         ? `Meta do mês: ${valor}.\n${responderVendas("mes", leitura, new Date(), cmd.valor)}`
         : `Meta do mês: ${valor}. Está em Negócios; o progresso aparece quando a Flush estiver ligada.` });
     } else if (cmd?.tipo === "limite") {
-      const chave = chaveDoLimite(metas, cmd.categoria);
-      const antes = metas[chave] ?? null;
-      const depois = mudarMeta(metas, chave, cmd.valor);
-      setMetas(depois);
-      novas.push({ id: id(), de: "drend", status: "feito", meta: { chave, antes, depois: cmd.valor }, texto: confirmarLimite(chave, depois, lancamentos, antes) });
+      const chave = chaveDoLimite(metasAgora.current, cmd.categoria);
+      const r = registrarMudanca(metasAgora.current, carimbosAgora.current, chave, cmd.valor, id());
+      aplicarMetas(r.metas, r.carimbos);
+      novas.push({ id: id(), de: "drend", status: "feito", meta: r.mudanca, texto: confirmarLimite(chave, r.metas, lancamentos, r.mudanca.antes) });
     } else if (cmd?.tipo === "tirarMeta" || cmd?.tipo === "tirarLimite") {
       const chave = cmd.tipo === "tirarMeta" ? META_FLUSH_MES : chaveDoLimite(metas, cmd.categoria);
       const nome = cmd.tipo === "tirarMeta" ? "a meta da Flush" : nomeDoLimiteNaFrase(chave);
@@ -422,8 +436,9 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       if (antes === null) {
         novas.push({ id: id(), de: "drend", status: "falhou", texto: `Você não tem ${nome}. Diga “como estão as metas?” para ver o que tem.` });
       } else {
-        setMetas((m) => mudarMeta(m, chave, null));
-        novas.push({ id: id(), de: "drend", status: "feito", meta: { chave, antes, depois: null }, texto: `Tirei ${nome} (era ${antes.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 })}).` });
+        const r = registrarMudanca(metasAgora.current, carimbosAgora.current, chave, null, id());
+        aplicarMetas(r.metas, r.carimbos);
+        novas.push({ id: id(), de: "drend", status: "feito", meta: r.mudanca, texto: `Tirei ${nome} (era ${antes.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 })}).` });
       }
     } else if (cmd?.tipo === "metas") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderMetas(metas, mesDaConversa(), lancamentos) });
@@ -460,7 +475,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Não entendi isso como pedido. Se for uma ideia, escolha onde eu guardo. Diga “ajuda” para ver o que eu entendo.", ideia: limpo });
     }
     setMensagens((ms) => [...ms, ...novas]);
-  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos, contas, apagarLancamento]);
+  }, [mural, tarefas, caixaDeEntrada.length, metas, lancamentos, habitos, contas, apagarLancamento, aplicarMetas]);
 
   const guardarIdeia = useCallback(
     (ideia: string, projeto: string) => {
@@ -526,11 +541,18 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const alternarHabitoHoje = useCallback((hid: string, dia?: string) => setHabitos((hs) => alternarDia(hs, hid, dia ?? diaEmBrasilia(new Date()))), []);
   const apagarHabito = useCallback((hid: string) => setHabitos((hs) => removerHabito(hs, hid)), []);
   const restaurarHabito = useCallback((h: Habito) => setHabitos((hs) => adicionarHabito(hs, h)), []);
-  const definirMeta = useCallback((chave: string, valor: number | null) => setMetas((m) => mudarMeta(m, chave, valor)), []);
+  const definirMeta = useCallback((chave: string, valor: number | null) => {
+    const r = registrarMudanca(metasAgora.current, carimbosAgora.current, chave, valor, id());
+    aplicarMetas(r.metas, r.carimbos);
+  }, [aplicarMetas]);
+  const desfazerMeta = useCallback((m: MudancaDeMeta) => {
+    const r = desfazerMudanca(metasAgora.current, carimbosAgora.current, m, id());
+    if (r) aplicarMetas(r.metas, r.carimbos);
+  }, [aplicarMetas]);
 
   const value = useMemo(
-    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento }),
-    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento],
+    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, carimbosDeMeta, desfazerMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento }),
+    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, carimbosDeMeta, desfazerMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

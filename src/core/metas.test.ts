@@ -4,6 +4,9 @@ import {
   META_FLUSH_MES,
   chaveDoLimite,
   confirmarLimite,
+  desfazerMudanca,
+  podeDesfazer,
+  registrarMudanca,
   estadoDoLimite,
   lerLimite,
   lerMetas,
@@ -206,5 +209,40 @@ describe("guardar", () => {
     const metas = { "limite:mercado": 800 };
     expect(sp(confirmarLimite("limite:mercado", metas, [gasto(120, "mercado", "2026-10-05T15:00:00Z")], 600, agora))).toBe("Limite de mercado: R$ 800 (era R$ 600). Neste mês gastou R$ 120 até agora. Está em Vida.");
     expect(sp(confirmarLimite(LIMITE_GERAL, { [LIMITE_GERAL]: 100 }, [gasto(120, "mercado", "2026-10-05T15:00:00Z")], null, agora))).toBe("Limite do mês: R$ 100. Neste mês já passou R$ 20. Está em Vida.");
+  });
+});
+
+describe("desfazer só a mudança mais recente", () => {
+  it("800 → 900 → 800: a primeira não volta a valer; desfazer a última volta para 900", () => {
+    const k = "limite:mercado";
+    const a = registrarMudanca({}, {}, k, 800, "c1");
+    const b = registrarMudanca(a.metas, a.carimbos, k, 900, "c2");
+    const c = registrarMudanca(b.metas, b.carimbos, k, 800, "c3");
+    expect(c.metas[k]).toBe(800);
+    // O valor se repete, mas as antigas não podem ser desfeitas.
+    expect(podeDesfazer(a.mudanca, c.carimbos)).toBe(false);
+    expect(podeDesfazer(b.mudanca, c.carimbos)).toBe(false);
+    expect(desfazerMudanca(c.metas, c.carimbos, a.mudanca, "c4")).toBeNull();
+    expect(podeDesfazer(c.mudanca, c.carimbos)).toBe(true);
+    const volta = desfazerMudanca(c.metas, c.carimbos, c.mudanca, "c4")!;
+    expect(volta.metas[k]).toBe(900);
+    // O desfazer é uma mudança nova: nada antigo fica ativo, nem ele mesmo de novo.
+    expect([a, b, c].some((x) => podeDesfazer(x.mudanca, volta.carimbos))).toBe(false);
+    expect(desfazerMudanca(volta.metas, volta.carimbos, c.mudanca, "c5")).toBeNull();
+  });
+
+  it("mudança feita na tela também tira o Desfazer do chat; outra chave não interfere", () => {
+    const a = registrarMudanca({}, {}, META_FLUSH_MES, 20000, "c1");
+    const outra = registrarMudanca(a.metas, a.carimbos, "limite:uber", 200, "c2");
+    expect(podeDesfazer(a.mudanca, outra.carimbos)).toBe(true);
+    const tela = registrarMudanca(outra.metas, outra.carimbos, META_FLUSH_MES, 20000, "c3");
+    expect(podeDesfazer(a.mudanca, tela.carimbos)).toBe(false);
+  });
+
+  it("tirar e desfazer devolve o valor", () => {
+    const a = registrarMudanca({ "limite:mercado": 800 }, {}, "limite:mercado", null, "c1");
+    expect(a.metas).toEqual({});
+    expect(a.mudanca).toMatchObject({ antes: 800, depois: null });
+    expect(desfazerMudanca(a.metas, a.carimbos, a.mudanca, "c2")!.metas).toEqual({ "limite:mercado": 800 });
   });
 });
