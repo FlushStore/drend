@@ -8,6 +8,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { inicioDoMesAnterior } from "@/core/financeiro";
 import { diasDesde, resumirPorDia, type CaixaFlush, type CustoPadrao, type VendaFlush } from "./flush-regras";
+import { LIMITE_ACABANDO, resumirProdutos, type ProdutosFlush, type SaborEstoqueFlush, type VinculoFlush } from "./flush-produtos";
 import { criarFonte, type DiaLoja, type EstadoLoja, type ResumoLoja } from "./loja";
 import { supabase as drend } from "@/core/nuvem";
 
@@ -15,7 +16,10 @@ import { supabase as drend } from "@/core/nuvem";
 export const LOJA_PRINCIPAL = "5f1a9c00-0000-4000-8000-000000000001";
 export const EMAIL_FLUSH = "flushstoreunai@gmail.com";
 
-export type ResumoFlush = ResumoLoja;
+export type ResumoFlush = ResumoLoja & {
+  /** Mais vendidos, estoque baixo e formas de pagamento. Só na leitura direta (com a sessão da Flush). */
+  produtos?: ProdutosFlush;
+};
 export type EstadoFlush = EstadoLoja;
 
 const PAGINA = 1000;
@@ -32,13 +36,37 @@ async function todas<T>(pagina: (de: number, ate: number) => PromiseLike<{ data:
 }
 
 /**
+ * Estoque da loja principal para o "acabando": sabores com até o limite e os vínculos produto↔loja.
+ * Falhou, devolve null: as vendas seguem e a tela diz que o estoque não veio.
+ */
+async function buscarEstoque(db: SupabaseClient): Promise<{ sabores: SaborEstoqueFlush[]; vinculos: VinculoFlush[] } | null> {
+  try {
+    const [sabores, vinculos] = await Promise.all([
+      todas<SaborEstoqueFlush>((de, ate) =>
+        db.from("product_flavors")
+          .select("id, product_id, qty, is_external, flavors(name, emoji)")
+          .eq("store_id", LOJA_PRINCIPAL).eq("is_external", false).lte("qty", LIMITE_ACABANDO)
+          .order("qty", { ascending: true }).order("id", { ascending: true }).range(de, ate)),
+      todas<VinculoFlush>((de, ate) =>
+        db.from("store_products")
+          .select("product_id, active, price, products(name, active, price)")
+          .eq("store_id", LOJA_PRINCIPAL)
+          .order("product_id", { ascending: true }).range(de, ate)),
+    ]);
+    return { sabores, vinculos };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Do dia 1 do mês passado até hoje, na loja principal, com as regras do Início da Flush.
  * `dias` são os últimos 7 (Hoje e Negócios); `historico` é tudo (o mês e a comparação).
  */
 export async function buscarSemana(db: SupabaseClient, agora = new Date()): Promise<ResumoFlush> {
   const dias = diasDesde(inicioDoMesAnterior(agora), agora);
   const inicio = new Date(`${dias[0]}T00:00:00`).toISOString();
-  const [vendas, caixa, custos] = await Promise.all([
+  const [vendas, caixa, custos, estoque] = await Promise.all([
     todas<VendaFlush>((de, ate) =>
       db.from("sales")
         .select("id, final_price, created_at, order_id, product_name, cost_price, quantity, payment_method, cash_neutralized")
@@ -52,6 +80,7 @@ export async function buscarSemana(db: SupabaseClient, agora = new Date()): Prom
         .order("created_at", { ascending: true }).order("id", { ascending: true }).range(de, ate)),
     // Tabela global (vale para as duas unidades).
     db.from("custos_padrao").select("modelo, custo, ordem").order("ordem", { ascending: true }).order("modelo", { ascending: true }),
+    buscarEstoque(db),
   ]);
   if (custos.error) throw new Error(custos.error.message);
   const tabela: CustoPadrao[] = [];
@@ -61,7 +90,9 @@ export async function buscarSemana(db: SupabaseClient, agora = new Date()): Prom
     if (modelo && Number.isFinite(custo)) tabela.push({ modelo, custo });
   }
   const historico = resumirPorDia(vendas, caixa, tabela, dias);
-  return { dias: historico.slice(-7), historico, atualizadoEm: new Date().toISOString() };
+  const semana = historico.slice(-7);
+  const produtos = resumirProdutos(vendas, estoque, semana.map((d) => d.dia), agora);
+  return { dias: semana, historico, produtos, atualizadoEm: new Date().toISOString() };
 }
 
 /** A cópia que o servidor do DREND guarda (lida da Flush de hora em hora, só leitura). */
