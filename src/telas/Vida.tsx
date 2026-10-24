@@ -4,6 +4,7 @@ import { Bloco } from "@/design-system/Bloco";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { Valor } from "@/design-system/Valor";
 import { dinheiroMes, linhaDoTempo, metas } from "@/data/exemplo";
+import { AgendaDaSemana } from "./AgendaDaSemana";
 
 export function Vida() {
   const sobrou = dinheiroMes.entradas - dinheiroMes.saidas;
@@ -11,6 +12,7 @@ export function Vida() {
   return (
     <>
       <CabecalhoDeTela titulo="Vida" />
+      <AgendaDaSemana />
       <div className="dr-hoje">
         <Bloco className="dr-heroi" aria-label="Dinheiro do mês">
           <span className="dr-rotulo">Sobrou no mês</span>

@@ -10,6 +10,15 @@ import { AJUDA, responderAgradecimento, responderMissao, responderPendencias, re
 import { lerEstado as lerFlush } from "./fontes/flush";
 import { iniciarMissoes, lerMissoes, registrar } from "./fontes/missoes";
 import { nomeDaMissao } from "./core/missao";
+import { responderAgenda } from "./core/agenda";
+import { eventosDa, iniciarAgenda, lerAgenda, motivoSemAgenda } from "./fontes/agenda";
+
+/** A agenda como a conversa enxerga: os eventos, ou o motivo de não ter. */
+function agendaDaConversa() {
+  const e = lerAgenda();
+  const eventos = eventosDa(e);
+  return { eventos, motivo: eventos ? undefined : motivoSemAgenda(e) };
+}
 
 /** A Flush como a conversa enxerga: só o resumo, nunca a sessão. */
 function leituraDaFlush(): LeituraFlush {
@@ -80,6 +89,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
 
   // As missões ficam ouvindo desde a abertura: a conversa responde sem precisar abrir a tela.
   useEffect(iniciarMissoes, []);
+  useEffect(iniciarAgenda, []);
 
   // Banco: ao entrar, a versão mais nova (aparelho ou banco) vence; depois cada mudança sobe em ~1 s.
   const [sessao, setSessao] = useState<Session | null>(null);
@@ -210,7 +220,13 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
         novas.push({ id: id(), de: "drend", status: "feito", texto: `Apaguei a tarefa “${r.achado.texto}”.` });
       }
     } else if (cmd?.tipo === "pendencias") {
-      novas.push({ id: id(), de: "drend", status: "dica", texto: responderPendencias(tarefas, caixaDeEntrada.length) });
+      // "O que tenho hoje?" junta as tarefas e o que falta na agenda de hoje.
+      const { eventos } = agendaDaConversa();
+      const agendaHoje = eventos ? responderAgenda(eventos, "hoje") : "";
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderPendencias(tarefas, caixaDeEntrada.length) + (agendaHoje.startsWith("Hoje:") ? `\n\n${agendaHoje.replace(/^Hoje:/, "Na agenda hoje:")}` : "") });
+    } else if (cmd?.tipo === "agenda") {
+      const { eventos, motivo } = agendaDaConversa();
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderAgenda(eventos, cmd.quando, new Date(), motivo) });
     } else if (cmd?.tipo === "vendas") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.periodo, leituraDaFlush(), new Date(), metas[META_FLUSH_MES] ?? null) });
     } else if (cmd?.tipo === "meta") {

@@ -103,3 +103,15 @@ describe("missão com hífen no nome", () => {
     expect(entender("missão flush - fotos novas")).toEqual({ tipo: "missaoNota", missao: "flush", texto: "fotos novas" });
   });
 });
+
+describe("agenda na conversa", () => {
+  it("entende os jeitos de perguntar", () => {
+    expect(entender("o que tenho amanhã?")).toEqual({ tipo: "agenda", quando: "amanha" });
+    expect(entender("minha agenda")).toEqual({ tipo: "agenda", quando: "hoje" });
+    expect(entender("agenda da semana")).toEqual({ tipo: "agenda", quando: "semana" });
+    expect(entender("qual o próximo compromisso?")).toEqual({ tipo: "agenda", quando: "proximo" });
+    expect(entender("tenho reunião amanhã?")).toEqual({ tipo: "agenda", quando: "amanha" });
+    expect(entender("o que tenho hoje?")).toEqual({ tipo: "pendencias" });
+    expect(entender("e a semana?")).toEqual({ tipo: "vendas", periodo: "semana" });
+  });
+});
