@@ -8,7 +8,7 @@ import { abertas } from "@/core/tarefas";
 import { Valor } from "@/design-system/Valor";
 import { diaDe, horaDe, proximo } from "@/core/agenda";
 import { eventosDa, useAgenda } from "@/fontes/agenda";
-import { DIAS_PARADO, projetos } from "@/core/missao";
+import { estaParado, projetos } from "@/core/missao";
 import { useMissoes } from "@/fontes/missoes";
 import { useStatusVM } from "@/fontes/status";
 import { useFlush } from "@/fontes/useFlush";
@@ -34,7 +34,7 @@ export function Hoje() {
     if (missoes.fase !== "ok") return { agora: 0, parados: 0, texto: "Abrir" };
     const ps = projetos(missoes.eventos);
     const agora = ps.reduce((t, p) => t + p.itens.agora.length, 0);
-    const parados = ps.filter((p) => p.parado !== null && p.parado >= DIAS_PARADO).length;
+    const parados = ps.filter(estaParado).length;
     return { agora, parados, texto: parados ? `${parados} parado${parados > 1 ? "s" : ""}` : `${agora} em andamento` };
   })();
   const { aviso, avisar, limpar } = useAviso();

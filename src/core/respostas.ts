@@ -7,7 +7,7 @@ import type { DiaFlush } from "../fontes/flush-regras";
 import type { Periodo } from "./comandos";
 import { abertas, type Tarefa } from "./tarefas";
 import { progressoMeta, resumirMes, type MesFlush } from "./financeiro";
-import { DIAS_PARADO, nomeDaMissao, projetos, type EventoMissao } from "./missao";
+import { estaParado, nomeDaMissao, projetos, type EventoMissao } from "./missao";
 
 /** O que a conversa sabe da Flush: `null` quando ela não está ligada neste aparelho. */
 export type LeituraFlush = { fase: "carregando" } | { fase: "ok" | "erro"; dias: readonly DiaFlush[]; historico?: readonly DiaFlush[]; atualizadoEm: string } | null;
@@ -100,10 +100,10 @@ export function responderMissao(eventos: readonly EventoMissao[] | null, missao:
   if (missao) {
     const p = ps[0];
     const agoraItens = p.itens.agora.slice(0, 5).map((i) => `• ${i.titulo}`).join("\n");
-    const parado = p.parado !== null && p.parado >= DIAS_PARADO ? `\nParada há ${p.parado} dias.` : "";
+    const parado = p.pausado ? "\nPausada." : estaParado(p) ? `\nParada há ${p.parado} dias.` : "";
     return `${p.nome}: ${p.itens.agora.length} em andamento, ${p.itens.feito.length} feitos, ${p.itens.depois.length} para depois.${agoraItens ? `\n${agoraItens}` : ""}${parado}`;
   }
-  return ps.map((p) => `• ${p.nome}: ${p.itens.agora.length} em andamento${p.parado !== null && p.parado >= DIAS_PARADO ? `, parada há ${p.parado} dias` : ""}`).join("\n");
+  return ps.map((p) => `• ${p.nome}: ${p.itens.agora.length} em andamento${p.pausado ? ", pausada" : estaParado(p) ? `, parada há ${p.parado} dias` : ""}`).join("\n");
 }
 
 export function responderPendencias(tarefas: readonly Tarefa[], ideiasSoltas: number): string {
