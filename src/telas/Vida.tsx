@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
@@ -10,7 +10,8 @@ import { classesDoBotao } from "@/design-system/classes";
 import { tomDoSinal } from "@/design-system/formato";
 import { gastosPorCategoria, nomeDoLancamento, saldoDoMes, ultimos } from "@/core/dinheiro";
 import { feitoNoDia, sequencia, textoDaSequencia, ultimos7 } from "@/core/habitos";
-import { diaEmBrasilia, meioDiaEmBrasilia, msAteAmanha } from "@/core/brasilia";
+import { meioDiaEmBrasilia } from "@/core/brasilia";
+import { useDiaEmBrasilia } from "@/lib/useDiaEmBrasilia";
 import { useStore } from "@/store";
 import { AgendaDaSemana } from "./AgendaDaSemana";
 import { ContasDoMes } from "./ContasDoMes";
@@ -46,34 +47,6 @@ export function Vida() {
 }
 
 type Avisar = ReturnType<typeof useAviso>["avisar"];
-
-/**
- * O "hoje" de Brasília, reativo: vira à meia-noite e é conferido de novo quando o app
- * volta ao primeiro plano (no iPhone o relógio para com a tela em segundo plano).
- */
-function useDiaEmBrasilia(): string {
-  const [dia, setDia] = useState(() => diaEmBrasilia(new Date()));
-  useEffect(() => {
-    let relogio: ReturnType<typeof setTimeout>;
-    const conferir = () => {
-      clearTimeout(relogio);
-      setDia(diaEmBrasilia(new Date()));
-      relogio = setTimeout(conferir, msAteAmanha() + 1000);
-    };
-    const aoVoltar = () => {
-      if (document.visibilityState === "visible") conferir();
-    };
-    relogio = setTimeout(conferir, msAteAmanha() + 1000);
-    document.addEventListener("visibilitychange", aoVoltar);
-    window.addEventListener("focus", conferir);
-    return () => {
-      clearTimeout(relogio);
-      document.removeEventListener("visibilitychange", aoVoltar);
-      window.removeEventListener("focus", conferir);
-    };
-  }, []);
-  return dia;
-}
 
 function Dinheiro({ avisar }: { avisar: Avisar }) {
   const { lancamentos, apagarLancamento, restaurarLancamento } = useStore();

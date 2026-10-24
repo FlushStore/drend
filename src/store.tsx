@@ -6,6 +6,7 @@ import { baixar, maisRecente, subir, supabase, type Session } from "./core/nuvem
 import { tirarExemplos } from "./core/limpeza";
 import { abertas, adicionar, concluir, novaTarefa, podar, reabrir, remover, type Tarefa } from "./core/tarefas";
 import { acharPorTexto } from "./core/fala";
+import { responderAtencao } from "./core/atencao";
 import { AJUDA, responderAgradecimento, responderMissao, responderPendencias, responderResumo, responderVendas, type LeituraFlush } from "./core/respostas";
 import { lerEstado as lerFlush } from "./fontes/flush";
 import { iniciarMissoes, lerMissoes, registrar } from "./fontes/missoes";
@@ -375,7 +376,9 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       // "O que tenho hoje?" junta as tarefas e o que falta na agenda de hoje.
       const { eventos } = agendaDaConversa();
       const agendaHoje = eventos ? responderAgenda(eventos, "hoje") : "";
-      novas.push({ id: id(), de: "drend", status: "dica", texto: responderPendencias(tarefas, caixaDeEntrada.length) + (agendaHoje.startsWith("Hoje:") ? `\n\n${agendaHoje.replace(/^Hoje:/, "Na agenda hoje:")}` : "") });
+      // E as contas atrasadas ou perto de vencer e os hábitos que faltam hoje.
+      const atencaoHoje = responderAtencao(contas, habitos);
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderPendencias(tarefas, caixaDeEntrada.length) + (atencaoHoje ? `\n\n${atencaoHoje}` : "") + (agendaHoje.startsWith("Hoje:") ? `\n\n${agendaHoje.replace(/^Hoje:/, "Na agenda hoje:")}` : "") });
     } else if (cmd?.tipo === "agenda") {
       const { eventos, motivo } = agendaDaConversa();
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderAgenda(eventos, cmd.quando, new Date(), motivo) });

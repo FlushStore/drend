@@ -400,3 +400,11 @@ li[data-feito="true"] > .dr-vault-caixa { border-color: var(--cos-acento); backg
 .dr-contas-ativa input { width: 18px; height: 18px; margin: 0; accent-color: var(--cos-acento); }
 .dr-contas-erro { margin: 0; font-size: 13px; color: var(--cos-negativo); }
 @media (max-width: 380px) { .dr-contas-campos { grid-template-columns: minmax(0, 1fr) 64px; } .dr-contas-campo-valor { grid-column: 1 / -1; } }
+
+/* Hoje · o que pede atenção: entra no "Para você", mesmo desenho das tarefas. */
+.dr-atencao-valor { margin-left: auto; flex: none; }
+.dr-para-voce .dr-lista-tipo[data-estado="atrasada"] { color: var(--cos-negativo); font-weight: 600; }
+.dr-para-voce .dr-lista-tipo[data-estado="hoje"] { font-weight: 600; }
+.dr-ver-tudo { display: inline-flex; align-items: baseline; gap: 6px; align-self: flex-start; padding: 8px 0 4px; font-size: 14px; font-weight: 600; color: var(--cos-acento-tinta); }
+.dr-ver-tudo small { font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-3); }
+@media (hover: hover) { .dr-ver-tudo:hover { text-decoration: underline; text-underline-offset: 3px; } }
