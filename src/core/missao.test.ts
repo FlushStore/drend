@@ -71,4 +71,14 @@ describe("missões", () => {
     expect(flush.ultimo?.titulo).toBe("Notas copiadas");
     expect(estaParado(flush)).toBe(true);
   });
+
+  it("passo antigo registrado depois decide a fase, mas não o 'mexido há'", () => {
+    const [drend] = projetos([
+      ev({ id: 900, chave: "flush-real", fase: "agora", titulo: "Flush real", em: "2026-10-24T11:00:00Z" }),
+      ev({ id: 901, chave: "outro", fase: "agora", titulo: "Outro", em: "2026-10-24T11:30:00Z" }),
+      ev({ id: 902, chave: "flush-real", fase: "feito", titulo: "", em: "2026-10-24T10:59:00Z" }),
+    ], agora);
+    expect(drend.itens.feito.map((i) => i.chave)).toEqual(["flush-real"]);
+    expect(drend.ultimo?.chave).toBe("outro");
+  });
 });
