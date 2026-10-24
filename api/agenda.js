@@ -84,7 +84,16 @@ export default async function handler(req, res) {
     if (!linhas.length && !fontes.length) return res.status(503).json({ codigo: "sem-agenda", erro: "agenda ainda não sincronizou" });
     const listas = await Promise.all(fontes.map(async (u) => compromissos(await baixar(u), de, ate)));
     const salvos = linhas.flatMap((l) => (Array.isArray(l.eventos) ? l.eventos : []));
+    // A mesma agenda pode vir pela sincronia e pelo iCal, com ids diferentes: fica uma cópia
+    // por título + início + fim (a da sincronia, que vem primeiro).
+    const vistos = new Set();
     const eventos = [...salvos.filter((e) => Date.parse(e.fim) > de && Date.parse(e.inicio) < ate), ...listas.flat()]
+      .filter((e) => {
+        const chave = `${e.titulo}|${e.inicio}|${e.fim}`;
+        if (vistos.has(chave)) return false;
+        vistos.add(chave);
+        return true;
+      })
       .sort((a, b) => a.inicio.localeCompare(b.inicio) || Number(b.diaInteiro) - Number(a.diaInteiro));
     // Com só a sincronia, "atualizado" é a hora em que a tarefa gravou, não a hora desta leitura.
     const quando = fontes.length ? agora : Math.min(...linhas.map((l) => Date.parse(l.atualizado_em)));
