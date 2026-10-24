@@ -296,3 +296,9 @@ li[data-feito="true"] > .dr-vault-caixa { border-color: var(--cos-acento); backg
 .dr-vault-filtros { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; }
 .dr-vault-filtros::-webkit-scrollbar { display: none; }
 .dr-vault-filtros > * { flex: none; }
+
+/* Busca em tudo (⌘K / lupa do topo): o trecho achado marcado e o item acendendo na tela de destino. */
+.dr-busca-marca { padding: 0 1px; border-radius: 4px; background: var(--cos-acento-suave); color: inherit; font-weight: inherit; }
+[data-dr-achado] { outline: 2px solid var(--cos-acento); outline-offset: 3px; border-radius: var(--cos-r-interno); animation: dr-achado 2.4s var(--cos-curva) both; }
+@keyframes dr-achado { 0%, 70% { outline-color: var(--cos-acento); } 100% { outline-color: transparent; } }
+@media (prefers-reduced-motion: reduce) { [data-dr-achado] { animation: none; } }
