@@ -77,7 +77,6 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-mes-total { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; }
 .dr-mes-num { font-size: 20px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 @media (max-width: 767px) { .dr-mes .dr-numeros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
-.dr-meta .dr-barra { margin: 4px 0 10px; }
 .dr-barra[data-batida] i { background: var(--cos-positivo, var(--cos-acento)); }
 .dr-meta-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .dr-meta-form .cos-entrada { flex: 1 1 140px; }
@@ -408,3 +407,17 @@ li[data-feito="true"] > .dr-vault-caixa { border-color: var(--cos-acento); backg
 .dr-ver-tudo { display: inline-flex; align-items: baseline; gap: 6px; align-self: flex-start; padding: 8px 0 4px; font-size: 14px; font-weight: 600; color: var(--cos-acento-tinta); }
 .dr-ver-tudo small { font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-3); }
 @media (hover: hover) { .dr-ver-tudo:hover { text-decoration: underline; text-underline-offset: 3px; } }
+
+/* Metas do mês: meta da Flush (Negócios) e limites de gasto (Vida). */
+.dr-meta-flush { display: grid; gap: 10px; }
+.dr-meta-flush-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.dr-meta-flush-pct { font-family: var(--cos-fonte-marca); font-size: 20px; font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.dr-meta-flush .dr-barra { margin: 0 0 4px; }
+@media (max-width: 767px) { .dr-mes .dr-meta-flush .dr-numeros { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.dr-meta-limite-estado { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-3); }
+.dr-meta-limite-estado[data-estado="perto"] { color: var(--cos-tinta); font-weight: 600; }
+.dr-meta-limite-estado[data-estado="passou"] { color: var(--cos-negativo); font-weight: 600; }
+.dr-meta-limite-valores { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dr-meta-limite-valores small { font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-3); }
+.dr-meta-limite-barra i { width: calc(var(--parte) * 100%); }
+.dr-meta-limite-barra[data-estado="passou"] i { background: var(--cos-negativo); }

@@ -4,6 +4,7 @@
  * Início do Control OS). A comparação é justa: o mês passado só até o mesmo dia.
  */
 import type { DiaFlush } from "../fontes/flush-regras";
+import { diasRestantesNoMes } from "./brasilia";
 
 export interface Totais {
   valor: number;
@@ -98,9 +99,10 @@ export interface ProgressoMeta {
   noRitmo: boolean;
 }
 
-export function progressoMeta(mes: MesFlush, meta: number): ProgressoMeta {
+/** Com `agora`, os dias que restam são contados em Brasília (o certo, mesmo com leitura antiga); sem, pelo dia da leitura. */
+export function progressoMeta(mes: MesFlush, meta: number, agora?: Date): ProgressoMeta {
   const falta = Math.max(0, arred(meta - mes.atual.valor));
-  const restam = mes.diasNoMes - mes.diasPassados + 1;
+  const restam = agora ? diasRestantesNoMes(agora) : mes.diasNoMes - mes.diasPassados + 1;
   return {
     meta,
     feito: meta > 0 ? mes.atual.valor / meta : 0,

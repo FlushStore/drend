@@ -15,6 +15,7 @@ import { useDiaEmBrasilia } from "@/lib/useDiaEmBrasilia";
 import { useStore } from "@/store";
 import { AgendaDaSemana } from "./AgendaDaSemana";
 import { ContasDoMes } from "./ContasDoMes";
+import { LimitesDoMes } from "./LimitesDoMes";
 
 const FUSO = "America/Sao_Paulo";
 const quando = (iso: string) => {
@@ -36,6 +37,7 @@ export function Vida() {
       <div className="dr-vida">
         <div className="dr-vida-coluna">
           <Dinheiro avisar={avisar} />
+          <LimitesDoMes hoje={hoje} avisar={avisar} />
           <ContasDoMes hoje={hoje} avisar={avisar} />
         </div>
         <Habitos avisar={avisar} hoje={hoje} />
@@ -124,7 +126,7 @@ function Dinheiro({ avisar }: { avisar: Avisar }) {
           </li>
         ))}
       </ul>
-      <p className="dr-vida-dica">Para lançar, diga no chat: “gastei 12,90 com uber”.</p>
+      <p className="dr-vida-dica">Para lançar, diga no chat: “gastei 12,90 com uber”. Para limitar: “limite mercado 800”.</p>
     </section>
   );
 }

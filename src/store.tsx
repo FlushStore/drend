@@ -21,6 +21,8 @@ import { diaEmBrasilia, mesEmBrasilia } from "./core/brasilia";
 import { adicionarConta, confirmarConta, confirmarPagamento, contaParaPagar, desmarcarPaga, editarConta as editarNaLista, lerContas, marcarPaga, mesmaConta, novaConta, pagamentoDoMes, removerConta, responderContas, semLancamento, substituirConta, type Conta, type ContaLida, type MudancaDeConta, type PagamentoDeConta } from "./core/contas";
 import { responderSemana, semanaDaFlush, type SemanaFlush } from "./core/semana";
 import type { ResumoFlush } from "./fontes/flush";
+import { resumirMes } from "./core/financeiro";
+import { META_FLUSH_MES, chaveDoLimite, confirmarLimite, lerMetas, limitesDoMes, mudarMeta, nomeDoLimiteNaFrase, responderMetas, type Metas, type MesParaMeta } from "./core/metas";
 
 /** O vault como a conversa enxerga: o índice das notas, ou o motivo de não ter. */
 function vaultDaConversa() {
@@ -44,6 +46,14 @@ function leituraDaFlush(): LeituraFlush {
   return e.resumo ? { fase: e.fase, dias: e.resumo.dias, historico: e.resumo.historico, atualizadoEm: e.resumo.atualizadoEm } : { fase: "erro", dias: [], atualizadoEm: "" };
 }
 
+/** O mês da Flush para as metas: o mês lido, "carregando", ou null sem leitura. Só lido, nunca guardado. */
+function mesDaConversa(): MesParaMeta {
+  const e = lerFlush();
+  if (e.fase === "fora") return null;
+  if (e.fase === "carregando") return "carregando";
+  return e.resumo?.historico ? resumirMes(e.resumo.historico) : null;
+}
+
 /** A semana da Flush como a conversa enxerga: null sem a Flush ligada. */
 function semanaDaConversa(): SemanaFlush | null | "carregando" {
   const e = lerFlush();
@@ -55,7 +65,7 @@ function semanaDaConversa(): SemanaFlush | null | "carregando" {
 
 export type Mensagem =
   | { id: string; de: "rapha"; texto: string }
-  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string; pagamento?: { conta: string; mes: string } };
+  | { id: string; de: "drend"; status: "feito" | "proposto" | "falhou" | "pergunta" | "dica"; texto: string; ideia?: string; logId?: string; quadro?: string; lancamento?: string; pagamento?: { conta: string; mes: string }; /** Meta ou limite que a mensagem mudou: o Desfazer volta a chave para `antes` enquanto ela ainda vale `depois`. */ meta?: { chave: string; antes: number | null; depois: number | null } };
 
 /** Banco: "sem-banco" quando o build não tem as chaves; "fora" sem login. */
 export type Sincronia = "sem-banco" | "fora" | "sincronizando" | "ok" | "erro";
@@ -78,8 +88,8 @@ interface Store {
   criarTarefa: (texto: string) => void;
   concluirTarefa: (id: string) => void;
   reabrirTarefa: (id: string) => void;
-  /** Metas em reais ("flush-mes"). Moram no retrato: vão para o banco junto com o resto. */
-  metas: Record<string, number>;
+  /** Metas em reais: "flush-mes" e os limites ("limite:mercado", "limite:geral"). Moram no retrato: vão para o banco junto com o resto. */
+  metas: Metas;
   definirMeta: (chave: string, valor: number | null) => void;
   /** Dinheiro pessoal (Vida), contado pelo chat. Nível B: automático, com desfazer. */
   lancamentos: Lancamento[];
@@ -107,7 +117,7 @@ interface Store {
   restaurarPagamento: (id: string, p: PagamentoDeConta, l: Lancamento | null) => void;
 }
 
-export const META_FLUSH_MES = "flush-mes";
+export { META_FLUSH_MES };
 
 /** Quita a conta no mês de agora: com valor, o gasto nasce junto e fica vinculado. Já paga: nada muda. */
 function pagarAgora(contas: readonly Conta[], cid: string, agora: Date, mesDado?: string): { contas: Conta[]; pagamento: PagamentoDeConta | null; lancamento: Lancamento | null } {
@@ -143,7 +153,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const [caixaDeEntrada, setCaixa] = useState<string[]>(salvo?.caixaDeEntrada ?? []);
   const [mensagens, setMensagens] = useState<Mensagem[]>(salvo?.mensagens.length ? salvo.mensagens : BOAS_VINDAS);
   const [tarefas, setTarefas] = useState<Tarefa[]>(() => podar(salvo?.tarefas ?? []));
-  const [metas, setMetas] = useState<Record<string, number>>(salvo?.metas ?? {});
+  const [metas, setMetas] = useState<Metas>(() => lerMetas(salvo?.metas));
   const [lancamentos, setLancamentos] = useState<Lancamento[]>(() => lerLancamentos(salvo?.lancamentos));
   const [habitos, setHabitos] = useState<Habito[]>(() => lerHabitos(salvo?.habitos));
   const [contas, setContas] = useState<Conta[]>(() => lerContas(salvo?.contas));
@@ -196,7 +206,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
           setCaixa(remoto.caixaDeEntrada);
           setMensagens(remoto.mensagens.length ? remoto.mensagens : BOAS_VINDAS);
           setTarefas(podar(remoto.tarefas ?? []));
-          setMetas(remoto.metas ?? {});
+          setMetas(lerMetas(remoto.metas));
           setLancamentos(lerLancamentos(remoto.lancamentos));
           setHabitos(lerHabitos(remoto.habitos));
           setContas(lerContas(remoto.contas));
@@ -377,7 +387,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       const { eventos } = agendaDaConversa();
       const agendaHoje = eventos ? responderAgenda(eventos, "hoje") : "";
       // E as contas atrasadas ou perto de vencer e os hábitos que faltam hoje.
-      const atencaoHoje = responderAtencao(contas, habitos);
+      const atencaoHoje = responderAtencao(contas, habitos, new Date(), limitesDoMes(metas, lancamentos));
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderPendencias(tarefas, caixaDeEntrada.length) + (atencaoHoje ? `\n\n${atencaoHoje}` : "") + (agendaHoje.startsWith("Hoje:") ? `\n\n${agendaHoje.replace(/^Hoje:/, "Na agenda hoje:")}` : "") });
     } else if (cmd?.tipo === "agenda") {
       const { eventos, motivo } = agendaDaConversa();
@@ -391,12 +401,32 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     } else if (cmd?.tipo === "vendas") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.periodo, leituraDaFlush(), new Date(), metas[META_FLUSH_MES] ?? null) });
     } else if (cmd?.tipo === "meta") {
-      setMetas((m) => ({ ...m, [META_FLUSH_MES]: cmd.valor }));
+      // Nível B: grava na hora; o Desfazer da mensagem volta a meta de antes.
+      const antes = metas[META_FLUSH_MES] ?? null;
+      setMetas((m) => mudarMeta(m, META_FLUSH_MES, cmd.valor));
       const leitura = leituraDaFlush();
       const valor = cmd.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-      novas.push({ id: id(), de: "drend", status: "feito", texto: leitura && leitura.fase !== "carregando"
+      novas.push({ id: id(), de: "drend", status: "feito", meta: { chave: META_FLUSH_MES, antes, depois: cmd.valor }, texto: leitura && leitura.fase !== "carregando"
         ? `Meta do mês: ${valor}.\n${responderVendas("mes", leitura, new Date(), cmd.valor)}`
-        : `Meta do mês: ${valor}. Aparece em Negócios assim que a Flush estiver ligada.` });
+        : `Meta do mês: ${valor}. Está em Negócios; o progresso aparece quando a Flush estiver ligada.` });
+    } else if (cmd?.tipo === "limite") {
+      const chave = chaveDoLimite(metas, cmd.categoria);
+      const antes = metas[chave] ?? null;
+      const depois = mudarMeta(metas, chave, cmd.valor);
+      setMetas(depois);
+      novas.push({ id: id(), de: "drend", status: "feito", meta: { chave, antes, depois: cmd.valor }, texto: confirmarLimite(chave, depois, lancamentos, antes) });
+    } else if (cmd?.tipo === "tirarMeta" || cmd?.tipo === "tirarLimite") {
+      const chave = cmd.tipo === "tirarMeta" ? META_FLUSH_MES : chaveDoLimite(metas, cmd.categoria);
+      const nome = cmd.tipo === "tirarMeta" ? "a meta da Flush" : nomeDoLimiteNaFrase(chave);
+      const antes = metas[chave] ?? null;
+      if (antes === null) {
+        novas.push({ id: id(), de: "drend", status: "falhou", texto: `Você não tem ${nome}. Diga “como estão as metas?” para ver o que tem.` });
+      } else {
+        setMetas((m) => mudarMeta(m, chave, null));
+        novas.push({ id: id(), de: "drend", status: "feito", meta: { chave, antes, depois: null }, texto: `Tirei ${nome} (era ${antes.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 })}).` });
+      }
+    } else if (cmd?.tipo === "metas") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderMetas(metas, mesDaConversa(), lancamentos) });
     } else if (cmd?.tipo === "missaoNota") {
       // Grava no banco (as Missões atualizam ao vivo); a resposta chega quando o banco confirmar.
       const { missao, texto } = cmd;
@@ -496,12 +526,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const alternarHabitoHoje = useCallback((hid: string, dia?: string) => setHabitos((hs) => alternarDia(hs, hid, dia ?? diaEmBrasilia(new Date()))), []);
   const apagarHabito = useCallback((hid: string) => setHabitos((hs) => removerHabito(hs, hid)), []);
   const restaurarHabito = useCallback((h: Habito) => setHabitos((hs) => adicionarHabito(hs, h)), []);
-  const definirMeta = useCallback((chave: string, valor: number | null) => setMetas((m) => {
-    const novas = { ...m };
-    if (valor) novas[chave] = valor;
-    else delete novas[chave];
-    return novas;
-  }), []);
+  const definirMeta = useCallback((chave: string, valor: number | null) => setMetas((m) => mudarMeta(m, chave, valor)), []);
 
   const value = useMemo(
     () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta, lancamentos, apagarLancamento, restaurarLancamento, habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito, contas, criarConta, editarConta, apagarConta, restaurarConta, pagarConta, desfazerPagamento, restaurarPagamento }),

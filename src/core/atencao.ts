@@ -1,6 +1,6 @@
 /**
  * "O que pede atenção" no Hoje e no chat: contas atrasadas ou perto de vencer, compromisso
- * nas próximas 2 horas, sabores esgotados da Flush e hábitos que faltam hoje.
+ * nas próximas 2 horas, sabores esgotados da Flush, limite de gasto que passou e hábitos que faltam hoje.
  * Funções puras: só junta e ordena o que veio da leitura; sem dado, a lista fica vazia.
  * O dia é sempre o de Brasília.
  */
@@ -8,6 +8,7 @@ import type { Compromisso } from "./agenda";
 import { contasDoMes, pagamentoDoMes, reais, textoDoEstado, vencimentoNoMes, type Conta, type EstadoDaConta } from "./contas";
 import { feitoNoDia, type Habito } from "./habitos";
 import { diaEmBrasilia, somarDias } from "./brasilia";
+import { passaram, textoDosEstourados, type LimiteNoMes } from "./metas";
 
 export type Tela = "/vida" | "/negocios";
 
@@ -15,6 +16,8 @@ export type ItemDeAtencao =
   | { tipo: "conta"; chave: string; contaId: string; /** "AAAA-MM" que esta ocorrência quita (o "marcar paga" usa este mês). */ mes: string; nome: string; estado: Exclude<EstadoDaConta, "paga">; dias: number; valor: number | null; rotulo: string; tela: Tela }
   | { tipo: "compromisso"; chave: string; titulo: string; inicio: string; comecou: boolean; rotulo: string; tela: Tela }
   | { tipo: "esgotados"; chave: string; n: number; rotulo: string; tela: Tela }
+  /** Uma linha só, mesmo com vários limites estourados. */
+  | { tipo: "limite"; chave: string; texto: string; rotulo: string; tela: Tela }
   | { tipo: "habito"; chave: string; habitoId: string; nome: string; rotulo: string; tela: Tela };
 
 export interface FontesDeAtencao {
@@ -24,6 +27,8 @@ export interface FontesDeAtencao {
   compromissos: readonly Compromisso[] | null;
   /** Quantos sabores com 0 unidades. null = sem leitura direta do estoque. */
   esgotados: number | null;
+  /** Os limites do mês (`limitesDoMes`); só os que passaram entram. Ausente = nenhum. */
+  limites?: readonly LimiteNoMes[];
   agora: Date;
 }
 
@@ -79,7 +84,8 @@ function peso(i: ItemDeAtencao): number {
   if (i.tipo === "compromisso") return 0;
   if (i.tipo === "conta") return i.estado === "atrasada" ? 1 : i.estado === "hoje" ? 2 : 3;
   if (i.tipo === "esgotados") return 4;
-  return 5;
+  if (i.tipo === "limite") return 5;
+  return 6;
 }
 
 /** A lista inteira, em ordem de urgência. */
@@ -97,6 +103,8 @@ export function montarAtencao(f: FontesDeAtencao): ItemDeAtencao[] {
   if (f.esgotados && f.esgotados > 0) {
     itens.push({ tipo: "esgotados", chave: "esgotados", n: f.esgotados, rotulo: "Flush", tela: "/negocios" });
   }
+  const estourados = passaram(f.limites ?? []);
+  if (estourados.length) itens.push({ tipo: "limite", chave: "limites", texto: textoDosEstourados(estourados), rotulo: "Limite", tela: "/vida" });
   for (const h of f.habitos) {
     if (!feitoNoDia(h, hoje)) itens.push({ tipo: "habito", chave: `hb-${h.id}`, habitoId: h.id, nome: h.nome, rotulo: "Hábito", tela: "/vida" });
   }
@@ -120,8 +128,8 @@ export function cortarAtencao(itens: readonly ItemDeAtencao[], limite = 5): { vi
   return { visiveis, escondidos: resto.length, verTudo: telas.size === 1 ? resto[0].tela : "/vida" };
 }
 
-/** O pedaço do chat ("o que tenho hoje?"): contas e hábitos de hoje. Vazio quando não há nada. */
-export function responderAtencao(contas: readonly Conta[], habitos: readonly Habito[], agora = new Date()): string {
+/** O pedaço do chat ("o que tenho hoje?"): contas, limite estourado e hábitos de hoje. Vazio quando não há nada. */
+export function responderAtencao(contas: readonly Conta[], habitos: readonly Habito[], agora = new Date(), limites: readonly LimiteNoMes[] = []): string {
   const partes: string[] = [];
   const urgentes = contasUrgentes(contas, agora);
   if (urgentes.length) {
@@ -129,6 +137,8 @@ export function responderAtencao(contas: readonly Conta[], habitos: readonly Hab
     const lista = [...urgentes].sort((a, b) => ordem[a.estado] - ordem[b.estado] || (a.estado === "atrasada" ? b.dias - a.dias : 0));
     partes.push(`Contas:\n${lista.map((i) => `• ${i.conta.nome}: ${textoDoEstado(i).toLowerCase()}${i.valor !== null ? ` (${reais(i.valor)})` : ""}`).join("\n")}`);
   }
+  const estourados = passaram(limites);
+  if (estourados.length) partes.push(`${textoDosEstourados(estourados).replace(/ passou (?=R\$)/, " passou do limite em ")}.`);
   const hoje = diaEmBrasilia(agora);
   const faltam = habitos.filter((h) => !feitoNoDia(h, hoje));
   if (faltam.length) partes.push(`Hábitos que faltam hoje: ${faltam.map((h) => h.nome).join(", ")}.`);

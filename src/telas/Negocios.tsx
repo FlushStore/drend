@@ -7,6 +7,7 @@ import { atualizarStatusVM, rotulo, useStatusVM } from "@/fontes/status";
 import { useFlush } from "@/fontes/useFlush";
 import { CurvaDaSemana } from "./VendasDaSemana";
 import { MesDaFlush } from "./MesDaFlush";
+import { MetaSemLeitura } from "./MetaDaFlush";
 import { ProdutosDaFlush } from "./ProdutosDaFlush";
 
 /** Um projeto por bloco: o número que importa e o estado. Operar é no painel do projeto. */
@@ -38,6 +39,7 @@ export function Negocios() {
         </Bloco>
 
         {flush.mes && <MesDaFlush mes={flush.mes} />}
+        {!flush.mes && <MetaSemLeitura lendo={flush.estado.fase === "carregando"} />}
 
         <ProdutosDaFlush flush={flush} />
 
