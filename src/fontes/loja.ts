@@ -20,6 +20,8 @@ export interface ResumoLoja {
   historico?: DiaLoja[];
   /** Vendas registradas desde sempre (só quando a loja informa). 0 = ainda não abriu. */
   totalVendas?: number;
+  /** "servidor": a cópia que o DREND guarda (de hora em hora), sem login da loja neste aparelho. */
+  origem?: "servidor";
 }
 
 export type EstadoLoja =
@@ -38,6 +40,11 @@ export interface ConfigLoja {
   /** Onde o último resumo fica no aparelho (abre com número mesmo sem internet). */
   cache: string;
   buscar: (db: SupabaseClient, agora: Date) => Promise<ResumoLoja>;
+  /**
+   * Sem sessão da loja neste aparelho: o último resumo que o servidor do DREND guardou
+   * (copiado de hora em hora). null quando não há. Assim os números aparecem sem login.
+   */
+  doServidor?: () => Promise<ResumoLoja | null>;
 }
 
 export interface FonteLoja {
@@ -84,8 +91,14 @@ export function criarFonte(cfg: ConfigLoja): FonteLoja {
     const anterior = estado.fase === "ok" || estado.fase === "erro" ? estado.resumo : guardado();
     if (anterior) mudar({ fase: "ok", resumo: anterior, atualizando: true });
     try {
-      const resumo = await cfg.buscar(db(), new Date());
+      const { data } = await db().auth.getSession();
+      const resumo = data.session ? await cfg.buscar(db(), new Date()) : await cfg.doServidor?.() ?? null;
       if (minha !== geracao) return;
+      if (!resumo) {
+        guardar(null);
+        mudar({ fase: "fora" });
+        return;
+      }
       guardar(resumo);
       mudar({ fase: "ok", resumo, atualizando: false });
     } catch (e) {
@@ -100,19 +113,12 @@ export function criarFonte(cfg: ConfigLoja): FonteLoja {
     if (iniciado || typeof window === "undefined") return;
     iniciado = true;
     const salvo = guardado();
-    void db().auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        guardar(null);
-        mudar({ fase: "fora" });
-        return;
-      }
-      if (salvo) mudar({ fase: "ok", resumo: salvo, atualizando: true });
-      void atualizar();
-    });
+    if (salvo) mudar({ fase: "ok", resumo: salvo, atualizando: true });
+    void atualizar();
     // Volta para o app (iPhone): números frescos, no máximo a cada 2 minutos.
     let ultima = Date.now();
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState !== "visible" || estado.fase === "fora" || Date.now() - ultima < 120_000) return;
+      if (document.visibilityState !== "visible" || (estado.fase === "fora" && !cfg.doServidor) || Date.now() - ultima < 120_000) return;
       ultima = Date.now();
       void atualizar();
     });
@@ -136,6 +142,8 @@ export function criarFonte(cfg: ConfigLoja): FonteLoja {
     await db().auth.signOut();
     guardar(null);
     mudar({ fase: "fora" });
+    // Sem a sessão, volta a mostrar a cópia do servidor (se houver).
+    if (cfg.doServidor) await atualizar();
   }
 
   return {
