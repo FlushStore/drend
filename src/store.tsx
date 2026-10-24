@@ -43,18 +43,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const limpo = texto.trim();
     if (!limpo) return;
     const ideia = limpo.match(/^tive uma ideia[:,]?\s*(.*)$/i);
-    setMensagens((ms) => {
-      const novas: Mensagem[] = [...ms, { id: id(), de: "rapha", texto: limpo }];
-      if (ideia) {
-        const conteudo = ideia[1] || limpo;
-        setCaixa((c) => [...c, conteudo]);
-        novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Guardei na caixa de entrada. Em qual projeto eu salvo?", ideia: conteudo });
-      } else {
-        // Fase 4: ainda sem modelo de IA ligado. Dizer isso é melhor que fingir.
-        novas.push({ id: id(), de: "drend", status: "falhou", texto: "Ainda não estou ligado a uma IA. Por enquanto entendo “tive uma ideia…”. Conversa livre chega na Fase 6." });
-      }
-      return novas;
-    });
+    // As mensagens novas saem prontas daqui: o updater fica puro (o StrictMode roda ele duas vezes).
+    const novas: Mensagem[] = [{ id: id(), de: "rapha", texto: limpo }];
+    if (ideia) {
+      const conteudo = ideia[1] || limpo;
+      setCaixa((c) => [...c, conteudo]);
+      novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Guardei na caixa de entrada. Em qual projeto eu salvo?", ideia: conteudo });
+    } else {
+      // Fase 4: ainda sem modelo de IA ligado. Dizer isso é melhor que fingir.
+      novas.push({ id: id(), de: "drend", status: "falhou", texto: "Ainda não estou ligado a uma IA. Por enquanto entendo “tive uma ideia…”. Conversa livre chega na Fase 6." });
+    }
+    setMensagens((ms) => [...ms, ...novas]);
   }, []);
 
   const guardarIdeia = useCallback(

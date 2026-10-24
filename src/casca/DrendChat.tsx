@@ -20,6 +20,8 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: () => void }) {
   const { mensagens, falar, guardarIdeia, desfazer, mural } = useStore();
   const [texto, setTexto] = useState("");
   const fim = useRef<HTMLDivElement>(null);
+  // O Desfazer só volta a última ação ativa: o botão aparece só na mensagem dela.
+  const ultima = [...mural.log].reverse().find((e) => !e.undone && !e.summary.startsWith("Desfez:"));
 
   useEffect(() => {
     fim.current?.scrollIntoView({ block: "end" });
@@ -45,7 +47,7 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: () => void }) {
               {m.logId && mural.log.some((e) => e.id === m.logId && !e.undone) && (
                 <div className="dr-msg-acoes">
                   <Botao variante="secundaria" compacto onClick={aoAbrirMural}>Ver no Mural</Botao>
-                  <Botao variante="fantasma" compacto onClick={desfazer}>Desfazer</Botao>
+                  {ultima?.id === m.logId && <Botao variante="fantasma" compacto onClick={desfazer}>Desfazer</Botao>}
                 </div>
               )}
             </li>
