@@ -9,6 +9,7 @@ import { lerValor } from "./financeiro";
 import type { QuandoAgenda } from "./agenda";
 import { lerLancamento, type LancamentoLido } from "./dinheiro";
 import { lerConta, lerPagamentoDeConta, type ContaLida } from "./contas";
+import { lerLimite, lerTirar } from "./metas";
 
 export type Comando =
   | { tipo: "criarQuadro"; titulo: string; cartoes: string[]; projeto: string }
@@ -26,6 +27,14 @@ export type Comando =
   | { tipo: "agradecimento" }
   | { tipo: "ajuda" }
   | { tipo: "meta"; valor: number }
+  /** "limite mercado 800" · "limite do mês 3000": `categoria` null é o limite geral. */
+  | { tipo: "limite"; categoria: string | null; valor: number }
+  /** "tirar meta da flush" */
+  | { tipo: "tirarMeta" }
+  /** "tirar limite mercado" · "tirar limite do mês" */
+  | { tipo: "tirarLimite"; categoria: string | null }
+  /** "como estão as metas?" */
+  | { tipo: "metas" }
   | { tipo: "missaoNota"; missao: string; texto: string }
   | { tipo: "missaoStatus"; missao: string | null }
   | { tipo: "agenda"; quando: QuandoAgenda }
@@ -113,8 +122,16 @@ export function entender(entrada: string): Comando | null {
   const nota = t.match(/^(?:(?:anot[ae]|registr[ae]|coloc[ae]|p[oõ]e)\s+(?:isso\s+)?(?:na|no)\s+)?miss[aã]o\b([^:]*?)(?:\s*[:,]|\s+-)\s*(.+)$/i);
   const textoNota = nota?.[2].trim().replace(/^["“”']+|["“”']+$/g, "").trim();
   if (nota && textoNota) return { tipo: "missaoNota", missao: qualMissao(normalizar(nota[1])) ?? "drend", texto: textoNota };
-  // "meta do mês 10 mil" · "minha meta é 8000" · "meta: R$ 12.000"
-  const meta = t.match(/^(?:(?:minha|a|nossa)\s+)?meta(?:\s+(?:do|desse|deste|pro|para o)\s+m[eê]s)?(?:\s+(?:da|de)\s+(?:flush|vendas?))?\s*(?:[:=-]|(?:é|e|vai ser|fica|agora é)(?=\s|$))?\s*(?:de\s+)?(.+)$/i);
+  // Metas do mês: "limite mercado 800" · "tirar meta da flush" · "como estão as metas?"
+  const limite = lerLimite(t);
+  if (limite) return { tipo: "limite", ...limite };
+  const tirar = lerTirar(t);
+  if (tirar) return tirar.tipo === "meta" ? { tipo: "tirarMeta" } : { tipo: "tirarLimite", categoria: tirar.categoria };
+  if (/^(?:e )?(?:como (?:estao|andam|vao|ficam) )?(?:as |os |minhas |meus )?(?:metas|limites)(?: (?:e )?(?:os |as |meus |minhas )?(?:limites|metas))?(?: (?:do|desse|deste) mes)?$/.test(n)) {
+    return { tipo: "metas" };
+  }
+  // "meta do mês 10 mil" · "minha meta é 8000" · "meta: R$ 12.000" · "meta flush 20000" · "meta de vendas 15k"
+  const meta = t.match(/^(?:(?:minha|a|nossa)\s+)?meta(?:\s+(?:do|desse|deste|pro|para o)\s+m[eê]s)?(?:\s+(?:(?:da|de|do)\s+)?(?:flush(?:store)?|vendas?|faturamento))?(?:\s+(?:do|desse|deste)\s+m[eê]s)?\s*(?:[:=-]|(?:é|e|vai ser|fica|agora é)(?=\s|$))?\s*(?:(?:de|em|pra|para)\s+)?(.+)$/i);
   if (meta) {
     const valor = lerValor(meta[1]);
     if (valor) return { tipo: "meta", valor };

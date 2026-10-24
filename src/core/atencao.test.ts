@@ -140,3 +140,25 @@ describe("virada do mês", () => {
     expect(montarAtencao({ contas: [contaDia1("2026-10")], habitos: [], compromissos: null, esgotados: null, agora: fim("2026-10-30") })).toEqual([]);
   });
 });
+
+describe("limite que passou", () => {
+  const l = (rotulo: string, estado: "dentro" | "perto" | "passou", excesso = 0) => ({ chave: `limite:${rotulo}`, categoria: rotulo, rotulo, limite: 100, gasto: 100 + excesso, parte: 1, estado, sobra: 0, excesso });
+
+  it("entra numa linha só, depois dos esgotados e antes dos hábitos", () => {
+    const itens = montarAtencao({ contas: [], habitos: [habito("Ler")], compromissos: null, esgotados: 2, limites: [l("Mercado", "passou", 50), l("Uber", "perto")], agora });
+    expect(tipos(itens)).toEqual(["esgotados", "limites", "hb-ler"]);
+    const lim = itens[1];
+    expect(lim.tipo === "limite" && sp(lim.texto)).toBe("Mercado passou R$ 50");
+    const dois = montarAtencao({ contas: [], habitos: [], compromissos: null, esgotados: null, limites: [l("Mercado", "passou", 50), l("Geral", "passou", 10)], agora });
+    expect(dois).toHaveLength(1);
+    expect(dois[0].tipo === "limite" && dois[0].texto).toBe("Mercado e Geral passaram do limite");
+  });
+
+  it("dentro ou perto não pede atenção", () => {
+    expect(montarAtencao({ contas: [], habitos: [], compromissos: null, esgotados: null, limites: [l("Uber", "perto")], agora })).toEqual([]);
+  });
+
+  it("no chat", () => {
+    expect(sp(responderAtencao([], [], agora, [l("Mercado", "passou", 50)]))).toBe("Mercado passou do limite em R$ 50.");
+  });
+});

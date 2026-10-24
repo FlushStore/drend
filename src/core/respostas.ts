@@ -47,7 +47,7 @@ export function responderVendas(periodo: Periodo, leitura: LeituraFlush, agora =
 
   if (periodo === "mes") {
     const mes = leitura.historico ? resumirMes(leitura.historico, agora) : null;
-    return mes ? responderMes(mes, meta) + aviso : "Ainda não tenho o mês inteiro da Flush. Abra o app com internet que eu leio.";
+    return mes ? responderMes(mes, meta, agora) + aviso : "Ainda não tenho o mês inteiro da Flush. Abra o app com internet que eu leio.";
   }
 
   if (periodo === "semana") {
@@ -72,7 +72,7 @@ export function responderVendas(periodo: Periodo, leitura: LeituraFlush, agora =
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** O mês em três linhas: quanto, contra o mês passado, e a meta (quando tem). */
-export function responderMes(mes: MesFlush, meta: number | null): string {
+export function responderMes(mes: MesFlush, meta: number | null, agora?: Date): string {
   const { atual, anterior } = mes;
   if (!atual.valor) return `Em ${mes.nome} a Flush ainda não vendeu.${meta ? ` Meta: ${reais(meta)}.` : ""}`;
   const linhas = [`Em ${mes.nome}, até hoje: ${reais(atual.valor)} em ${pedidos(atual.pedidos)}, ${reais(atual.lucro)} de lucro${mes.margem !== null ? ` (margem de ${pct(mes.margem)})` : ""}.`];
@@ -82,7 +82,7 @@ export function responderMes(mes: MesFlush, meta: number | null): string {
     linhas.push(`Está ${sentido} ${anterior.nome} no mesmo ponto (${reais(anterior.ateHoje.valor)}).`);
   }
   if (meta) {
-    const p = progressoMeta(mes, meta);
+    const p = progressoMeta(mes, meta, agora);
     linhas.push(p.falta === 0
       ? `Meta de ${reais(meta)} batida.`
       : `Meta de ${reais(meta)}: ${pct(p.feito)} feito, faltam ${reais(p.falta)}${p.porDia ? `, ${reais(p.porDia)} por dia` : ""}.${p.noRitmo ? " No ritmo de agora, bate." : ""}`);
@@ -138,7 +138,7 @@ export const AJUDA = [
   "• concluir: “feito: pagar o fornecedor”",
   "• ver o que falta: “o que tenho hoje?”",
   "• números da Flush: “quanto vendi hoje?”, “e a semana?”, “e o mês?”",
-  "• meta: “meta do mês 10 mil”",
+  "• metas do mês: “meta da flush 20 mil”, “limite mercado 800”, “limite do mês 3000”, “como estão as metas?”, “tirar limite mercado”",
   "• seu dinheiro: “gastei 50 no mercado”, “recebi 1.200 do freela”, “quanto gastei?”, “apaga o último lançamento”",
   "• contas do mês: “conta de luz todo dia 10, 200 reais”, “paguei a luz”, “quais contas vencem?”",
   "• hábitos: “novo hábito academia”, “fiz academia”, “meus hábitos”",

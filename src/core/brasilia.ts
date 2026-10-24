@@ -25,3 +25,10 @@ export const meioDiaEmBrasilia = (dia: string) => new Date(`${dia}T12:00:00-03:0
 export function msAteAmanha(agora = new Date()): number {
   return Date.parse(`${somarDias(diaEmBrasilia(agora), 1)}T00:00:00-03:00`) - agora.getTime();
 }
+
+/** Dias que restam no mês de Brasília, hoje incluso (dia 24 de outubro: 8). */
+export function diasRestantesNoMes(agora = new Date()): number {
+  const hoje = diaEmBrasilia(agora);
+  const [a, m, d] = hoje.split("-").map(Number);
+  return new Date(Date.UTC(a, m, 0)).getUTCDate() - d + 1;
+}
