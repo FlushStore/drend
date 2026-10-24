@@ -21,6 +21,11 @@ export async function marcar(db, chave) {
   return Array.isArray(linhas) && linhas.length > 0;
 }
 
+/** Solta a marca quando o aviso não saiu, para a próxima rodada tentar de novo. */
+export async function desmarcar(db, chave) {
+  await fetch(`${db.url}/rest/v1/drend_avisado?chave=eq.${encodeURIComponent(chave)}`, { method: "DELETE", headers: db.cabecalhos }).catch(() => {});
+}
+
 /** Manda para todos os aparelhos; tira os que o navegador já descartou (404/410). */
 export async function enviar(db, aviso) {
   if (!pushPronto()) return 0;

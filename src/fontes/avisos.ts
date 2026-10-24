@@ -41,8 +41,11 @@ export async function ligarAvisos(): Promise<string | null> {
     const { chave } = (await r.json()) as { chave: string };
     const reg = await navigator.serviceWorker.ready;
     const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveEmBytes(chave) }));
-    const ok = await fetch("/api/avisos", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` }, body: JSON.stringify({ inscricao: sub.toJSON(), teste: true }) });
-    return ok.ok ? null : "Não consegui guardar a inscrição. Tente de novo.";
+    // Sem o servidor guardar, a inscrição não serve: desfaz para o botão "Ligar" voltar.
+    const ok = await fetch("/api/avisos", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` }, body: JSON.stringify({ inscricao: sub.toJSON(), teste: true }) }).catch(() => null);
+    if (ok?.ok) return null;
+    await sub.unsubscribe().catch(() => false);
+    return "Não consegui guardar a inscrição. Tente de novo.";
   } catch (e) {
     return e instanceof Error ? e.message : "Não consegui ligar os avisos.";
   }

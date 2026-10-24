@@ -5,7 +5,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { banco, DONO, quemE } from "./_sessao.js";
 import { diaEmBrasilia, resumoDaManha } from "./_resumo.js";
-import { enviar, marcar, pushPronto } from "./_push.js";
+import { desmarcar, enviar, marcar, pushPronto } from "./_push.js";
 
 function doCron(req) {
   const esperado = process.env.CRON_SECRET || "";
@@ -21,12 +21,19 @@ async function ler(db, caminho) {
 
 async function manha(db, res) {
   const dia = diaEmBrasilia(Date.now());
-  if (!(await marcar(db, `manha|${dia}`))) return res.status(200).json({ ja: true });
-  const [agenda, estado] = await Promise.all([ler(db, "drend_agenda?select=eventos"), ler(db, "drend_estado?select=dados&limit=1")]);
-  const eventos = agenda.flatMap((l) => (Array.isArray(l.eventos) ? l.eventos : []));
-  const tarefas = Array.isArray(estado[0]?.dados?.tarefas) ? estado[0].dados.tarefas : [];
-  const enviados = await enviar(db, resumoDaManha(eventos, tarefas));
-  return res.status(200).json({ enviados });
+  const chave = `manha|${dia}`;
+  if (!(await marcar(db, chave))) return res.status(200).json({ ja: true });
+  try {
+    const [agenda, estado] = await Promise.all([ler(db, "drend_agenda?select=eventos"), ler(db, "drend_estado?select=dados&limit=1")]);
+    const eventos = agenda.flatMap((l) => (Array.isArray(l.eventos) ? l.eventos : []));
+    const tarefas = Array.isArray(estado[0]?.dados?.tarefas) ? estado[0].dados.tarefas : [];
+    const enviados = await enviar(db, resumoDaManha(eventos, tarefas));
+    if (!enviados) await desmarcar(db, chave);
+    return res.status(200).json({ enviados });
+  } catch (e) {
+    await desmarcar(db, chave);
+    return res.status(502).json({ erro: e instanceof Error ? e.message : "falhou" });
+  }
 }
 
 export default async function handler(req, res) {

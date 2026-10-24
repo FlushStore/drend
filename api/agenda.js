@@ -7,7 +7,7 @@ import { normalizar } from "./_google.js";
 import { autorizado } from "./_token.js";
 import { banco, DONO, quemE } from "./_sessao.js";
 import { avisoDe, proximos } from "./_resumo.js";
-import { enviar, marcar } from "./_push.js";
+import { desmarcar, enviar, marcar } from "./_push.js";
 
 const DIA = 864e5;
 const CACHE_MS = 5 * 60 * 1000;
@@ -53,7 +53,10 @@ async function gravar(req, res) {
   let avisados = 0;
   try {
     for (const e of proximos(eventos)) {
-      if (await marcar(db, `ev|${e.id}`)) avisados += (await enviar(db, avisoDe(e))) > 0 ? 1 : 0;
+      const chave = `ev|${e.id}`;
+      if (!(await marcar(db, chave))) continue;
+      if ((await enviar(db, avisoDe(e))) > 0) avisados++;
+      else await desmarcar(db, chave);
     }
   } catch { /* segue: a agenda já foi gravada */ }
   return res.status(200).json({ fonte, gravados: eventos.length, avisados });
