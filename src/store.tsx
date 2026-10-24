@@ -4,7 +4,18 @@ import { Mural, MuralError, type Op, type LogEntry } from "./core/mural";
 import { VERSAO, repositorioLocal, type Repositorio, type Retrato } from "./core/persistencia";
 import { baixar, maisRecente, subir, supabase, type Session } from "./core/nuvem";
 import { muralExemplo } from "./data/exemplo";
-import { adicionar, concluir, novaTarefa, podar, reabrir, type Tarefa } from "./core/tarefas";
+import { abertas, adicionar, concluir, novaTarefa, podar, reabrir, remover, type Tarefa } from "./core/tarefas";
+import { acharPorTexto } from "./core/fala";
+import { AJUDA, responderAgradecimento, responderPendencias, responderResumo, responderVendas, type LeituraFlush } from "./core/respostas";
+import { lerEstado as lerFlush } from "./fontes/flush";
+
+/** A Flush como a conversa enxerga: só o resumo, nunca a sessão. */
+function leituraDaFlush(): LeituraFlush {
+  const e = lerFlush();
+  if (e.fase === "fora") return null;
+  if (e.fase === "carregando") return e;
+  return e.resumo ? { fase: e.fase, dias: e.resumo.dias, atualizadoEm: e.resumo.atualizadoEm } : { fase: "erro", dias: [], atualizadoEm: "" };
+}
 
 export type Mensagem =
   | { id: string; de: "rapha"; texto: string }
@@ -39,7 +50,7 @@ let seq = 0;
 const id = () => `m${Date.now().toString(36)}-${++seq}`;
 
 const BOAS_VINDAS: Mensagem[] = [
-  { id: "m-inicio", de: "drend", status: "dica", texto: "Diga “me lembra de…” para anotar uma tarefa, ou “crie um quadro Natal da Flush com cartões vídeo, cupom e stories”." },
+  { id: "m-inicio", de: "drend", status: "dica", texto: "Fala comigo do seu jeito: “me lembra de…”, “o que tenho hoje?”, “quanto vendi hoje?”. Diga “ajuda” para ver tudo." },
 ];
 
 export function StoreProvider({ children, repositorio }: { children: ReactNode; repositorio?: Repositorio<Mensagem> }) {
@@ -162,8 +173,41 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       }
     } else if (cmd?.tipo === "tarefa") {
       const t = novaTarefa(cmd.texto);
+      const repetida = abertas(tarefas).find((x) => x.texto.toLowerCase() === t.texto.toLowerCase());
       setTarefas((l) => adicionar(l, t));
-      novas.push({ id: id(), de: "drend", status: "feito", texto: `Anotei: “${t.texto}”. Está em Para você, no Hoje.` });
+      novas.push(repetida
+        ? { id: id(), de: "drend", status: "dica", texto: `“${repetida.texto}” já está na sua lista.` }
+        : { id: id(), de: "drend", status: "feito", texto: `Anotei: “${t.texto}”. Está em Para você, no Hoje.` });
+    } else if (cmd?.tipo === "concluir" || cmd?.tipo === "reabrir" || cmd?.tipo === "apagarTarefa") {
+      // Concluir e apagar procuram nas abertas; reabrir, nas feitas. Empate vira pergunta, nunca chute.
+      const base = cmd.tipo === "reabrir" ? tarefas.filter((t) => t.feitaEm) : abertas(tarefas);
+      const r = acharPorTexto(base, cmd.texto, (t) => t.texto);
+      if (!r) {
+        novas.push({ id: id(), de: "drend", status: "falhou", texto: cmd.tipo === "reabrir" ? `Não achei uma tarefa feita parecida com “${cmd.texto}”.` : `Não achei “${cmd.texto}” nas suas tarefas abertas. Diga “o que tenho” para ver a lista.` });
+      } else if ("empate" in r) {
+        novas.push({ id: id(), de: "drend", status: "pergunta", texto: `Qual delas? ${r.empate.slice(0, 4).map((t) => `“${t.texto}”`).join(", ")}.` });
+      } else if (cmd.tipo === "concluir") {
+        setTarefas((l) => concluir(l, r.achado.id));
+        novas.push({ id: id(), de: "drend", status: "feito", texto: `Feita: “${r.achado.texto}”. Se errei, diga “reabre ${r.achado.texto.toLowerCase()}”.` });
+      } else if (cmd.tipo === "reabrir") {
+        setTarefas((l) => reabrir(l, r.achado.id));
+        novas.push({ id: id(), de: "drend", status: "feito", texto: `Voltou para a lista: “${r.achado.texto}”.` });
+      } else {
+        setTarefas((l) => remover(l, r.achado.id));
+        novas.push({ id: id(), de: "drend", status: "feito", texto: `Apaguei a tarefa “${r.achado.texto}”.` });
+      }
+    } else if (cmd?.tipo === "pendencias") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderPendencias(tarefas, caixaDeEntrada.length) });
+    } else if (cmd?.tipo === "vendas") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.loja, cmd.periodo, leituraDaFlush()) });
+    } else if (cmd?.tipo === "resumo") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderResumo(tarefas, leituraDaFlush(), new Date(), "Resumo de agora:") });
+    } else if (cmd?.tipo === "saudacao") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderResumo(tarefas, leituraDaFlush()) });
+    } else if (cmd?.tipo === "agradecimento") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderAgradecimento() });
+    } else if (cmd?.tipo === "ajuda") {
+      novas.push({ id: id(), de: "drend", status: "dica", texto: AJUDA });
     } else if (cmd?.tipo === "desfazer") {
       const e = mural.undo();
       if (e) setVersao((v) => v + 1);
@@ -171,11 +215,11 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
         ? { id: id(), de: "drend", status: "feito", texto: `Desfeito: ${e.summary.replace(/^Desfez: /, "")}.` }
         : { id: id(), de: "drend", status: "falhou", texto: "Não há nada para desfazer." });
     } else {
-      // Fase 4: ainda sem modelo de IA ligado. Dizer isso é melhor que fingir.
-      novas.push({ id: id(), de: "drend", status: "falhou", texto: "Ainda não entendo conversa livre. Por enquanto: “crie um quadro … com cartões …”, “tive uma ideia…”, “me lembra de…” e “desfaz”." });
+      // Ainda sem modelo de IA ligado: dizer isso é melhor que fingir. Se era uma ideia, dá para guardar num toque.
+      novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Não entendi isso como pedido. Se for uma ideia, escolha onde eu guardo. Diga “ajuda” para ver o que eu entendo.", ideia: limpo });
     }
     setMensagens((ms) => [...ms, ...novas]);
-  }, [mural]);
+  }, [mural, tarefas, caixaDeEntrada.length]);
 
   const guardarIdeia = useCallback(
     (ideia: string, projeto: string) => {

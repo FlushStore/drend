@@ -93,7 +93,7 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-chat-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .dr-msg-eu { align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 20px 20px 6px 20px; background: var(--cos-acento); color: var(--cos-sobre-acento); font-size: var(--cos-texto-corpo); line-height: 1.4; }
 .dr-msg-drend { display: grid; gap: 8px; padding: 14px 16px; max-width: 92%; border-radius: 20px 20px 20px 6px; }
-.dr-msg-drend p { margin: 0; font-size: var(--cos-texto-corpo); line-height: 1.45; }
+.dr-msg-drend p { margin: 0; white-space: pre-line; font-size: var(--cos-texto-corpo); line-height: 1.45; }
 .dr-msg-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
 .dr-selo { justify-self: start; display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: var(--cos-r-pilula); font-size: 12px; font-weight: 600; background: var(--cos-controle); color: var(--cos-tinta-2); }
 .dr-selo[data-status="feito"] { background: var(--cos-positivo-suave); color: var(--cos-positivo); }

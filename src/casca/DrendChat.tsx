@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Botao } from "@/design-system/Botao";
 import { useStore, type Mensagem } from "@/store";
+import { iniciarFlush } from "@/fontes/flush";
 
 const DESTINOS = [
   ["flushstore", "FlushStore"],
@@ -10,8 +11,10 @@ const DESTINOS = [
 
 /** Atalhos da conversa vazia: o rótulo é curto, o toque deixa o começo da frase no campo. */
 const SUGESTOES = [
-  ["Criar um quadro", "Crie um quadro "],
-  ["Tive uma ideia", "Tive uma ideia: "],
+  ["O que tenho hoje?", "O que tenho hoje?", true],
+  ["Quanto vendi hoje?", "Quanto vendi hoje?", true],
+  ["Me lembra de…", "Me lembra de ", false],
+  ["Tive uma ideia", "Tive uma ideia: ", false],
 ] as const;
 
 const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
@@ -30,6 +33,9 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
   const entrada = useRef<HTMLInputElement>(null);
   // O Desfazer só volta a última ação ativa: o botão aparece só na mensagem dela.
   const ultima = [...mural.log].reverse().find((e) => !e.undone && !e.summary.startsWith("Desfez:"));
+
+  // A conversa responde sobre a Flush mesmo quando o Hoje ainda não abriu.
+  useEffect(iniciarFlush, []);
 
   useEffect(() => {
     fim.current?.scrollIntoView({ block: "end" });
@@ -64,8 +70,10 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
       </ol>
       {mensagens.every((m) => m.de === "drend" && m.status === "dica") && (
         <ul className="dr-chat-sugestoes" aria-label="Sugestões">
-          {SUGESTOES.map(([rotulo, inicio]) => (
-            <li key={rotulo}><button type="button" className="dr-chat-sugestao" onClick={() => { setTexto(inicio); entrada.current?.focus(); }}>{rotulo}</button></li>
+          {SUGESTOES.map(([rotulo, inicio, enviar]) => (
+            <li key={rotulo}>
+              <button type="button" className="dr-chat-sugestao" onClick={() => { if (enviar) falar(inicio); else { setTexto(inicio); entrada.current?.focus(); } }}>{rotulo}</button>
+            </li>
           ))}
         </ul>
       )}
@@ -80,7 +88,7 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
       >
         <label className="cos-entrada dr-chat-entrada">
           <span className="cos-sr">Falar com o DREND</span>
-          <input ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Tive uma ideia…" enterKeyHint="send" />
+          <input ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Fale com o DREND…" enterKeyHint="send" />
         </label>
         <button type="submit" className="cos-circulo cos-circulo-acento dr-chat-enviar" aria-label="Enviar" disabled={!texto.trim()}>
           <ArrowUp size={20} strokeWidth={2} aria-hidden="true" />

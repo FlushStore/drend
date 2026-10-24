@@ -23,7 +23,8 @@ describe("entender", () => {
   });
 
   it("não inventa comando no que não entende", () => {
-    expect(entender("como está a Flush hoje?")).toBeNull();
+    expect(entender("qual sabor de pod combina com café")).toBeNull();
+    expect(entender("Beleza, produza o máximo que der")).toBeNull();
     expect(entender("crie um quadro com cartões")).toBeNull();
   });
 
