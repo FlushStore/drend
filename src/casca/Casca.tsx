@@ -13,6 +13,7 @@ import type { ItemDeNavegacao } from "@/design-system/navegacao";
 import { useTelaLarga } from "@/design-system/useTelaLarga";
 import { EXEMPLO } from "@/data/exemplo";
 import { useStore } from "@/store";
+import { ContaFlush } from "./ContaFlush";
 import { ContaNuvem } from "./ContaNuvem";
 import { DrendChat } from "./DrendChat";
 import { useTema, type Tema } from "./tema";
@@ -136,6 +137,7 @@ export function Casca() {
             <div><dt>Uso</dt><dd>Só você. Ninguém da equipe vê este painel.</dd></div>
           </dl>
           <ContaNuvem />
+          <ContaFlush />
           <div className="cv2-conta-tema">
             <span className="cv2-conta-rotulo">Aparência</span>
             <Segmentado<Tema> opcoes={TEMAS} valor={tema} aoMudar={escolher} rotulo="Aparência" />

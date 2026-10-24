@@ -30,7 +30,10 @@
 .dr-heroi { display: flex; flex-direction: column; gap: 6px; padding: 22px 22px 18px; color: inherit; transition: transform var(--cos-rapido) var(--cos-curva); }
 a.dr-heroi:active { transform: scale(.99); }
 .dr-heroi-num { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; }
-.dr-heroi-lucro { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--cos-tinta-2); }
+.dr-heroi-lucro { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px 5px; border-radius: var(--cos-r-pilula); font-size: 13px; font-weight: 500; color: var(--cos-positivo); background: var(--cos-positivo-suave); }
+.dr-heroi-lucro[data-tom="negativo"] { color: var(--cos-negativo); background: var(--cos-negativo-suave); }
+.dr-heroi-lucro .cos-valor, .dr-heroi-lucro * { color: inherit; }
+.dr-heroi-extra { font-size: 13px; color: var(--cos-tinta-3); }
 .dr-heroi .ini-semana-grafico { height: 96px; margin-top: 18px; }
 @media (min-width: 1024px) { .dr-heroi { padding: 28px 30px 24px; } .dr-heroi .ini-semana-grafico { height: 132px; } }
 
@@ -49,6 +52,7 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-tira { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 16px; border-radius: var(--cos-r-bloco); background: var(--cos-bloco); border: 1px solid var(--cos-linha); box-shadow: var(--cos-sombra); color: inherit; }
 .dr-tira strong { font-size: 15px; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .dr-tira .dr-rotulo { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+@media (max-width: 599px) { .dr-tiras { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dr-tira:last-child { grid-column: 1 / -1; } }
 @media (min-width: 1024px) { .dr-tiras { gap: 20px; } .dr-tira { padding: 20px 24px; } .dr-tira strong { font-size: 17px; } }
 
 /* Negócios. */
@@ -135,3 +139,17 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-nuvem .cv2-conta-dados dd { display: flex; align-items: center; gap: 10px; }
 .dr-nuvem .cos-entrada input { width: 100%; }
 .dr-nuvem-aviso { margin: 0; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
+
+/* Selo pequeno de número de exemplo, ao lado do rótulo. */
+.dr-tag-exemplo { padding: 1px 7px; border-radius: var(--cos-r-pilula); font-size: 11px; font-weight: 500; color: var(--cos-tinta-3); background: var(--cos-controle); letter-spacing: .02em; }
+
+/* Sugestões quando a conversa ainda está vazia: um toque preenche o campo. */
+.dr-chat-sugestoes { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 0; padding: 0; list-style: none; }
+.dr-chat-sugestao { padding: 9px 14px; border: 1px solid var(--cos-linha-forte); border-radius: var(--cos-r-pilula); background: var(--cos-bloco); color: var(--cos-tinta); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background var(--cos-rapido) var(--cos-curva), transform var(--cos-rapido) var(--cos-curva); }
+.dr-chat-sugestao:hover { background: var(--cos-acento-suave); }
+.dr-chat-sugestao:active { transform: scale(.97); }
+
+/* Conversa como tela no PC (link direto para /drend): coluna de leitura e campo embaixo. */
+@media (min-width: 768px) {
+  .cv2-conteudo > .dr-chat { width: 100%; max-width: 760px; margin-inline: auto; min-height: calc(100dvh - 260px); }
+}

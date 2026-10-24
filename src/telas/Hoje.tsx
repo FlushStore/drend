@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { SetaCirculo } from "@/design-system/BotaoCirculo";
 import { Valor } from "@/design-system/Valor";
 import { agenda, drendStatus, flush } from "@/data/exemplo";
+import { useFlush } from "@/fontes/useFlush";
 import { useStore } from "@/store";
 import { CurvaDaSemana } from "./VendasDaSemana";
 
@@ -16,6 +17,7 @@ function saudacao(agora: Date) {
  */
 export function Hoje() {
   const { caixaDeEntrada } = useStore();
+  const numeros = useFlush();
   const agora = new Date();
   const longa = agora.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
   const data = longa.charAt(0).toUpperCase() + longa.slice(1);
@@ -36,12 +38,18 @@ export function Hoje() {
 
       <div className="dr-hoje">
         <Link to="/negocios" className="cos-bloco dr-heroi" aria-label={`FlushStore hoje: faturamento e lucro`}>
-          <span className="dr-rotulo">FlushStore · hoje</span>
-          <span className="dr-heroi-num">
-            <Valor valor={flush.faturamento} tamanho="gg" centavos={false} animar />
-            <span className="dr-heroi-lucro">lucro <Valor valor={flush.lucro} tamanho="p" centavos={false} /></span>
+          <span className="dr-rotulo">
+            FlushStore · hoje
+            {numeros.exemplo && <span className="dr-tag-exemplo">exemplo</span>}
           </span>
-          <CurvaDaSemana dias={flush.semana} />
+          <span className="dr-heroi-num">
+            <Valor valor={numeros.hoje} tamanho="gg" centavos={false} animar />
+            <span className="dr-heroi-lucro" data-tom={numeros.lucro < 0 ? "negativo" : "positivo"}>
+              lucro <Valor valor={numeros.lucro} tamanho="p" centavos={false} />
+            </span>
+            {numeros.pedidos !== null && <span className="dr-heroi-extra">{numeros.pedidos === 1 ? "1 pedido" : `${numeros.pedidos} pedidos`}</span>}
+          </span>
+          <CurvaDaSemana dias={numeros.semana} />
         </Link>
 
         <section className="cos-bloco dr-para-voce" aria-labelledby="dr-pv">

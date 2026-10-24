@@ -1,11 +1,13 @@
 import { Bloco } from "@/design-system/Bloco";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { Valor } from "@/design-system/Valor";
-import { drendStatus, flush, outrosProjetos, vapeMania } from "@/data/exemplo";
+import { drendStatus, outrosProjetos, vapeMania } from "@/data/exemplo";
+import { useFlush } from "@/fontes/useFlush";
 import { CurvaDaSemana } from "./VendasDaSemana";
 
 /** Um projeto por bloco: o número que importa e o estado. Operar é no painel do projeto. */
 export function Negocios() {
+  const flush = useFlush();
   const semana = flush.semana.reduce((t, d) => t + d.valor, 0);
   return (
     <>
@@ -14,10 +16,10 @@ export function Negocios() {
         <Bloco className="dr-proj dr-proj-flush" aria-label="FlushStore">
           <div className="dr-proj-cab">
             <h2 className="dr-proj-nome">FlushStore</h2>
-            <span className="dr-estado"><i className="dr-ponto" data-tom="ok" aria-hidden="true" />Operando</span>
+            <span className="dr-estado"><i className="dr-ponto" data-tom={flush.exemplo ? undefined : "ok"} aria-hidden="true" />{flush.exemplo ? "Exemplo" : flush.pedidos === 1 ? "1 pedido hoje" : `${flush.pedidos} pedidos hoje`}</span>
           </div>
           <dl className="dr-numeros">
-            <div><dt>Hoje</dt><dd><Valor valor={flush.faturamento} tamanho="g" centavos={false} /></dd></div>
+            <div><dt>Hoje</dt><dd><Valor valor={flush.hoje} tamanho="g" centavos={false} /></dd></div>
             <div><dt>Lucro</dt><dd><Valor valor={flush.lucro} tamanho="g" centavos={false} /></dd></div>
             <div><dt>Semana</dt><dd><Valor valor={semana} tamanho="g" centavos={false} /></dd></div>
           </dl>

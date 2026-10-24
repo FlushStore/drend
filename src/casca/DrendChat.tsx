@@ -8,6 +8,12 @@ const DESTINOS = [
   ["vape-mania", "Vape Mania"],
 ] as const;
 
+/** Atalhos da conversa vazia: o rótulo é curto, o toque deixa o começo da frase no campo. */
+const SUGESTOES = [
+  ["Criar um quadro", "Crie um quadro "],
+  ["Tive uma ideia", "Tive uma ideia: "],
+] as const;
+
 const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
   feito: "Feito",
   proposto: "Precisa do seu ok",
@@ -21,6 +27,7 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
   const { mensagens, falar, guardarIdeia, desfazer, mural } = useStore();
   const [texto, setTexto] = useState("");
   const fim = useRef<HTMLDivElement>(null);
+  const entrada = useRef<HTMLInputElement>(null);
   // O Desfazer só volta a última ação ativa: o botão aparece só na mensagem dela.
   const ultima = [...mural.log].reverse().find((e) => !e.undone && !e.summary.startsWith("Desfez:"));
 
@@ -55,6 +62,13 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
           ),
         )}
       </ol>
+      {mensagens.every((m) => m.de === "drend" && m.status === "dica") && (
+        <ul className="dr-chat-sugestoes" aria-label="Sugestões">
+          {SUGESTOES.map(([rotulo, inicio]) => (
+            <li key={rotulo}><button type="button" className="dr-chat-sugestao" onClick={() => { setTexto(inicio); entrada.current?.focus(); }}>{rotulo}</button></li>
+          ))}
+        </ul>
+      )}
       <div ref={fim} />
       <form
         className="dr-chat-campo"
@@ -66,7 +80,7 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
       >
         <label className="cos-entrada dr-chat-entrada">
           <span className="cos-sr">Falar com o DREND</span>
-          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Tive uma ideia…" enterKeyHint="send" />
+          <input ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Tive uma ideia…" enterKeyHint="send" />
         </label>
         <button type="submit" className="cos-circulo cos-circulo-acento dr-chat-enviar" aria-label="Enviar" disabled={!texto.trim()}>
           <ArrowUp size={20} strokeWidth={2} aria-hidden="true" />
