@@ -8,6 +8,7 @@ import { normalizar } from "./fala";
 import { lerValor } from "./financeiro";
 import type { QuandoAgenda } from "./agenda";
 import { lerLancamento, type LancamentoLido } from "./dinheiro";
+import { lerConta, lerPagamentoDeConta, type ContaLida } from "./contas";
 
 export type Comando =
   | { tipo: "criarQuadro"; titulo: string; cartoes: string[]; projeto: string }
@@ -35,6 +36,12 @@ export type Comando =
   | { tipo: "apagarLancamento" }
   | { tipo: "novoHabito"; nome: string }
   | { tipo: "habitos" }
+  /** "conta de luz todo dia 10, 200 reais": conta fixa nova (Vida). */
+  | { tipo: "novaConta"; conta: ContaLida }
+  /** "minhas contas" · "quais contas vencem?" */
+  | { tipo: "contas" }
+  /** "paguei a luz": `texto` é a conta; `frase`, o que vira "concluir" se nenhuma conta casar. */
+  | { tipo: "pagarConta"; texto: string; frase: string }
   /** "como foi a semana?" · "resumo da semana": a revisão dos últimos 7 dias. */
   | { tipo: "semana" };
 
@@ -82,6 +89,14 @@ export function entender(entrada: string): Comando | null {
   // Dinheiro pessoal: "gastei 50 no mercado" · "recebi 1.200 do freela" (só com valor na frase).
   const lancamento = lerLancamento(t);
   if (lancamento) return { tipo: "lancamento", lancamento };
+  // Contas fixas: "conta de luz todo dia 10, 200 reais" · "internet dia 15 R$ 99,90" · "paguei a luz" (sem valor; "já paguei X" segue como concluir).
+  const conta = lerConta(t);
+  if (conta) return { tipo: "novaConta", conta };
+  const paga = lerPagamentoDeConta(t);
+  if (paga) return { tipo: "pagarConta", texto: paga, frase: t.replace(/[.!?]+$/, "") };
+  if (/^(?:(?:quais|que) (?:as )?contas?(?: (?:que )?(?:vencem|vence|tenho|faltam|falta pagar|a pagar|para pagar))?(?: (?:hoje|essa semana|esta semana|esse mes|este mes|no mes))?|(?:minhas|as) contas(?: (?:do mes|fixas|a pagar|para pagar))?|contas(?: do mes| fixas| a pagar| para pagar)?|o que (?:falta|tenho (?:que|para)) pagar(?: (?:esse|este|no) mes)?|quanto falta pagar(?: (?:esse|este|no) mes)?|como (?:estao|andam|vao) (?:as |minhas )?contas)$/.test(n)) {
+    return { tipo: "contas" };
+  }
   if (/^(?:apag[ae]|apagar|remov[ae]|remover|tir[ae]|tirar|exclu[ia]|excluir|delet[ae]|deletar|desfa(?:z|zer|ca)) (?:o )?ultimo (?:lancamento|gasto|entrada|recebimento)$/.test(n)) {
     return { tipo: "apagarLancamento" };
   }

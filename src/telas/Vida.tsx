@@ -13,6 +13,7 @@ import { feitoNoDia, sequencia, textoDaSequencia, ultimos7 } from "@/core/habito
 import { diaEmBrasilia, meioDiaEmBrasilia, msAteAmanha } from "@/core/brasilia";
 import { useStore } from "@/store";
 import { AgendaDaSemana } from "./AgendaDaSemana";
+import { ContasDoMes } from "./ContasDoMes";
 
 const FUSO = "America/Sao_Paulo";
 const quando = (iso: string) => {
@@ -22,16 +23,21 @@ const quando = (iso: string) => {
 const letraDoDia = (dia: string) => new Date(`${dia}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC", weekday: "narrow" }).toUpperCase();
 const nomeDoDia = (dia: string) => new Date(`${dia}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC", weekday: "long", day: "numeric" });
 
-/** Vida: dinheiro pessoal e hábitos (o que o Rapha conta) e a agenda. Só dado real: sem lançamento, a tela ensina a lançar. */
+/** Vida: dinheiro pessoal, contas do mês e hábitos (o que o Rapha conta) e a agenda. Só dado real: sem lançamento, a tela ensina a lançar. */
 export function Vida() {
   // Um aviso só para a tela: o Desfazer de dinheiro e de hábito aparece no mesmo lugar.
   const { aviso, avisar, limpar } = useAviso();
+  // Um "hoje" só para a tela: hábitos e contas viram o dia juntos.
+  const hoje = useDiaEmBrasilia();
   return (
     <>
       <CabecalhoDeTela titulo="Vida" />
       <div className="dr-vida">
-        <Dinheiro avisar={avisar} />
-        <Habitos avisar={avisar} />
+        <div className="dr-vida-coluna">
+          <Dinheiro avisar={avisar} />
+          <ContasDoMes hoje={hoje} avisar={avisar} />
+        </div>
+        <Habitos avisar={avisar} hoje={hoje} />
       </div>
       <AgendaDaSemana />
       <Aviso aviso={aviso} aoSumir={limpar} />
@@ -150,11 +156,10 @@ function Dinheiro({ avisar }: { avisar: Avisar }) {
   );
 }
 
-function Habitos({ avisar }: { avisar: Avisar }) {
+function Habitos({ avisar, hoje }: { avisar: Avisar; hoje: string }) {
   const { habitos, criarHabito, alternarHabitoHoje, apagarHabito, restaurarHabito } = useStore();
   const [novo, setNovo] = useState("");
   // Tela e toque usam o mesmo dia: o que aparece como hoje é o dia que o toque marca.
-  const hoje = useDiaEmBrasilia();
   const agora = meioDiaEmBrasilia(hoje);
 
   return (

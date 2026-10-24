@@ -8,6 +8,7 @@ import type { LogEntry, MuralState } from "./mural";
 import type { Tarefa } from "./tarefas";
 import type { Lancamento } from "./dinheiro";
 import type { Habito } from "./habitos";
+import type { Conta } from "./contas";
 
 export const VERSAO = 1;
 export const CHAVE = "drend:dados:v1";
@@ -26,6 +27,8 @@ export interface Retrato<M = unknown> {
   lancamentos?: Lancamento[];
   /** Hábitos (Vida). Opcional pelo mesmo motivo. */
   habitos?: Habito[];
+  /** Contas fixas do mês (Vida). Opcional pelo mesmo motivo: ausente = nenhuma conta. */
+  contas?: Conta[];
 }
 
 export interface Repositorio<M = unknown> {
@@ -50,7 +53,8 @@ function valido(x: unknown): x is Retrato {
     (r.tarefas === undefined || Array.isArray(r.tarefas)) &&
     (r.metas === undefined || (typeof r.metas === "object" && r.metas !== null)) &&
     (r.lancamentos === undefined || Array.isArray(r.lancamentos)) &&
-    (r.habitos === undefined || Array.isArray(r.habitos))
+    (r.habitos === undefined || Array.isArray(r.habitos)) &&
+    (r.contas === undefined || Array.isArray(r.contas))
   );
 }
 

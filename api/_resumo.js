@@ -13,13 +13,36 @@ export function doDia(eventos, dia) {
 
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 
-/** O resumo da manhã: agenda de hoje e tarefas abertas. */
-export function resumoDaManha(eventos, tarefas, agora = Date.now()) {
+const reais = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 });
+
+/**
+ * Contas fixas (campo `contas` do retrato, ver src/core/contas.ts) que vencem hoje e ainda
+ * não foram pagas no mês. Dia 31 em mês de 30 dias vence no último dia, como no app.
+ */
+export function contasDeHoje(contas, agora = Date.now()) {
+  if (!Array.isArray(contas)) return [];
+  const hoje = diaEmBrasilia(agora);
+  const mes = hoje.slice(0, 7);
+  const [a, m] = mes.split("-").map(Number);
+  const ultimo = new Date(Date.UTC(a, m, 0)).getUTCDate();
+  const diaDeHoje = Number(hoje.slice(8, 10));
+  return contas.filter(
+    (c) =>
+      c && typeof c.nome === "string" && c.ativa !== false && Number.isInteger(c.dia) &&
+      Math.min(c.dia, ultimo) === diaDeHoje &&
+      !(Array.isArray(c.pagamentos) && c.pagamentos.some((p) => p && p.mes === mes)),
+  );
+}
+
+/** O resumo da manhã: agenda de hoje, contas que vencem hoje e tarefas abertas. */
+export function resumoDaManha(eventos, tarefas, agora = Date.now(), contas = []) {
   const hoje = doDia(eventos, diaEmBrasilia(agora));
   const abertas = tarefas.filter((t) => t && typeof t.texto === "string" && !t.feitaEm);
   const linhas = [];
   if (hoje.length) linhas.push(hoje.slice(0, 4).map((e) => `${e.diaInteiro ? "Dia todo" : hora(e.inicio)} · ${e.titulo}`).join("\n") + (hoje.length > 4 ? `\n+${hoje.length - 4}` : ""));
   else linhas.push("Agenda livre hoje.");
+  const vencem = contasDeHoje(contas, agora);
+  if (vencem.length) linhas.push(`Vence hoje: ${vencem.map((c) => (typeof c.valor === "number" && c.valor > 0 ? `${c.nome} (${reais(c.valor)})` : c.nome)).join(", ")}`);
   if (abertas.length) linhas.push(`${plural(abertas.length, "tarefa aberta", "tarefas abertas")}: ${abertas.slice(0, 3).map((t) => t.texto).join(", ")}${abertas.length > 3 ? "…" : ""}`);
   else linhas.push("Nenhuma tarefa aberta.");
   const titulo = hoje.length ? `Bom dia, Rapha · ${plural(hoje.length, "compromisso", "compromissos")} hoje` : "Bom dia, Rapha";

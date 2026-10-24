@@ -59,6 +59,20 @@ describe("repositorioLocal", () => {
     expect(repositorioLocal(s).carregar()).toBeNull();
   });
 
+  it("contas: retrato sem o campo continua válido; com o campo, volta igual", () => {
+    const s = memoria();
+    const antigo = { v: 1, salvoEm: "2026-10-20T00:00:00Z", mural: { state: emptyMural(), log: [] }, caixaDeEntrada: [], mensagens: [], lancamentos: [], habitos: [] };
+    s.setItem(CHAVE, JSON.stringify(antigo));
+    expect(repositorioLocal(s).carregar()?.contas).toBeUndefined();
+
+    const contas = [{ id: "c1", nome: "Luz", dia: 10, valor: 200, ativa: true, criadaEm: "2026-10-01T12:00:00Z", pagamentos: [{ mes: "2026-10", em: "2026-10-10T12:00:00Z", valor: 200, lancamento: "l1" }] }];
+    repositorioLocal(s).salvar({ mural: { state: emptyMural(), log: [] }, caixaDeEntrada: [], mensagens: [], contas });
+    expect(repositorioLocal(s).carregar()?.contas).toEqual(contas);
+
+    s.setItem(CHAVE, JSON.stringify({ ...antigo, contas: "quebrado" }));
+    expect(repositorioLocal(s).carregar()).toBeNull();
+  });
+
   it("guarda só as últimas mensagens", () => {
     const s = memoria();
     const repo = repositorioLocal<number>(s);

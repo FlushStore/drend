@@ -27,7 +27,8 @@ async function manha(db, res) {
     const [agenda, estado] = await Promise.all([ler(db, "drend_agenda?select=eventos"), ler(db, "drend_estado?select=dados&limit=1")]);
     const eventos = agenda.flatMap((l) => (Array.isArray(l.eventos) ? l.eventos : []));
     const tarefas = Array.isArray(estado[0]?.dados?.tarefas) ? estado[0].dados.tarefas : [];
-    const enviados = await enviar(db, resumoDaManha(eventos, tarefas));
+    const contas = Array.isArray(estado[0]?.dados?.contas) ? estado[0].dados.contas : [];
+    const enviados = await enviar(db, resumoDaManha(eventos, tarefas, Date.now(), contas));
     if (!enviados) await desmarcar(db, chave);
     return res.status(200).json({ enviados });
   } catch (e) {

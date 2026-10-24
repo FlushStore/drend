@@ -28,6 +28,11 @@ const LEVELS: Record<string, Level> = {
   "habito.criar": "B",
   "habito.marcar": "B",
   "habito.apagar": "B",
+  // Contas fixas do mês: anotar, marcar paga (lança o gasto), editar e apagar. Tudo com desfazer.
+  "conta.criar": "B",
+  "conta.pagar": "B",
+  "conta.editar": "B",
+  "conta.apagar": "B",
   "dinheiro.mover": "D",
   "deploy": "D",
   "migration": "D",
