@@ -88,7 +88,8 @@ export function lerFraseDoDiario(frase: string): FraseDoDiario | null {
   const sinto = t.match(SINTO);
   if (sinto) {
     const resto = limpar(sinto[1]);
-    if (!resto || PERGUNTA.test(resto)) return null;
+    // "como me sinto hoje" sem descrição: o "hoje" opcional recua e vira o texto.
+    if (!resto || /^hoje$/i.test(resto) || PERGUNTA.test(resto)) return null;
     const texto = `Me sinto ${resto}`;
     return { texto, humor: detectarHumor(texto) };
   }

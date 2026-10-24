@@ -55,6 +55,8 @@ describe("lerFraseDoDiario", () => {
     "hoje foi bom?",
     "como me sinto?",
     "como me sinto hoje?",
+    "como me sinto hoje",
+    "como eu me sinto hoje",
     "hoje foi quanto de venda",
     "hoje foi quanto?",
     "diário:",
