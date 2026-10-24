@@ -29,7 +29,7 @@ function saudacao(agora: Date) {
  * Regra do painel da Flush: um herói por tela, nada de texto explicando a tela.
  */
 export function Hoje() {
-  const { caixaDeEntrada, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, lancamentos, contas, habitos, pagarConta, desfazerPagamento, alternarHabitoHoje } = useStore();
+  const { caixaDeEntrada, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, lancamentos, contas, habitos, diario, pagarConta, desfazerPagamento, alternarHabitoHoje } = useStore();
   const numeros = useFlush();
   const vm = useStatusVM();
   const missoes = useMissoes();
@@ -57,7 +57,7 @@ export function Hoje() {
   const eventos = eventosDa(agendaEstado);
   const acabando = numeros.produtos?.acabando;
   const atencao = cortarAtencao(
-    montarAtencao({ contas, habitos, compromissos: eventos, esgotados: acabando ? acabando.filter((x) => x.quantidade === 0).length : null, limites: limitesDoMes(metas, lancamentos, agora), agora }),
+    montarAtencao({ contas, habitos, compromissos: eventos, esgotados: acabando ? acabando.filter((x) => x.quantidade === 0).length : null, limites: limitesDoMes(metas, lancamentos, agora), diario, agora }),
   );
   const total = atencao.visiveis.length + atencao.escondidos + lista.length + caixaDeEntrada.length;
 
@@ -129,10 +129,10 @@ export function Hoje() {
                 </li>
               ) : (
                 <li key={i.chave}>
-                  <Link to={i.tela} className="dr-lista-item">
+                  <Link to={i.tipo === "diario" ? "/vida?diario" : i.tela} className="dr-lista-item">
                     <span>
                       <small className="dr-lista-tipo" data-estado={i.tipo === "compromisso" && i.comecou ? "hoje" : i.tipo === "limite" ? "atrasada" : undefined}>{i.rotulo}</small>
-                      {i.tipo === "compromisso" ? i.titulo : i.tipo === "limite" ? i.texto : textoDosEsgotados(i.n)}
+                      {i.tipo === "compromisso" ? i.titulo : i.tipo === "limite" || i.tipo === "diario" ? i.texto : textoDosEsgotados(i.n)}
                     </span>
                     <SetaCirculo />
                   </Link>

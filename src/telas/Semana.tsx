@@ -5,7 +5,9 @@ import { Valor } from "@/design-system/Valor";
 import { tomDoSinal } from "@/design-system/formato";
 import { eventosDa, useAgenda } from "@/fontes/agenda";
 import { useFlush, type NumerosFlush } from "@/fontes/useFlush";
-import { periodoDaFlush, semanaDaFlush, semanaDasTarefas, semanaDoDinheiro, semanaDosHabitos, seteDias } from "@/core/semana";
+import { periodoDaFlush, semanaDaFlush, semanaDasTarefas, semanaDoDinheiro, semanaDosHabitos, seteDias, textoDaSemanaDoDiario } from "@/core/semana";
+import { semanaDoDiario } from "@/core/diario";
+import { SetaCirculo } from "@/design-system/BotaoCirculo";
 import { textoDaSequencia } from "@/core/habitos";
 import { moneyBRL } from "@/lib/store-utils";
 import { useStore } from "@/store";
@@ -36,6 +38,7 @@ export function Semana() {
         <Tarefas />
         <Habitos />
         <Dinheiro />
+        <Diario />
       </div>
       {temAgenda && <h2 className="dr-rotulo dr-semana-agenda">Próximos 7 dias</h2>}
       <AgendaDaSemana />
@@ -158,5 +161,20 @@ function Dinheiro() {
         </div>
       )}
     </section>
+  );
+}
+
+/** Uma linha: quantos dias ele anotou e a média do humor (só quando disse algum). Toque leva ao Diário em Vida. */
+function Diario() {
+  const { diario } = useStore();
+  const s = semanaDoDiario(diario);
+  return (
+    <Link to="/vida?diario" className="cos-bloco dr-lista-item dr-diario-semana">
+      <span>
+        <small className="dr-lista-tipo">Diário</small>
+        {s.dias ? textoDaSemanaDoDiario(s) : "Nenhum dia anotado"}
+      </span>
+      <SetaCirculo />
+    </Link>
   );
 }

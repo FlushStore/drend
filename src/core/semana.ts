@@ -13,6 +13,7 @@ import { nomeDoLancamento } from "./dinheiro";
 import { normalizar } from "./fala";
 import { doDia, type Compromisso } from "./agenda";
 import { diaEmBrasilia, somarDias } from "./brasilia";
+import { mediaDoHumor, semanaDoDiario, type Anotacao } from "./diario";
 
 /** Os 7 dias de Brasília que terminam hoje, do mais antigo para hoje. */
 export function seteDias(agora = new Date()): string[] {
@@ -225,6 +226,8 @@ export interface EntradaDaSemana {
   lancamentos: readonly Lancamento[];
   /** null = agenda não lida. */
   agenda: readonly Compromisso[] | null;
+  /** Diário do dia. Ausente ou vazio na semana: a linha não entra. */
+  diario?: readonly Anotacao[];
 }
 
 /** "como foi a semana?": 3 ou 4 linhas, só com o que tem dado. */
@@ -258,9 +261,18 @@ export function responderSemana(e: EntradaDaSemana, agora = new Date()): string 
     linhas.push(`Seu dinheiro: entrou ${reais(d.entradas)}, saiu ${reais(d.gastos)}, saldo ${d.saldo < 0 ? "-" : ""}${reais(Math.abs(d.saldo))}.${onde}`);
   }
 
+  const di = semanaDoDiario(e.diario ?? [], agora);
+  if (di.dias) linhas.push(`Diário: ${textoDaSemanaDoDiario(di)}.`);
+
   if (e.agenda) {
     const n = proximos7(e.agenda, agora).length;
     linhas.push(n ? `Próximos 7 dias: ${vezes(n, "compromisso", "compromissos")} na agenda.` : "Próximos 7 dias: agenda livre.");
   }
   return linhas.join("\n");
+}
+
+/** "4 de 7 dias anotados · humor médio 3,5" (a média só quando ele disse algum humor). */
+export function textoDaSemanaDoDiario(s: { dias: number; humorMedio: number | null }): string {
+  const base = `${s.dias} de 7 ${s.dias === 1 ? "dia anotado" : "dias anotados"}`;
+  return s.humorMedio !== null ? `${base} · humor médio ${mediaDoHumor(s.humorMedio)}` : base;
 }

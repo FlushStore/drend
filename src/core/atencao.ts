@@ -1,6 +1,7 @@
 /**
  * "O que pede atenção" no Hoje e no chat: contas atrasadas ou perto de vencer, compromisso
- * nas próximas 2 horas, sabores esgotados da Flush, limite de gasto que passou e hábitos que faltam hoje.
+ * nas próximas 2 horas, sabores esgotados da Flush, limite de gasto que passou, hábitos que faltam hoje
+ * e, depois das 20h, o diário do dia ainda em branco.
  * Funções puras: só junta e ordena o que veio da leitura; sem dado, a lista fica vazia.
  * O dia é sempre o de Brasília.
  */
@@ -9,6 +10,7 @@ import { contasDoMes, pagamentoDoMes, reais, textoDoEstado, vencimentoNoMes, typ
 import { feitoNoDia, type Habito } from "./habitos";
 import { diaEmBrasilia, somarDias } from "./brasilia";
 import { passaram, textoDosEstourados, type LimiteNoMes } from "./metas";
+import { precisaAnotar, type Anotacao } from "./diario";
 
 export type Tela = "/vida" | "/negocios";
 
@@ -18,7 +20,9 @@ export type ItemDeAtencao =
   | { tipo: "esgotados"; chave: string; n: number; rotulo: string; tela: Tela }
   /** Uma linha só, mesmo com vários limites estourados. */
   | { tipo: "limite"; chave: string; texto: string; rotulo: string; tela: Tela }
-  | { tipo: "habito"; chave: string; habitoId: string; nome: string; rotulo: string; tela: Tela };
+  | { tipo: "habito"; chave: string; habitoId: string; nome: string; rotulo: string; tela: Tela }
+  /** Uma linha só: depois das 20h, sem anotação no dia. */
+  | { tipo: "diario"; chave: string; texto: string; rotulo: string; tela: Tela };
 
 export interface FontesDeAtencao {
   contas: readonly Conta[];
@@ -29,6 +33,8 @@ export interface FontesDeAtencao {
   esgotados: number | null;
   /** Os limites do mês (`limitesDoMes`); só os que passaram entram. Ausente = nenhum. */
   limites?: readonly LimiteNoMes[];
+  /** O diário; ausente = não entra (a linha só aparece com o diário lido). */
+  diario?: readonly Anotacao[];
   agora: Date;
 }
 
@@ -85,7 +91,8 @@ function peso(i: ItemDeAtencao): number {
   if (i.tipo === "conta") return i.estado === "atrasada" ? 1 : i.estado === "hoje" ? 2 : 3;
   if (i.tipo === "esgotados") return 4;
   if (i.tipo === "limite") return 5;
-  return 6;
+  if (i.tipo === "habito") return 6;
+  return 7;
 }
 
 /** A lista inteira, em ordem de urgência. */
@@ -108,6 +115,7 @@ export function montarAtencao(f: FontesDeAtencao): ItemDeAtencao[] {
   for (const h of f.habitos) {
     if (!feitoNoDia(h, hoje)) itens.push({ tipo: "habito", chave: `hb-${h.id}`, habitoId: h.id, nome: h.nome, rotulo: "Hábito", tela: "/vida" });
   }
+  if (f.diario && precisaAnotar(f.diario, f.agora)) itens.push({ tipo: "diario", chave: "diario", texto: "Anotar o dia", rotulo: "Diário", tela: "/vida" });
 
   // Ordem estável: dentro do mesmo peso, atrasada há mais tempo primeiro; o resto mantém a ordem de origem.
   return itens

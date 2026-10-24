@@ -5,6 +5,7 @@ import { useStore, type Mensagem } from "@/store";
 import { iniciarFlush } from "@/fontes/flush";
 import { Cerebro } from "@/cerebro/Cerebro";
 import { podeDesfazer } from "@/core/metas";
+import { podeDesfazerDiario } from "@/core/diario";
 
 const DESTINOS = [
   ["flushstore", "FlushStore"],
@@ -30,7 +31,7 @@ const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
 
 /** A conversa com o DREND: no PC dentro do painel lateral, no iPhone como tela. */
 export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) => void }) {
-  const { mensagens, falar, guardarIdeia, desfazer, mural, lancamentos, apagarLancamento, contas, desfazerPagamento, carimbosDeMeta, desfazerMeta } = useStore();
+  const { mensagens, falar, guardarIdeia, desfazer, mural, lancamentos, apagarLancamento, contas, desfazerPagamento, carimbosDeMeta, desfazerMeta, carimboDoDiario, desfazerDiario } = useStore();
   const [texto, setTexto] = useState("");
   // O cérebro: cada pedido é uma rajada, e ele "pensa" por um instante.
   const [atividade, setAtividade] = useState(0);
@@ -91,6 +92,11 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
               {m.meta && podeDesfazer(m.meta, carimbosDeMeta) && (
                 <div className="dr-msg-acoes">
                   <Botao variante="fantasma" compacto onClick={() => desfazerMeta(m.meta!)}>Desfazer</Botao>
+                </div>
+              )}
+              {m.diario && podeDesfazerDiario(m.diario, carimboDoDiario) && (
+                <div className="dr-msg-acoes">
+                  <Botao variante="fantasma" compacto onClick={() => desfazerDiario(m.diario!)}>Desfazer</Botao>
                 </div>
               )}
               {m.logId && mural.log.some((e) => e.id === m.logId && !e.undone) && (
