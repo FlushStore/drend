@@ -25,7 +25,9 @@ export type Comando =
   | { tipo: "meta"; valor: number }
   | { tipo: "missaoNota"; missao: string; texto: string }
   | { tipo: "missaoStatus"; missao: string | null }
-  | { tipo: "agenda"; quando: QuandoAgenda };
+  | { tipo: "agenda"; quando: QuandoAgenda }
+  | { tipo: "vault"; termo: string }
+  | { tipo: "projetosVault" };
 
 export type Periodo = "hoje" | "ontem" | "semana" | "mes";
 
@@ -79,6 +81,19 @@ export function entender(entrada: string): Comando | null {
     const valor = lerValor(meta[1]);
     if (valor) return { tipo: "meta", valor };
   }
+
+  // "o que o vault diz sobre X" · "procura no vault X" · "o que eu anotei sobre X" · "vault: X"
+  const fonte = String.raw`(?:(?:o |meu |no |na )?(?:vault|obsidian|segundo cerebro|cerebro|minhas notas|notas))`;
+  const vault =
+    n.match(new RegExp(String.raw`^(?:o que )?(?:${fonte}|eu anotei|(?:eu )?tenho anotado)(?: (?:diz|fala|tem|sabe))?(?: (?:de|sobre|da|do))? (.+)$`)) ??
+    n.match(new RegExp(String.raw`^(?:busca|buscar|procura|procurar|pesquisa|pesquisar|acha|achar)(?: (?:no|na|nas|em|meu|minhas))? ${fonte.replace("(?:o |meu |no |na )?", "")}(?: (?:por|sobre|de))? (.+)$`)) ??
+    n.match(/^vault (.+)$/);
+  if (vault) {
+    const termo = vault[1].replace(/^(?:o que (?:diz|fala) )?(?:sobre|de|da|do) /, "").replace(/^(?:a|o|as|os) /, "").trim();
+    if (/^(?:projetos?|meus projetos)$/.test(termo)) return { tipo: "projetosVault" };
+    if (termo) return { tipo: "vault", termo };
+  }
+  if (/^(?:como (?:estao|andam|vao) )?(?:os |meus )?projetos(?: do vault)?$/.test(n)) return { tipo: "projetosVault" };
 
   const ideia = t.match(/^tive uma ideia[:,]?\s*(.*)$/i);
   if (ideia) return { tipo: "ideia", texto: ideia[1] || t };

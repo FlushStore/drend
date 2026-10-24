@@ -141,6 +141,7 @@ export const AJUDA = [
   "• meta: “meta do mês 10 mil”",
   "• agenda: “o que tenho amanhã?”, “minha agenda da semana”, “próximo compromisso”",
   "• missões: “anota na missão: terminei o login”, “como está a missão da flush?”",
+  "• vault do Obsidian: “o que o vault diz sobre a Black Store?”, “como estão os projetos?”",
   "• guardar ideia: “tive uma ideia: kit de natal”",
   "• montar quadro: “crie um quadro Natal com cartões vídeo, cupom e stories”",
   "• voltar atrás: “desfaz”",
