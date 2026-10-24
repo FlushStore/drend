@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { Bloco } from "@/design-system/Bloco";
+import { Bloco, BlocoHeroi } from "@/design-system/Bloco";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
-import { DIAS_PARADO, NOME_AGENTE, haQuanto, nomeDaMissao, projetos, type ItemMissao, type Projeto } from "@/core/missao";
+import { NOME_AGENTE, estaParado, haQuanto, itemParado, nomeDaMissao, ondeParou, projetos, type ItemMissao, type Projeto } from "@/core/missao";
 import { useMissoes } from "@/fontes/missoes";
 import { Cerebro } from "@/cerebro/Cerebro";
 
@@ -16,15 +16,17 @@ function useAgora() {
   return agora;
 }
 
-function Item({ item, novo }: { item: ItemMissao; novo: boolean }) {
+function Item({ item, novo, agora }: { item: ItemMissao; novo: boolean; agora: Date }) {
+  const atrasado = itemParado(item, agora);
   const corpo = (
     <>
       <span className="dr-mi-titulo">{item.titulo}</span>
       {item.texto && <small className="dr-mi-texto">{item.texto}</small>}
+      {atrasado && <small className="dr-mi-parado">Sem passo {haQuanto(item.em, agora)}</small>}
     </>
   );
   return (
-    <li className="dr-mi" data-fase={item.fase} data-novo={novo || undefined}>
+    <li className="dr-mi" data-fase={item.fase} data-novo={novo || undefined} data-parado={atrasado || undefined}>
       <i className="dr-mi-marca" aria-hidden="true" />
       {item.ref ? (
         <a className="dr-mi-corpo" href={item.ref} target="_blank" rel="noreferrer">
@@ -40,18 +42,18 @@ function Item({ item, novo }: { item: ItemMissao; novo: boolean }) {
 
 function CartaoProjeto({ p, agora, novo }: { p: Projeto; agora: Date; novo: number | null }) {
   const [aberto, setAberto] = useState(false);
-  const parado = p.parado !== null && p.parado >= DIAS_PARADO;
-  const estado = !p.ultimo ? "Sem passos ainda" : parado ? `Parado há ${p.parado} dias` : `Mexido ${haQuanto(p.ultimo.em, agora)}`;
+  const parado = estaParado(p);
+  const estado = !p.ultimo ? "Sem passos ainda" : p.pausado ? "Pausado" : parado ? `Parado há ${p.parado} dias` : `Mexido ${haQuanto(p.ultimo.em, agora)}`;
   const novoAqui = (i: ItemMissao) => novo !== null && p.ultimo?.id === novo && p.ultimo.chave === i.chave;
   return (
-    <Bloco className="dr-proj dr-missao" aria-label={p.nome}>
+    <Bloco className="dr-proj dr-missao" aria-label={p.nome} data-pausado={p.pausado || undefined}>
       <div className="dr-proj-cab">
         <h2 className="dr-proj-nome">{p.nome}</h2>
         <span className="dr-estado"><i className="dr-ponto" data-tom={parado ? "alerta" : p.itens.agora.length ? "acento" : undefined} aria-hidden="true" />{estado}</span>
       </div>
       {p.itens.agora.length > 0 ? (
         <ul className="dr-mi-lista" aria-label="Em andamento">
-          {p.itens.agora.map((i) => <Item key={i.chave} item={i} novo={novoAqui(i)} />)}
+          {p.itens.agora.map((i) => <Item key={i.chave} item={i} novo={novoAqui(i)} agora={agora} />)}
         </ul>
       ) : (
         <p className="dr-proj-linha">{p.ultimo ? p.ultimo.titulo : "Nada em andamento."}</p>
@@ -64,10 +66,10 @@ function CartaoProjeto({ p, agora, novo }: { p: Projeto; agora: Date; novo: numb
       {aberto && (
         <div className="dr-mi-resto">
           {p.itens.depois.length > 0 && (
-            <ul className="dr-mi-lista" aria-label="Depois">{p.itens.depois.map((i) => <Item key={i.chave} item={i} novo={false} />)}</ul>
+            <ul className="dr-mi-lista" aria-label="Depois">{p.itens.depois.map((i) => <Item key={i.chave} item={i} novo={false} agora={agora} />)}</ul>
           )}
           {p.itens.feito.length > 0 && (
-            <ul className="dr-mi-lista" aria-label="Feito">{p.itens.feito.map((i) => <Item key={i.chave} item={i} novo={false} />)}</ul>
+            <ul className="dr-mi-lista" aria-label="Feito">{p.itens.feito.map((i) => <Item key={i.chave} item={i} novo={false} agora={agora} />)}</ul>
           )}
         </div>
       )}
@@ -94,6 +96,8 @@ export function Missoes() {
   }
 
   const lista = projetos(m.eventos, agora);
+  const onde = ondeParou(lista);
+  const parados = lista.filter(estaParado);
   const feed = [...m.eventos].sort((a, b) => b.em.localeCompare(a.em) || b.id - a.id).slice(0, 12);
   return (
     <>
@@ -101,6 +105,19 @@ export function Missoes() {
         <span className="dr-ao-vivo" data-on={m.aoVivo || undefined}><i aria-hidden="true" />{m.aoVivo ? "Ao vivo" : "Conectando"}</span>
       </CabecalhoDeTela>
       <Cerebro tamanho="p" atividade={m.novo ?? 0} />
+      {onde && (
+        <BlocoHeroi className="dr-onde" aria-label="Onde você parou">
+          <span className="dr-rotulo">Onde você parou · {haQuanto(onde.projeto.ultimo!.em, agora)}</span>
+          <p className="dr-onde-proj">{onde.projeto.nome}</p>
+          <p className="dr-onde-item">{onde.item ? onde.item.titulo : onde.projeto.ultimo!.titulo}</p>
+          {parados.length > 0 && (
+            <p className="dr-onde-parados">
+              <i className="dr-ponto" data-tom="alerta" aria-hidden="true" />
+              {parados.map((p) => `${p.nome} parado há ${p.parado} dias`).join(" · ")}
+            </p>
+          )}
+        </BlocoHeroi>
+      )}
       <div className="dr-negocios">
         {lista.map((p) => <CartaoProjeto key={p.missao} p={p} agora={agora} novo={m.novo} />)}
       </div>
