@@ -1,18 +1,11 @@
 // Central de IAs: a porta por onde Claude, ChatGPT e Codex registram passos da missão.
 // POST grava um evento; GET devolve os últimos. Exige o token DREND_AGENTE_TOKEN
 // (Authorization: Bearer ...). A chave de serviço do Supabase só existe aqui, no servidor.
-import { timingSafeEqual } from "node:crypto";
+import { autorizado } from "./_token.js";
 
 const AGENTES = new Set(["claude", "chatgpt", "codex", "drend", "rapha"]);
 const TIPOS = new Set(["item", "nota", "decisao", "pergunta"]);
 const FASES = new Set(["feito", "agora", "depois"]);
-
-function autorizado(req) {
-  const esperado = process.env.DREND_AGENTE_TOKEN || "";
-  const veio = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  if (esperado.length < 32 || veio.length !== esperado.length) return false;
-  return timingSafeEqual(Buffer.from(veio), Buffer.from(esperado));
-}
 
 /** Confere o evento e devolve só os campos conhecidos, ou a mensagem do erro. */
 export function validar(corpo) {
