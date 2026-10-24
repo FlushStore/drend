@@ -1,6 +1,6 @@
 // DREND offline: a tela abre mesmo sem internet no iPhone.
 // Páginas: rede primeiro, cópia salva se cair. Arquivos com hash (assets/, fonts/): cópia salva primeiro.
-const CACHE = "drend-v1";
+const CACHE = "drend-v2";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/manifest.webmanifest"])).then(() => self.skipWaiting()));
@@ -45,4 +45,27 @@ self.addEventListener("fetch", (e) => {
       ),
     );
   }
+});
+
+// Avisos (Web Push): resumo da manhã e compromisso chegando.
+self.addEventListener("push", (e) => {
+  let a = {};
+  try {
+    a = e.data ? e.data.json() : {};
+  } catch {
+    a = { titulo: "DREND", corpo: e.data ? e.data.text() : "" };
+  }
+  e.waitUntil(self.registration.showNotification(a.titulo || "DREND", { body: a.corpo || "", icon: "/icons/apple-touch-icon.png", badge: "/icons/apple-touch-icon.png", data: { url: a.url || "/" } }));
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "/";
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((abertas) => {
+      const aberta = abertas.find((c) => new URL(c.url).origin === self.location.origin);
+      if (aberta) return aberta.focus().then((c) => c && c.navigate && c.navigate(url));
+      return self.clients.openWindow(url);
+    }),
+  );
 });
