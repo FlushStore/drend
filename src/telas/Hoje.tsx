@@ -104,8 +104,8 @@ export function Hoje() {
 
       <nav className="dr-tiras" aria-label="Resumo">
         <Link to="/negocios" className="dr-tira">
-          <span className="dr-rotulo">Vape Mania</span>
-          <strong><i className="dr-ponto" data-tom="ok" aria-hidden="true" />No ar</strong>
+          <span className="dr-rotulo">Flush · 7 dias{numeros.exemplo && <span className="dr-tag-exemplo">exemplo</span>}</span>
+          <strong><Valor valor={numeros.semana.reduce((t, d) => t + d.valor, 0)} tamanho="p" centavos={false} /></strong>
         </Link>
         <Link to="/negocios" className="dr-tira">
           <span className="dr-rotulo">DREND</span>

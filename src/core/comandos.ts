@@ -15,7 +15,7 @@ export type Comando =
   | { tipo: "reabrir"; texto: string }
   | { tipo: "apagarTarefa"; texto: string }
   | { tipo: "pendencias" }
-  | { tipo: "vendas"; loja: "flush" | "vape-mania"; periodo: Periodo }
+  | { tipo: "vendas"; periodo: Periodo }
   | { tipo: "resumo" }
   | { tipo: "saudacao" }
   | { tipo: "agradecimento" }
@@ -25,7 +25,6 @@ export type Periodo = "hoje" | "ontem" | "semana";
 
 const PROJETOS: ReadonlyArray<[RegExp, string]> = [
   [/\b(?:da |na |para a |pra )?flush(?:store)?\b/i, "flushstore"],
-  [/\b(?:da |na |para a |pra )?vape ?mania\b/i, "vape-mania"],
   [/\b(?:do |no |para o |pro )?drend\b/i, "drend"],
 ];
 
@@ -80,14 +79,14 @@ export function entender(entrada: string): Comando | null {
   if (quadro) return quadro;
 
   // Perguntas: o texto normalizado já tirou acento, gíria e pontuação.
-  const loja = /\b(?:flush|vape mania)\b/.test(n);
+  const loja = /\bflush\b/.test(n);
   if (
     /\b(?:vend\w*|fatur\w*|lucr\w*|pedidos?)\b/.test(n) ||
-    (loja && /\b(?:como|hoje|ontem|semana|quanto|status|numeros?)\b|^(?:e )?a (?:flush|vape mania)$/.test(n)) ||
+    (loja && /\b(?:como|hoje|ontem|semana|quanto|status|numeros?)\b|^(?:e )?a flush$/.test(n)) ||
     /^e (?:a |o )?(?:semana|ontem)$/.test(n)
   ) {
     const periodo: Periodo = /\bsemana\b|\b7 dias\b/.test(n) ? "semana" : /\bontem\b/.test(n) ? "ontem" : "hoje";
-    return { tipo: "vendas", loja: /\bvape mania\b/.test(n) ? "vape-mania" : "flush", periodo };
+    return { tipo: "vendas", periodo };
   }
   if (/\b(?:resumo|me atualiza|novidades?|como (?:esta|foi|anda) (?:o )?meu dia|o que (?:ha|tem) de novo)\b/.test(n)) return { tipo: "resumo" };
   if (/\b(?:pendencias?|pendente|minhas tarefas|tarefas|afazeres|o que (?:eu )?tenho|o que falta|o que (?:eu )?preciso fazer|tem algo para fazer|(?:minha|a) lista)\b/.test(n)) {

@@ -6,7 +6,8 @@ import { iniciarFlush } from "@/fontes/flush";
 
 const DESTINOS = [
   ["flushstore", "FlushStore"],
-  ["vape-mania", "Vape Mania"],
+  ["vida", "Vida"],
+  ["drend", "DREND"],
 ] as const;
 
 /** Atalhos da conversa vazia: o rótulo é curto, o toque deixa o começo da frase no campo. */

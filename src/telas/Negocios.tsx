@@ -1,7 +1,7 @@
 import { Bloco } from "@/design-system/Bloco";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { Valor } from "@/design-system/Valor";
-import { drendStatus, outrosProjetos, vapeMania } from "@/data/exemplo";
+import { drendStatus, outrosProjetos } from "@/data/exemplo";
 import { useFlush } from "@/fontes/useFlush";
 import { CurvaDaSemana } from "./VendasDaSemana";
 
@@ -24,14 +24,6 @@ export function Negocios() {
             <div><dt>Semana</dt><dd><Valor valor={semana} tamanho="g" centavos={false} /></dd></div>
           </dl>
           <CurvaDaSemana dias={flush.semana} ultimoEhHoje={flush.ultimoEhHoje} />
-        </Bloco>
-
-        <Bloco className="dr-proj" aria-label="Vape Mania">
-          <div className="dr-proj-cab">
-            <h2 className="dr-proj-nome">Vape Mania</h2>
-            <span className="dr-estado"><i className="dr-ponto" data-tom="ok" aria-hidden="true" />No ar</span>
-          </div>
-          <p className="dr-proj-linha">{vapeMania.saude[2][0]} · {vapeMania.saude[2][1]}</p>
         </Bloco>
 
         <Bloco className="dr-proj" aria-label="DREND">

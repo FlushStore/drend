@@ -36,8 +36,7 @@ function frase(d: DiaFlush, quando: string) {
   return `${quando} a Flush vendeu ${reais(d.valor)} em ${pedidos(d.pedidos)}, com ${lucro}.`;
 }
 
-export function responderVendas(loja: "flush" | "vape-mania", periodo: Periodo, leitura: LeituraFlush, agora = new Date()): string {
-  if (loja === "vape-mania") return "Ainda não leio as vendas da Vape Mania. Por enquanto só a Flush.";
+export function responderVendas(periodo: Periodo, leitura: LeituraFlush, agora = new Date()): string {
   if (!leitura) return "A Flush ainda não está ligada aqui. Ligue em Sua conta → Ligar a FlushStore, que eu passo a responder com os números de verdade.";
   if (leitura.fase === "carregando") return "Estou lendo a Flush agora. Pergunte de novo em instantes.";
   const dias = leitura.dias;

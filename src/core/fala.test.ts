@@ -27,12 +27,11 @@ describe("entende o Rapha", () => {
     ["o q tenho pra hj?", { tipo: "pendencias" }],
     ["oq falta", { tipo: "pendencias" }],
     ["minhas tarefas", { tipo: "pendencias" }],
-    ["qnt vendi hj", { tipo: "vendas", loja: "flush", periodo: "hoje" }],
-    ["como ta a flush?", { tipo: "vendas", loja: "flush", periodo: "hoje" }],
-    ["e a semana?", { tipo: "vendas", loja: "flush", periodo: "semana" }],
-    ["como foi a semana da flush", { tipo: "vendas", loja: "flush", periodo: "semana" }],
-    ["lucro de ontem", { tipo: "vendas", loja: "flush", periodo: "ontem" }],
-    ["como tá a vape mania", { tipo: "vendas", loja: "vape-mania", periodo: "hoje" }],
+    ["qnt vendi hj", { tipo: "vendas", periodo: "hoje" }],
+    ["como ta a flush?", { tipo: "vendas", periodo: "hoje" }],
+    ["e a semana?", { tipo: "vendas", periodo: "semana" }],
+    ["como foi a semana da flush", { tipo: "vendas", periodo: "semana" }],
+    ["lucro de ontem", { tipo: "vendas", periodo: "ontem" }],
     ["me atualiza", { tipo: "resumo" }],
     ["bom dia drend", { tipo: "saudacao" }],
     ["eai", { tipo: "saudacao" }],
@@ -57,7 +56,7 @@ describe("achar tarefa pelo texto", () => {
     { id: "1", texto: "Pagar o fornecedor de pods" },
     { id: "2", texto: "Ligar pro contador" },
     { id: "3", texto: "Postar stories da Flush" },
-    { id: "4", texto: "Postar stories da Vape Mania" },
+    { id: "4", texto: "Postar stories pessoais" },
   ];
   const achar = (q: string) => acharPorTexto(tarefas, q, (t) => t.texto);
 

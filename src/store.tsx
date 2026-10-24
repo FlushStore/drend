@@ -45,6 +45,7 @@ interface Store {
 }
 
 const Ctx = createContext<Store | null>(null);
+const NOMES_PROJETO: Record<string, string> = { flushstore: "Flush", vida: "Vida", drend: "DREND" };
 // Ids de mensagem únicos entre aberturas do app (as salvas voltam com os ids antigos).
 let seq = 0;
 const id = () => `m${Date.now().toString(36)}-${++seq}`;
@@ -199,7 +200,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     } else if (cmd?.tipo === "pendencias") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderPendencias(tarefas, caixaDeEntrada.length) });
     } else if (cmd?.tipo === "vendas") {
-      novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.loja, cmd.periodo, leituraDaFlush()) });
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.periodo, leituraDaFlush()) });
     } else if (cmd?.tipo === "resumo") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderResumo(tarefas, leituraDaFlush(), new Date(), "Resumo de agora:") });
     } else if (cmd?.tipo === "saudacao") {
@@ -223,17 +224,12 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
 
   const guardarIdeia = useCallback(
     (ideia: string, projeto: string) => {
-      const quadro = Object.values(mural.state.boards).find((b) => b.project === projeto);
-      if (!quadro) {
-        setMensagens((ms) => [...ms, { id: id(), de: "drend", status: "falhou", texto: `Não achei um quadro de ${projeto}.` }]);
-        return;
-      }
-      const n = mural.cardsOf(quadro.id).length;
-      const e = executar(
-        { type: "addCard", card: { id: `ideia-${Date.now()}`, boardId: quadro.id, kind: "nota", title: ideia, x: 60 + (n % 4) * 230, y: 680, w: 220 } },
-        "drend",
-        `Guardou a ideia em ${quadro.title}`,
-      );
+      // Sem quadro do projeto ainda: nasce um "Ideias", no mesmo lote (um desfazer tira os dois).
+      const existente = Object.values(mural.state.boards).find((b) => b.project === projeto);
+      const quadro = existente ?? { id: `ideias-${projeto}`, title: `${NOMES_PROJETO[projeto] ?? projeto} · ideias`, project: projeto, tags: [] };
+      const n = existente ? mural.cardsOf(quadro.id).length : 0;
+      const card: Op = { type: "addCard", card: { id: `ideia-${Date.now()}`, boardId: quadro.id, kind: "nota", title: ideia, x: 60 + (n % 4) * 230, y: existente ? 680 : 40, w: 220 } };
+      const e = executar(existente ? card : { type: "batch", ops: [{ type: "createBoard", board: quadro }, card] }, "drend", `Guardou a ideia em ${quadro.title}`);
       setCaixa((c) => c.filter((i) => i !== ideia));
       setMensagens((ms) => [
         ...ms.map((m) => (m.de === "drend" && m.ideia === ideia ? { ...m, ideia: undefined } : m)),

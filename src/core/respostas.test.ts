@@ -20,20 +20,19 @@ const t = (texto: string, feita = false): Tarefa => ({ id: texto, texto, criadaE
 
 describe("responderVendas", () => {
   it("hoje, ontem e semana com os números lidos", () => {
-    expect(sp(responderVendas("flush", "hoje", ok, agora))).toBe("Hoje a Flush vendeu R$ 432,50 em 4 pedidos, com R$ 120 de lucro.");
-    expect(sp(responderVendas("flush", "ontem", ok, agora))).toBe("Ontem a Flush vendeu R$ 120 em 1 pedido, com R$ 10 de prejuízo.");
-    expect(sp(responderVendas("flush", "semana", ok, agora))).toBe("Nos últimos 7 dias: R$ 1.187,50 em 11 pedidos, R$ 300 de lucro. Melhor dia: sexta, com R$ 432,50.");
+    expect(sp(responderVendas("hoje", ok, agora))).toBe("Hoje a Flush vendeu R$ 432,50 em 4 pedidos, com R$ 120 de lucro.");
+    expect(sp(responderVendas("ontem", ok, agora))).toBe("Ontem a Flush vendeu R$ 120 em 1 pedido, com R$ 10 de prejuízo.");
+    expect(sp(responderVendas("semana", ok, agora))).toBe("Nos últimos 7 dias: R$ 1.187,50 em 11 pedidos, R$ 300 de lucro. Melhor dia: sexta, com R$ 432,50.");
   });
 
   it("não mostra exemplo como se fosse real", () => {
-    expect(sp(responderVendas("flush", "hoje", null, agora))).toMatch(/^A Flush ainda não está ligada/);
-    expect(sp(responderVendas("vape-mania", "hoje", ok, agora))).toMatch(/Ainda não leio as vendas da Vape Mania/);
-    expect(sp(responderVendas("flush", "hoje", { fase: "carregando" }, agora))).toMatch(/Estou lendo/);
+    expect(sp(responderVendas("hoje", null, agora))).toMatch(/^A Flush ainda não está ligada/);
+    expect(sp(responderVendas("hoje", { fase: "carregando" }, agora))).toMatch(/Estou lendo/);
   });
 
   it("diz de quando é a leitura quando ela não é de hoje", () => {
     const sabado = new Date(2026, 9, 24, 9, 0);
-    expect(sp(responderVendas("flush", "hoje", { ...ok, fase: "erro" } as LeituraFlush, sabado))).toBe(
+    expect(sp(responderVendas("hoje", { ...ok, fase: "erro" } as LeituraFlush, sabado))).toBe(
       "Não tenho a leitura de hoje. Na última, de sexta: R$ 432,50 em 4 pedidos, R$ 120 de lucro.",
     );
   });

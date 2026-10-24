@@ -48,8 +48,6 @@ const GIRIAS: Record<string, string> = {
   tmj: "tamo junto",
   flu: "flush",
   flushstore: "flush",
-  vapemania: "vape mania",
-  vm: "vape mania",
 };
 
 /** Minúsculas, sem acento, sem pontuação, gírias expandidas, espaços simples. */
