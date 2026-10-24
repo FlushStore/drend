@@ -243,6 +243,17 @@ a.dr-mi-corpo .dr-mi-link { grid-row: 1; grid-column: 2; color: var(--cos-tinta-
 .cos-painel .dr-chat-cerebro { background: linear-gradient(to bottom, var(--cos-bloco) 78%, transparent); }
 .dr-chat-estado { margin: -6px 0 0; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--cos-acento-tinta); min-height: 1.2em; }
 
+/* Missões: onde o Rapha parou, item esquecido, projeto na gaveta */
+.dr-onde { display: grid; gap: 4px; padding: 22px; margin-bottom: 14px; }
+@media (min-width: 1024px) { .dr-onde { padding: 28px 30px; } }
+.dr-onde .dr-rotulo { color: var(--cos-heroi-tinta-2); }
+.dr-onde-proj { margin: 6px 0 0; font-family: var(--cos-fonte-marca); font-size: 30px; font-weight: 600; letter-spacing: -.035em; color: var(--cos-heroi-num); }
+.dr-onde-item { margin: 0; font-size: 16px; font-weight: 500; }
+.dr-onde-parados { margin: 10px 0 0; padding-top: 12px; border-top: 1px solid var(--cos-heroi-linha); font-size: 13.5px; color: var(--cos-heroi-tinta-2); }
+.dr-mi-parado { grid-column: 1; font-size: 12.5px; font-weight: 500; color: var(--cos-negativo); }
+.dr-mi[data-parado] .dr-mi-marca { border-color: var(--cos-negativo); }
+.dr-missao[data-pausado] { opacity: .62; }
+
 /* Vault: notas do Obsidian, só leitura. A nota abre no painel com o markdown do vault. */
 .dr-vault-quando { color: var(--cos-tinta-3); align-self: center; }
 @media (max-width: 767px) { .dr-vault-quando { display: none; } }
