@@ -16,7 +16,7 @@ const ESTADO: Record<LimiteNoMes["estado"], string> = { dentro: "Dentro", perto:
  * Sem limite definido, o bloco não aparece (a dica fica no Dinheiro).
  */
 export function LimitesDoMes({ hoje, avisar }: { hoje: string; avisar: Avisar }) {
-  const { metas, lancamentos, definirMeta } = useStore();
+  const { metas, lancamentos, definirMeta, desfazerMeta } = useStore();
   const limites = limitesDoMes(metas, lancamentos, meioDiaEmBrasilia(hoje));
   if (!limites.length) return null;
   const passaram = limites.filter((l) => l.estado === "passou").length;
@@ -41,8 +41,8 @@ export function LimitesDoMes({ hoje, avisar }: { hoje: string; avisar: Avisar })
                   className="dr-vida-apagar"
                   aria-label={`Tirar o limite ${l.rotulo}`}
                   onClick={() => {
-                    definirMeta(l.chave, null);
-                    avisar(`Limite “${l.rotulo}” tirado`, "sucesso", { rotulo: "Desfazer", aoTocar: () => definirMeta(l.chave, l.limite) });
+                    const tirada = definirMeta(l.chave, null);
+                    avisar(`Limite “${l.rotulo}” tirado`, "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazerMeta(tirada) });
                   }}
                 >
                   <Trash2 size={15} strokeWidth={2} aria-hidden="true" />

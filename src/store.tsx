@@ -90,7 +90,7 @@ interface Store {
   reabrirTarefa: (id: string) => void;
   /** Metas em reais: "flush-mes" e os limites ("limite:mercado", "limite:geral"). Moram no retrato: vão para o banco junto com o resto. */
   metas: Metas;
-  definirMeta: (chave: string, valor: number | null) => void;
+  definirMeta: (chave: string, valor: number | null) => MudancaDeMeta;
   /** Carimbo da última mudança de cada chave (só na memória: depois de reabrir, nenhuma mudança antiga é desfeita). */
   carimbosDeMeta: Carimbos;
   /** Desfaz a mudança se ela ainda for a mais recente da chave. */
@@ -544,6 +544,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const definirMeta = useCallback((chave: string, valor: number | null) => {
     const r = registrarMudanca(metasAgora.current, carimbosAgora.current, chave, valor, id());
     aplicarMetas(r.metas, r.carimbos);
+    return r.mudanca;
   }, [aplicarMetas]);
   const desfazerMeta = useCallback((m: MudancaDeMeta) => {
     const r = desfazerMudanca(metasAgora.current, carimbosAgora.current, m, id());
