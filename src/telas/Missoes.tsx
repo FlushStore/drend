@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { Bloco, BlocoHeroi } from "@/design-system/Bloco";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
@@ -27,7 +28,7 @@ function Item({ item, novo, agora, pausado = false }: { item: ItemMissao; novo: 
     </>
   );
   return (
-    <li className="dr-mi" data-fase={item.fase} data-novo={novo || undefined} data-parado={atrasado || undefined}>
+    <li className="dr-mi" data-chave={item.chave} data-fase={item.fase} data-novo={novo || undefined} data-parado={atrasado || undefined}>
       <i className="dr-mi-marca" aria-hidden="true" />
       {item.ref ? (
         <a className="dr-mi-corpo" href={item.ref} target="_blank" rel="noreferrer">
@@ -41,13 +42,17 @@ function Item({ item, novo, agora, pausado = false }: { item: ItemMissao; novo: 
   );
 }
 
-function CartaoProjeto({ p, agora, novo }: { p: Projeto; agora: Date; novo: number | null }) {
-  const [aberto, setAberto] = useState(false);
+function CartaoProjeto({ p, agora, novo, abrir = false }: { p: Projeto; agora: Date; novo: number | null; abrir?: boolean }) {
+  const [aberto, setAberto] = useState(abrir);
+  // Vindo da busca com um item de "Depois" ou "Feito": abre o resto para ele aparecer.
+  useEffect(() => {
+    if (abrir) setAberto(true);
+  }, [abrir]);
   const parado = estaParado(p);
   const estado = !p.ultimo ? "Sem passos ainda" : p.pausado ? "Pausado" : parado ? `Parado há ${p.parado} dias` : `Mexido ${haQuanto(p.ultimo.em, agora)}`;
   const novoAqui = (i: ItemMissao) => novo !== null && p.ultimo?.id === novo && p.ultimo.chave === i.chave;
   return (
-    <Bloco className="dr-proj dr-missao" aria-label={p.nome} data-pausado={p.pausado || undefined}>
+    <Bloco className="dr-proj dr-missao" data-missao={p.missao} aria-label={p.nome} data-pausado={p.pausado || undefined}>
       <div className="dr-proj-cab">
         <h2 className="dr-proj-nome">{p.nome}</h2>
         <span className="dr-estado"><i className="dr-ponto" data-tom={parado ? "alerta" : p.itens.agora.length ? "acento" : undefined} aria-hidden="true" />{estado}</span>
@@ -82,6 +87,10 @@ function CartaoProjeto({ p, agora, novo }: { p: Projeto; agora: Date; novo: numb
 export function Missoes() {
   const m = useMissoes();
   const agora = useAgora();
+  // ?projeto=missao&item=chave (da busca): o cartão desse projeto já abre com o item à vista.
+  const [params] = useSearchParams();
+  const alvo = { projeto: params.get("projeto"), item: params.get("item") };
+  const abrirAlvo = (p: Projeto) => p.missao === alvo.projeto && !!alvo.item && !p.itens.agora.some((i) => i.chave === alvo.item);
 
   if (m.fase !== "ok") {
     const texto =
@@ -120,7 +129,7 @@ export function Missoes() {
         </BlocoHeroi>
       )}
       <div className="dr-negocios">
-        {lista.map((p) => <CartaoProjeto key={p.missao} p={p} agora={agora} novo={m.novo} />)}
+        {lista.map((p) => <CartaoProjeto key={p.missao} p={p} agora={agora} novo={m.novo} abrir={abrirAlvo(p)} />)}
       </div>
       <section className="dr-feed" aria-label="Últimos passos">
         <h2 className="dr-rotulo">Últimos passos</h2>

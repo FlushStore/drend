@@ -77,3 +77,28 @@ export function responderAgenda(lista: readonly Compromisso[] | null, quando: Qu
   if (!cs.length) return quando === "hoje" ? "Nada mais na agenda hoje." : "Amanhã está livre.";
   return `${rotulo}:\n${cs.map((c) => `• ${linha(c, agora)}`).join("\n")}`;
 }
+
+export interface DiaDaAgenda {
+  dia: string;
+  /** Dias a partir de hoje (0 = hoje, 1 = amanhã; negativo = já passou). */
+  i: number;
+  cs: Compromisso[];
+}
+
+/**
+ * Os dias da tela Vida: os próximos 7 com compromisso (hoje sem o que já acabou). Com `focoId`
+ * (vindo da busca), o dia desse compromisso também aparece, mesmo fora da semana, e ele entra
+ * mesmo já encerrado, para a tela poder mostrar o que foi escolhido.
+ */
+export function diasDaAgenda(lista: readonly Compromisso[], agora = new Date(), focoId: string | null = null): DiaDaAgenda[] {
+  const dias = Array.from({ length: 7 }, (_, i) => ({ dia: maisDias(agora, i), i }));
+  const foco = focoId ? lista.find((c) => c.id === focoId) ?? null : null;
+  if (foco && !dias.some((d) => d.dia === foco.dia)) {
+    const hoje = new Date(`${diaDe(agora)}T12:00:00`).getTime();
+    dias.push({ dia: foco.dia, i: Math.round((new Date(`${foco.dia}T12:00:00`).getTime() - hoje) / 864e5) });
+    dias.sort((a, b) => a.dia.localeCompare(b.dia));
+  }
+  return dias
+    .map(({ dia, i }) => ({ dia, i, cs: doDia(lista, dia).filter((c) => i !== 0 || c.diaInteiro || new Date(c.fim) > agora || c.id === foco?.id) }))
+    .filter((d) => d.cs.length);
+}
