@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { responderPendencias, responderResumo, responderVendas, type LeituraFlush } from "./respostas";
+import { responderMissao, responderPendencias, responderResumo, responderVendas, type LeituraFlush } from "./respostas";
+import { diasDesde } from "../fontes/flush-regras";
+import type { EventoMissao } from "./missao";
 import type { Tarefa } from "./tarefas";
 
 // Sexta, 23/10/2026, 15h no horário local.
@@ -47,5 +49,29 @@ describe("pendências e resumo", () => {
   it("saudação conta o dia", () => {
     expect(sp(responderResumo([t("A"), t("B")], ok, agora))).toBe("Boa tarde, Rapha. Você tem 2 tarefas abertas. A Flush vendeu R$ 432,50 hoje, em 4 pedidos.");
     expect(sp(responderResumo([], null, new Date(2026, 9, 23, 8)))).toBe("Bom dia, Rapha. Nenhuma tarefa aberta.");
+  });
+});
+
+describe("rodada 5", () => {
+  const sabado = new Date(2026, 9, 24, 15, 0);
+  const historico = diasDesde("2026-09-01", sabado).map((dia) =>
+    dia.startsWith("2026-09") ? { dia, valor: 100, lucro: 30, pedidos: 1 } : { dia, valor: 150, lucro: 60, pedidos: 2 });
+  const leitura: LeituraFlush = { fase: "ok", dias: historico.slice(-7), historico, atualizadoEm: sabado.toISOString() };
+
+  it("o mês com comparação e meta", () => {
+    expect(sp(responderVendas("mes", leitura, sabado, 6000))).toBe(
+      "Em outubro, até hoje: R$ 3.600 em 48 pedidos, R$ 1.440 de lucro (margem de 40%).\nEstá 50% acima de setembro no mesmo ponto (R$ 2.400).\nMeta de R$ 6.000: 60% feito, faltam R$ 2.400, R$ 300 por dia.",
+    );
+    expect(sp(responderVendas("mes", leitura, sabado))).toMatch(/fecha em R\$ 4\.650/);
+    expect(responderVendas("mes", { ...leitura, historico: undefined } as LeituraFlush, sabado)).toMatch(/Ainda não tenho o mês/);
+  });
+
+  it("missões na conversa", () => {
+    let n = 0;
+    const ev = (e: Partial<EventoMissao>): EventoMissao => ({ id: ++n, em: "2026-10-24T10:00:00Z", missao: "drend", agente: "claude", tipo: "item", chave: null, titulo: "", texto: null, fase: null, ref: null, ...e });
+    const eventos = [ev({ chave: "a", fase: "agora", titulo: "Financeiro" }), ev({ chave: "b", fase: "feito", titulo: "Cérebro" }), ev({ missao: "flush", tipo: "nota", titulo: "x", em: "2026-10-10T10:00:00Z" })];
+    expect(responderMissao(eventos, "drend", sabado)).toBe("DREND: 1 em andamento, 1 feitos, 0 para depois.\n• Financeiro");
+    expect(responderMissao(eventos, null, sabado)).toBe("• DREND: 1 em andamento\n• FlushStore: 0 em andamento, parada há 14 dias");
+    expect(responderMissao(null, null, sabado)).toMatch(/Não consegui/);
   });
 });

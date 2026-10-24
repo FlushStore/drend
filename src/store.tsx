@@ -6,15 +6,17 @@ import { baixar, maisRecente, subir, supabase, type Session } from "./core/nuvem
 import { muralExemplo } from "./data/exemplo";
 import { abertas, adicionar, concluir, novaTarefa, podar, reabrir, remover, type Tarefa } from "./core/tarefas";
 import { acharPorTexto } from "./core/fala";
-import { AJUDA, responderAgradecimento, responderPendencias, responderResumo, responderVendas, type LeituraFlush } from "./core/respostas";
+import { AJUDA, responderAgradecimento, responderMissao, responderPendencias, responderResumo, responderVendas, type LeituraFlush } from "./core/respostas";
 import { lerEstado as lerFlush } from "./fontes/flush";
+import { iniciarMissoes, lerMissoes, registrar } from "./fontes/missoes";
+import { nomeDaMissao } from "./core/missao";
 
 /** A Flush como a conversa enxerga: só o resumo, nunca a sessão. */
 function leituraDaFlush(): LeituraFlush {
   const e = lerFlush();
   if (e.fase === "fora") return null;
   if (e.fase === "carregando") return e;
-  return e.resumo ? { fase: e.fase, dias: e.resumo.dias, atualizadoEm: e.resumo.atualizadoEm } : { fase: "erro", dias: [], atualizadoEm: "" };
+  return e.resumo ? { fase: e.fase, dias: e.resumo.dias, historico: e.resumo.historico, atualizadoEm: e.resumo.atualizadoEm } : { fase: "erro", dias: [], atualizadoEm: "" };
 }
 
 export type Mensagem =
@@ -42,7 +44,12 @@ interface Store {
   criarTarefa: (texto: string) => void;
   concluirTarefa: (id: string) => void;
   reabrirTarefa: (id: string) => void;
+  /** Metas em reais ("flush-mes"). Moram no retrato: vão para o banco junto com o resto. */
+  metas: Record<string, number>;
+  definirMeta: (chave: string, valor: number | null) => void;
 }
+
+export const META_FLUSH_MES = "flush-mes";
 
 const Ctx = createContext<Store | null>(null);
 const NOMES_PROJETO: Record<string, string> = { flushstore: "Flush", vida: "Vida", drend: "DREND" };
@@ -65,10 +72,14 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const [caixaDeEntrada, setCaixa] = useState<string[]>(salvo?.caixaDeEntrada ?? []);
   const [mensagens, setMensagens] = useState<Mensagem[]>(salvo?.mensagens.length ? salvo.mensagens : BOAS_VINDAS);
   const [tarefas, setTarefas] = useState<Tarefa[]>(() => podar(salvo?.tarefas ?? []));
+  const [metas, setMetas] = useState<Record<string, number>>(salvo?.metas ?? {});
 
   useEffect(() => {
-    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas });
-  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas]);
+    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas });
+  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas, metas]);
+
+  // As missões ficam ouvindo desde a abertura: a conversa responde sem precisar abrir a tela.
+  useEffect(iniciarMissoes, []);
 
   // Banco: ao entrar, a versão mais nova (aparelho ou banco) vence; depois cada mudança sobe em ~1 s.
   const [sessao, setSessao] = useState<Session | null>(null);
@@ -101,6 +112,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
           setCaixa(remoto.caixaDeEntrada);
           setMensagens(remoto.mensagens.length ? remoto.mensagens : BOAS_VINDAS);
           setTarefas(podar(remoto.tarefas ?? []));
+          setMetas(remoto.metas ?? {});
           setVersao((v) => v + 1);
         } else if (local) {
           await subir(local);
@@ -119,11 +131,11 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   useEffect(() => {
     if (!usuario || !conciliado.current) return;
     const t = setTimeout(() => {
-      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas };
+      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas, metas };
       subir(r).then(() => setSincronia("ok"), () => setSincronia("erro"));
     }, 1000);
     return () => clearTimeout(t);
-  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas]);
+  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas, metas]);
 
   const entrar = useCallback(async (email: string, senha: string) => {
     if (!supabase) return "O banco ainda não está ligado.";
@@ -200,7 +212,25 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     } else if (cmd?.tipo === "pendencias") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderPendencias(tarefas, caixaDeEntrada.length) });
     } else if (cmd?.tipo === "vendas") {
-      novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.periodo, leituraDaFlush()) });
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.periodo, leituraDaFlush(), new Date(), metas[META_FLUSH_MES] ?? null) });
+    } else if (cmd?.tipo === "meta") {
+      setMetas((m) => ({ ...m, [META_FLUSH_MES]: cmd.valor }));
+      const leitura = leituraDaFlush();
+      const valor = cmd.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+      novas.push({ id: id(), de: "drend", status: "feito", texto: leitura && leitura.fase !== "carregando"
+        ? `Meta do mês: ${valor}.\n${responderVendas("mes", leitura, new Date(), cmd.valor)}`
+        : `Meta do mês: ${valor}. Aparece em Negócios assim que a Flush estiver ligada.` });
+    } else if (cmd?.tipo === "missaoNota") {
+      // Grava no banco (as Missões atualizam ao vivo); a resposta chega quando o banco confirmar.
+      const { missao, texto } = cmd;
+      void registrar({ missao, tipo: "nota", titulo: texto }).then((erro) => {
+        setMensagens((ms) => [...ms, erro
+          ? { id: id(), de: "drend", status: "falhou", texto: `Não consegui anotar na missão: ${erro}` }
+          : { id: id(), de: "drend", status: "feito", texto: `Anotei na missão ${nomeDaMissao(missao)}: “${texto}”.` }]);
+      });
+    } else if (cmd?.tipo === "missaoStatus") {
+      const m = lerMissoes();
+      novas.push({ id: id(), de: "drend", status: "dica", texto: m.fase === "carregando" ? "Estou lendo as Missões. Pergunte de novo em instantes." : responderMissao(m.fase === "ok" ? m.eventos : null, cmd.missao) });
     } else if (cmd?.tipo === "resumo") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderResumo(tarefas, leituraDaFlush(), new Date(), "Resumo de agora:") });
     } else if (cmd?.tipo === "saudacao") {
@@ -220,7 +250,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       novas.push({ id: id(), de: "drend", status: "pergunta", texto: "Não entendi isso como pedido. Se for uma ideia, escolha onde eu guardo. Diga “ajuda” para ver o que eu entendo.", ideia: limpo });
     }
     setMensagens((ms) => [...ms, ...novas]);
-  }, [mural, tarefas, caixaDeEntrada.length]);
+  }, [mural, tarefas, caixaDeEntrada.length, metas]);
 
   const guardarIdeia = useCallback(
     (ideia: string, projeto: string) => {
@@ -242,10 +272,16 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const criarTarefa = useCallback((texto: string) => setTarefas((l) => adicionar(l, novaTarefa(texto))), []);
   const concluirTarefa = useCallback((tid: string) => setTarefas((l) => concluir(l, tid)), []);
   const reabrirTarefa = useCallback((tid: string) => setTarefas((l) => reabrir(l, tid)), []);
+  const definirMeta = useCallback((chave: string, valor: number | null) => setMetas((m) => {
+    const novas = { ...m };
+    if (valor) novas[chave] = valor;
+    else delete novas[chave];
+    return novas;
+  }), []);
 
   const value = useMemo(
-    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa }),
-    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa],
+    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta }),
+    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas, definirMeta],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

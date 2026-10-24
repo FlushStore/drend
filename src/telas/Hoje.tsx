@@ -11,7 +11,8 @@ import { DIAS_PARADO, projetos } from "@/core/missao";
 import { useMissoes } from "@/fontes/missoes";
 import { useStatusVM } from "@/fontes/status";
 import { useFlush } from "@/fontes/useFlush";
-import { useStore } from "@/store";
+import { META_FLUSH_MES, useStore } from "@/store";
+import { moneyBRL } from "@/lib/store-utils";
 import { CurvaDaSemana } from "./VendasDaSemana";
 
 function saudacao(agora: Date) {
@@ -24,7 +25,7 @@ function saudacao(agora: Date) {
  * Regra do painel da Flush: um herói por tela, nada de texto explicando a tela.
  */
 export function Hoje() {
-  const { caixaDeEntrada, tarefas, criarTarefa, concluirTarefa, reabrirTarefa } = useStore();
+  const { caixaDeEntrada, tarefas, criarTarefa, concluirTarefa, reabrirTarefa, metas } = useStore();
   const numeros = useFlush();
   const vm = useStatusVM();
   const missoes = useMissoes();
@@ -114,7 +115,16 @@ export function Hoje() {
         </section>
       </div>
 
-      <nav className="dr-tiras" aria-label="Resumo">
+      <nav className="dr-tiras" data-n={numeros.mes ? 4 : 3} aria-label="Resumo">
+        {numeros.mes && (
+          <Link to="/negocios" className="dr-tira">
+            <span className="dr-rotulo">Flush · {numeros.mes.nome}</span>
+            <strong>
+              {moneyBRL(Math.round(numeros.mes.atual.valor)).replace(/,00$/, "")}
+              {metas[META_FLUSH_MES] ? <small className="dr-tira-extra"> · {Math.round((numeros.mes.atual.valor / metas[META_FLUSH_MES]) * 100)}% da meta</small> : null}
+            </strong>
+          </Link>
+        )}
         <Link to="/negocios" className="dr-tira">
           <span className="dr-rotulo">Vape Mania</span>
           <strong><i className="dr-ponto" data-tom={vm.site.ok === null ? undefined : vm.site.ok && vm.banco.ok ? "ok" : "alerta"} aria-hidden="true" />{vm.site.ok === null ? "Verificando" : !vm.site.ok ? "Site fora do ar" : !vm.banco.ok ? "Banco sem resposta" : "No ar"}</strong>

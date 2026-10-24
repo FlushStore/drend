@@ -18,6 +18,8 @@ export interface Retrato<M = unknown> {
   mensagens: M[];
   /** Opcional: retratos salvos antes das tarefas continuam válidos. */
   tarefas?: Tarefa[];
+  /** Metas em reais, por chave ("flush-mes"). Opcional pelo mesmo motivo. */
+  metas?: Record<string, number>;
 }
 
 export interface Repositorio<M = unknown> {
@@ -39,7 +41,8 @@ function valido(x: unknown): x is Retrato {
     Array.isArray(r.mural.log) &&
     Array.isArray(r.caixaDeEntrada) &&
     Array.isArray(r.mensagens) &&
-    (r.tarefas === undefined || Array.isArray(r.tarefas))
+    (r.tarefas === undefined || Array.isArray(r.tarefas)) &&
+    (r.metas === undefined || (typeof r.metas === "object" && r.metas !== null))
   );
 }
 

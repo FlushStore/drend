@@ -6,7 +6,8 @@
  * URL e chave publicável são as mesmas que o app da Flush já publica no navegador.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resumirPorDia, ultimosDias, type CaixaFlush, type CustoPadrao, type VendaFlush } from "./flush-regras";
+import { inicioDoMesAnterior } from "@/core/financeiro";
+import { diasDesde, resumirPorDia, type CaixaFlush, type CustoPadrao, type VendaFlush } from "./flush-regras";
 import { criarFonte, type EstadoLoja, type ResumoLoja } from "./loja";
 
 /** Flush Principal (Unaí). Samambaia é a ...0002. */
@@ -16,33 +17,50 @@ export const EMAIL_FLUSH = "flushstoreunai@gmail.com";
 export type ResumoFlush = ResumoLoja;
 export type EstadoFlush = EstadoLoja;
 
-/** Os últimos 7 dias da loja principal, com as regras do Início da Flush. */
+const PAGINA = 1000;
+
+/** Todas as linhas, em páginas: o Supabase corta cada resposta em 1000. */
+async function todas<T>(pagina: (de: number, ate: number) => PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>): Promise<T[]> {
+  const linhas: T[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await pagina(de, de + PAGINA - 1);
+    if (error) throw new Error(error.message);
+    linhas.push(...((data ?? []) as T[]));
+    if (!data || data.length < PAGINA) return linhas;
+  }
+}
+
+/**
+ * Do dia 1 do mês passado até hoje, na loja principal, com as regras do Início da Flush.
+ * `dias` são os últimos 7 (Hoje e Negócios); `historico` é tudo (o mês e a comparação).
+ */
 export async function buscarSemana(db: SupabaseClient, agora = new Date()): Promise<ResumoFlush> {
-  const dias = ultimosDias(7, agora);
+  const dias = diasDesde(inicioDoMesAnterior(agora), agora);
   const inicio = new Date(`${dias[0]}T00:00:00`).toISOString();
   const [vendas, caixa, custos] = await Promise.all([
-    db.from("sales")
-      .select("final_price, created_at, order_id, product_name, cost_price, quantity, payment_method, cash_neutralized")
-      .eq("store_id", LOJA_PRINCIPAL).gte("created_at", inicio).limit(5000),
-    db.from("cash_register")
-      .select("type, amount, description, created_at, reference_type, reference_id")
-      .eq("store_id", LOJA_PRINCIPAL).eq("type", "saida").eq("reference_type", "sale")
-      .ilike("description", "frete pago da venda:%").gte("created_at", inicio).limit(5000),
+    todas<VendaFlush>((de, ate) =>
+      db.from("sales")
+        .select("id, final_price, created_at, order_id, product_name, cost_price, quantity, payment_method, cash_neutralized")
+        .eq("store_id", LOJA_PRINCIPAL).gte("created_at", inicio)
+        .order("created_at", { ascending: true }).order("id", { ascending: true }).range(de, ate)),
+    todas<CaixaFlush>((de, ate) =>
+      db.from("cash_register")
+        .select("id, type, amount, description, created_at, reference_type, reference_id")
+        .eq("store_id", LOJA_PRINCIPAL).eq("type", "saida").eq("reference_type", "sale")
+        .ilike("description", "frete pago da venda:%").gte("created_at", inicio)
+        .order("created_at", { ascending: true }).order("id", { ascending: true }).range(de, ate)),
     // Tabela global (vale para as duas unidades).
     db.from("custos_padrao").select("modelo, custo, ordem").order("ordem", { ascending: true }).order("modelo", { ascending: true }),
   ]);
-  const erro = vendas.error || caixa.error || custos.error;
-  if (erro) throw new Error(erro.message);
+  if (custos.error) throw new Error(custos.error.message);
   const tabela: CustoPadrao[] = [];
   for (const r of (custos.data ?? []) as Array<{ modelo: unknown; custo: unknown }>) {
     const modelo = String(r.modelo ?? "").trim().toLowerCase();
     const custo = Number(r.custo);
     if (modelo && Number.isFinite(custo)) tabela.push({ modelo, custo });
   }
-  return {
-    dias: resumirPorDia((vendas.data ?? []) as VendaFlush[], (caixa.data ?? []) as CaixaFlush[], tabela, dias),
-    atualizadoEm: new Date().toISOString(),
-  };
+  const historico = resumirPorDia(vendas, caixa, tabela, dias);
+  return { dias: historico.slice(-7), historico, atualizadoEm: new Date().toISOString() };
 }
 
 const fonte = criarFonte({
