@@ -12,6 +12,15 @@ import { iniciarMissoes, lerMissoes, registrar } from "./fontes/missoes";
 import { nomeDaMissao } from "./core/missao";
 import { responderAgenda } from "./core/agenda";
 import { eventosDa, iniciarAgenda, lerAgenda, motivoSemAgenda } from "./fontes/agenda";
+import { responderProjetos, responderVault } from "./core/vault";
+import { iniciarVault, lerVault, motivoSemVault, notasDo } from "./fontes/vault";
+
+/** O vault como a conversa enxerga: o índice das notas, ou o motivo de não ter. */
+function vaultDaConversa() {
+  const e = lerVault();
+  const notas = notasDo(e);
+  return { notas, motivo: notas ? undefined : motivoSemVault(e) };
+}
 
 /** A agenda como a conversa enxerga: os eventos, ou o motivo de não ter. */
 function agendaDaConversa() {
@@ -93,6 +102,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   // As missões ficam ouvindo desde a abertura: a conversa responde sem precisar abrir a tela.
   useEffect(iniciarMissoes, []);
   useEffect(iniciarAgenda, []);
+  useEffect(iniciarVault, []);
 
   // Banco: ao entrar, a versão mais nova (aparelho ou banco) vence; depois cada mudança sobe em ~1 s.
   const [sessao, setSessao] = useState<Session | null>(null);
@@ -231,6 +241,12 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     } else if (cmd?.tipo === "agenda") {
       const { eventos, motivo } = agendaDaConversa();
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderAgenda(eventos, cmd.quando, new Date(), motivo) });
+    } else if (cmd?.tipo === "vault") {
+      const { notas, motivo } = vaultDaConversa();
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderVault(notas, cmd.termo, motivo) });
+    } else if (cmd?.tipo === "projetosVault") {
+      const { notas, motivo } = vaultDaConversa();
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderProjetos(notas, motivo) });
     } else if (cmd?.tipo === "vendas") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderVendas(cmd.periodo, leituraDaFlush(), new Date(), metas[META_FLUSH_MES] ?? null) });
     } else if (cmd?.tipo === "meta") {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import { useSearchParams } from "react-router-dom";
-import { FileText, History, Image, Link2, Megaphone, Mic, Plus, StickyNote, Undo2, type LucideIcon } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { BookOpen, FileText, History, Image, Link2, Megaphone, Mic, Plus, StickyNote, Undo2, type LucideIcon } from "lucide-react";
 import { Aviso } from "@/design-system/Aviso";
 import { Bloco } from "@/design-system/Bloco";
 import { CampoDeBusca } from "@/design-system/CampoDeBusca";
@@ -46,6 +46,7 @@ function Cartao({ c }: { c: Card }) {
 export function Mural() {
   const { mural, executar, desfazer } = useStore();
   const largo = useTelaLarga();
+  const navigate = useNavigate();
   const [busca, setBusca] = useSearchParams();
   const quadros = Object.values(mural.state.boards);
   const [ativo, setAtivo] = useState(busca.get("quadro") ?? quadros[0]?.id ?? "");
@@ -151,6 +152,7 @@ export function Mural() {
     <>
       <CabecalhoDeTela titulo="Mural">
         <div className="dr-mural-acoes">
+          <BotaoCirculo rotulo="Vault do Obsidian" onClick={() => navigate("/vault")}><BookOpen size={18} strokeWidth={1.75} /></BotaoCirculo>
           <BotaoCirculo rotulo="Histórico" onClick={() => setVerHistorico(true)}><History size={18} strokeWidth={1.75} /></BotaoCirculo>
           <BotaoCirculo rotulo="Desfazer a última ação" onClick={() => desfazer()}><Undo2 size={18} strokeWidth={1.75} /></BotaoCirculo>
           <BotaoCirculo rotulo="Nova nota" tom="acento" onClick={novaNota} disabled={!quadro}><Plus size={18} strokeWidth={2} /></BotaoCirculo>

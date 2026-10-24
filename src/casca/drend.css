@@ -242,3 +242,46 @@ a.dr-mi-corpo .dr-mi-link { grid-row: 1; grid-column: 2; color: var(--cos-tinta-
 .dr-chat-cerebro { position: sticky; top: 0; z-index: 2; display: grid; justify-items: center; margin: 0 -16px; padding: 0 16px 4px; background: linear-gradient(to bottom, var(--cos-app) 78%, transparent); }
 .cos-painel .dr-chat-cerebro { background: linear-gradient(to bottom, var(--cos-bloco) 78%, transparent); }
 .dr-chat-estado { margin: -6px 0 0; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--cos-acento-tinta); min-height: 1.2em; }
+
+/* Vault: notas do Obsidian, só leitura. A nota abre no painel com o markdown do vault. */
+.dr-vault-quando { color: var(--cos-tinta-3); align-self: center; }
+@media (max-width: 767px) { .dr-vault-quando { display: none; } }
+.dr-vault-resumo { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dr-vault-proj .cos-botao { align-self: flex-start; margin-top: auto; }
+.dr-vault-rotulo { display: block; margin-bottom: 2px; font-size: 11.5px; font-weight: 500; color: var(--cos-acento-tinta); letter-spacing: .02em; }
+.dr-vault-mais { margin-top: 14px; }
+.dr-vault-nota { display: grid; gap: 14px; padding-bottom: 12px; }
+.dr-vault-meta { margin: 0; font-size: 13px; color: var(--cos-tinta-2); }
+.dr-vault-proxima { margin: 0; padding: 12px 14px; border-radius: var(--cos-r-interno); background: var(--cos-acento-suave); font-size: 14.5px; line-height: 1.45; }
+.dr-vault-md { display: grid; gap: 10px; font-size: 15px; line-height: 1.55; color: var(--cos-tinta); overflow-wrap: anywhere; }
+.dr-vault-md :is(p, ul, ol, pre, h3, h4, h5, h6) { margin: 0; }
+.dr-vault-md :is(h3, h4, h5, h6) { margin-top: 8px; font-family: var(--cos-fonte-marca); font-weight: 600; letter-spacing: -.02em; line-height: 1.25; }
+.dr-vault-md h3 { font-size: 20px; }
+.dr-vault-md h4 { font-size: 17px; }
+.dr-vault-md :is(h5, h6) { font-size: 15px; color: var(--cos-tinta-2); }
+.dr-vault-md :is(ul, ol) { display: grid; gap: 4px; padding-left: 20px; }
+.dr-vault-md li[data-feito] { list-style: none; margin-left: -20px; display: flex; gap: 8px; }
+.dr-vault-md li[data-feito="true"] { color: var(--cos-tinta-3); text-decoration: line-through; }
+.dr-vault-caixa { flex: none; width: 16px; height: 16px; margin-top: 4px; border: 1.5px solid var(--cos-linha-forte); border-radius: 5px; }
+li[data-feito="true"] > .dr-vault-caixa { border-color: var(--cos-acento); background: var(--cos-acento); }
+.dr-vault-md code { padding: 1px 5px; border-radius: 6px; background: var(--cos-palco); font-size: .88em; }
+.dr-vault-md pre { padding: 12px 14px; border-radius: var(--cos-r-interno); background: var(--cos-palco); overflow-x: auto; font-size: 13px; line-height: 1.5; }
+.dr-vault-md pre code { padding: 0; background: none; }
+.dr-vault-md a { color: var(--cos-acento-tinta); text-decoration: underline; text-underline-offset: 2px; }
+.dr-vault-md hr { width: 100%; margin: 4px 0; border: 0; border-top: 1px solid var(--cos-linha); }
+.dr-vault-wiki { display: inline; padding: 0; border: 0; background: none; font: inherit; color: var(--cos-acento-tinta); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+.dr-vault-wiki[data-sem-nota] { color: var(--cos-tinta-2); cursor: default; text-decoration: none; }
+.dr-vault-aviso { display: grid; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--cos-linha-forte); border-radius: 4px var(--cos-r-interno) var(--cos-r-interno) 4px; background: var(--cos-palco); font-size: 14px; }
+.dr-vault-aviso :is(p, strong) { margin: 0; }
+.dr-vault-aviso:is([data-tipo="info"], [data-tipo="note"], [data-tipo="tip"], [data-tipo="abstract"], [data-tipo="summary"]) { border-left-color: var(--cos-acento); }
+.dr-vault-aviso:is([data-tipo="warning"], [data-tipo="danger"], [data-tipo="caution"], [data-tipo="bug"]) { border-left-color: var(--cos-negativo); }
+.dr-vault-aviso:is([data-tipo="success"], [data-tipo="check"], [data-tipo="done"]) { border-left-color: var(--cos-positivo); }
+.dr-vault-tabela { overflow-x: auto; border: 1px solid var(--cos-linha); border-radius: var(--cos-r-interno); }
+.dr-vault-tabela table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.dr-vault-tabela :is(th, td) { padding: 8px 10px; text-align: left; vertical-align: top; }
+.dr-vault-tabela th { font-weight: 600; background: var(--cos-palco); }
+.dr-vault-tabela tr + tr :is(th, td) { border-top: 1px solid var(--cos-linha); }
+/* No iPhone as quatro partes rolam de lado numa linha só, sem quebrar. */
+.dr-vault-filtros { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; }
+.dr-vault-filtros::-webkit-scrollbar { display: none; }
+.dr-vault-filtros > * { flex: none; }
