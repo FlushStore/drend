@@ -51,4 +51,12 @@ describe("criar quadro por comando", () => {
     m.run(opCriarQuadro(m.state, c).op, "drend", "1");
     expect(opCriarQuadro(m.state, c).board.id).toBe("natal-2");
   });
+
+  it("entende tarefas", () => {
+    expect(entender("me lembra de pagar o fornecedor")).toEqual({ tipo: "tarefa", texto: "pagar o fornecedor" });
+    expect(entender("Lembrar de ligar pro contador")).toEqual({ tipo: "tarefa", texto: "ligar pro contador" });
+    expect(entender("tarefa: repor pods")).toEqual({ tipo: "tarefa", texto: "repor pods" });
+    expect(entender("preciso responder o fornecedor")).toEqual({ tipo: "tarefa", texto: "responder o fornecedor" });
+    expect(entender("tarefa:")).toBeNull();
+  });
 });

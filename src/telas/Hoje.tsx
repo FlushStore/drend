@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Check, Plus } from "lucide-react";
+import { Aviso } from "@/design-system/Aviso";
 import { SetaCirculo } from "@/design-system/BotaoCirculo";
+import { useAviso } from "@/design-system/useAviso";
+import { abertas } from "@/core/tarefas";
 import { Valor } from "@/design-system/Valor";
-import { agenda, drendStatus, flush } from "@/data/exemplo";
+import { agenda, drendStatus } from "@/data/exemplo";
 import { useFlush } from "@/fontes/useFlush";
 import { useStore } from "@/store";
 import { CurvaDaSemana } from "./VendasDaSemana";
@@ -16,17 +21,15 @@ function saudacao(agora: Date) {
  * Regra do painel da Flush: um herói por tela, nada de texto explicando a tela.
  */
 export function Hoje() {
-  const { caixaDeEntrada } = useStore();
+  const { caixaDeEntrada, tarefas, criarTarefa, concluirTarefa, reabrirTarefa } = useStore();
   const numeros = useFlush();
+  const { aviso, avisar, limpar } = useAviso();
+  const [nova, setNova] = useState("");
   const agora = new Date();
   const longa = agora.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
   const data = longa.charAt(0).toUpperCase() + longa.slice(1);
-  const pendencias = [
-    ...caixaDeEntrada.map((ideia, i) => ({ id: `ideia-${i}`, titulo: ideia, para: "/drend" })),
-    { id: "control-os", titulo: flush.proximaTarefa, para: "/negocios" },
-    { id: "fornecedor", titulo: "Responder o fornecedor", para: "/drend" },
-    { id: "picpay", titulo: "Conectar o PicPay", para: "/vida" },
-  ].slice(0, 4);
+  const lista = abertas(tarefas);
+  const total = lista.length + caixaDeEntrada.length;
   const [hora, compromisso] = agenda[0];
 
   return (
@@ -53,17 +56,49 @@ export function Hoje() {
         </Link>
 
         <section className="cos-bloco dr-para-voce" aria-labelledby="dr-pv">
-          <h2 id="dr-pv" className="dr-rotulo">Para você <span className="dr-conta">{pendencias.length}</span></h2>
+          <h2 id="dr-pv" className="dr-rotulo">Para você {total > 0 && <span className="dr-conta">{total}</span>}</h2>
           <ul className="dr-lista">
-            {pendencias.map((p) => (
-              <li key={p.id}>
-                <Link to={p.para} className="dr-lista-item">
-                  <span>{p.titulo}</span>
+            {lista.map((t) => (
+              <li key={t.id} className="dr-lista-item dr-tarefa">
+                <button
+                  type="button"
+                  className="dr-tarefa-check"
+                  aria-label={`Concluir: ${t.texto}`}
+                  onClick={() => {
+                    concluirTarefa(t.id);
+                    avisar("Feito", "sucesso", { rotulo: "Desfazer", aoTocar: () => reabrirTarefa(t.id) });
+                  }}
+                >
+                  <Check size={14} strokeWidth={2.5} aria-hidden="true" />
+                </button>
+                <span className="dr-tarefa-texto">{t.texto}</span>
+              </li>
+            ))}
+            {caixaDeEntrada.map((ideia, i) => (
+              <li key={`ideia-${i}`}>
+                <Link to="/drend" className="dr-lista-item">
+                  <span><small className="dr-lista-tipo">Ideia</small>{ideia}</span>
                   <SetaCirculo />
                 </Link>
               </li>
             ))}
           </ul>
+          {total === 0 && <p className="dr-vazio">Nada esperando por você.</p>}
+          <form
+            className="dr-tarefa-nova"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!nova.trim()) return;
+              criarTarefa(nova);
+              setNova("");
+            }}
+          >
+            <Plus size={16} strokeWidth={2} aria-hidden="true" />
+            <label className="dr-tarefa-nova-campo">
+              <span className="cos-sr">Nova tarefa</span>
+              <input value={nova} onChange={(e) => setNova(e.target.value)} placeholder="Nova tarefa" enterKeyHint="done" />
+            </label>
+          </form>
         </section>
       </div>
 
@@ -81,6 +116,7 @@ export function Hoje() {
           <strong>{compromisso}</strong>
         </Link>
       </nav>
+      <Aviso aviso={aviso} aoSumir={limpar} />
     </>
   );
 }

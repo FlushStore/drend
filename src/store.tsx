@@ -4,6 +4,7 @@ import { Mural, MuralError, type Op, type LogEntry } from "./core/mural";
 import { VERSAO, repositorioLocal, type Repositorio, type Retrato } from "./core/persistencia";
 import { baixar, maisRecente, subir, supabase, type Session } from "./core/nuvem";
 import { muralExemplo } from "./data/exemplo";
+import { adicionar, concluir, novaTarefa, podar, reabrir, type Tarefa } from "./core/tarefas";
 
 export type Mensagem =
   | { id: string; de: "rapha"; texto: string }
@@ -26,6 +27,10 @@ interface Store {
   desfazer: () => LogEntry | undefined;
   falar: (texto: string) => void;
   guardarIdeia: (ideia: string, projeto: string) => void;
+  tarefas: Tarefa[];
+  criarTarefa: (texto: string) => void;
+  concluirTarefa: (id: string) => void;
+  reabrirTarefa: (id: string) => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -34,7 +39,7 @@ let seq = 0;
 const id = () => `m${Date.now().toString(36)}-${++seq}`;
 
 const BOAS_VINDAS: Mensagem[] = [
-  { id: "m-inicio", de: "drend", status: "dica", texto: "Peça um quadro assim: “crie um quadro Natal da Flush com cartões vídeo, cupom e stories”." },
+  { id: "m-inicio", de: "drend", status: "dica", texto: "Diga “me lembra de…” para anotar uma tarefa, ou “crie um quadro Natal da Flush com cartões vídeo, cupom e stories”." },
 ];
 
 export function StoreProvider({ children, repositorio }: { children: ReactNode; repositorio?: Repositorio<Mensagem> }) {
@@ -47,10 +52,11 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   const [versao, setVersao] = useState(0);
   const [caixaDeEntrada, setCaixa] = useState<string[]>(salvo?.caixaDeEntrada ?? []);
   const [mensagens, setMensagens] = useState<Mensagem[]>(salvo?.mensagens.length ? salvo.mensagens : BOAS_VINDAS);
+  const [tarefas, setTarefas] = useState<Tarefa[]>(() => podar(salvo?.tarefas ?? []));
 
   useEffect(() => {
-    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens });
-  }, [repo, mural, versao, caixaDeEntrada, mensagens]);
+    repo.salvar({ mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas });
+  }, [repo, mural, versao, caixaDeEntrada, mensagens, tarefas]);
 
   // Banco: ao entrar, a versão mais nova (aparelho ou banco) vence; depois cada mudança sobe em ~1 s.
   const [sessao, setSessao] = useState<Session | null>(null);
@@ -82,6 +88,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
           muralRef.current = Mural.restaurar(remoto.mural);
           setCaixa(remoto.caixaDeEntrada);
           setMensagens(remoto.mensagens.length ? remoto.mensagens : BOAS_VINDAS);
+          setTarefas(podar(remoto.tarefas ?? []));
           setVersao((v) => v + 1);
         } else if (local) {
           await subir(local);
@@ -100,11 +107,11 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   useEffect(() => {
     if (!usuario || !conciliado.current) return;
     const t = setTimeout(() => {
-      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens };
+      const r: Retrato<Mensagem> = { v: VERSAO, salvoEm: new Date().toISOString(), mural: { state: mural.state, log: mural.log }, caixaDeEntrada, mensagens, tarefas };
       subir(r).then(() => setSincronia("ok"), () => setSincronia("erro"));
     }, 1000);
     return () => clearTimeout(t);
-  }, [usuario, mural, versao, caixaDeEntrada, mensagens]);
+  }, [usuario, mural, versao, caixaDeEntrada, mensagens, tarefas]);
 
   const entrar = useCallback(async (email: string, senha: string) => {
     if (!supabase) return "O banco ainda não está ligado.";
@@ -153,6 +160,10 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
       } catch (erro) {
         novas.push({ id: id(), de: "drend", status: "falhou", texto: erro instanceof MuralError ? `Não deu: ${erro.message}.` : "Não consegui criar o quadro." });
       }
+    } else if (cmd?.tipo === "tarefa") {
+      const t = novaTarefa(cmd.texto);
+      setTarefas((l) => adicionar(l, t));
+      novas.push({ id: id(), de: "drend", status: "feito", texto: `Anotei: “${t.texto}”. Está em Para você, no Hoje.` });
     } else if (cmd?.tipo === "desfazer") {
       const e = mural.undo();
       if (e) setVersao((v) => v + 1);
@@ -161,7 +172,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
         : { id: id(), de: "drend", status: "falhou", texto: "Não há nada para desfazer." });
     } else {
       // Fase 4: ainda sem modelo de IA ligado. Dizer isso é melhor que fingir.
-      novas.push({ id: id(), de: "drend", status: "falhou", texto: "Ainda não entendo conversa livre. Por enquanto: “crie um quadro … com cartões …”, “tive uma ideia…” e “desfaz”." });
+      novas.push({ id: id(), de: "drend", status: "falhou", texto: "Ainda não entendo conversa livre. Por enquanto: “crie um quadro … com cartões …”, “tive uma ideia…”, “me lembra de…” e “desfaz”." });
     }
     setMensagens((ms) => [...ms, ...novas]);
   }, [mural]);
@@ -188,9 +199,13 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     [executar, mural],
   );
 
+  const criarTarefa = useCallback((texto: string) => setTarefas((l) => adicionar(l, novaTarefa(texto))), []);
+  const concluirTarefa = useCallback((tid: string) => setTarefas((l) => concluir(l, tid)), []);
+  const reabrirTarefa = useCallback((tid: string) => setTarefas((l) => reabrir(l, tid)), []);
+
   const value = useMemo(
-    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair }),
-    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair],
+    () => ({ mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, email: sessao?.user.email ?? null, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa }),
+    [mural, versao, mensagens, caixaDeEntrada, executar, desfazer, falar, guardarIdeia, sincronia, sessao, entrar, criarAcesso, sair, tarefas, criarTarefa, concluirTarefa, reabrirTarefa],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

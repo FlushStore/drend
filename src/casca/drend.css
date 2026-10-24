@@ -153,3 +153,43 @@ a.dr-heroi:active { transform: scale(.99); }
 @media (min-width: 768px) {
   .cv2-conteudo > .dr-chat { width: 100%; max-width: 760px; margin-inline: auto; min-height: calc(100dvh - 260px); }
 }
+
+/* Tarefas em "Para você": um círculo para concluir, texto, e o campo de nova tarefa no fim. */
+.dr-tarefa { justify-content: flex-start; }
+.dr-tarefa-check { display: grid; place-items: center; flex: none; width: 26px; height: 26px; padding: 0; border: 1.5px solid var(--cos-linha-forte); border-radius: 50%; background: none; color: transparent; cursor: pointer; transition: background var(--cos-rapido) var(--cos-curva), color var(--cos-rapido) var(--cos-curva), border-color var(--cos-rapido) var(--cos-curva); }
+.dr-tarefa-check::before { content: ""; position: absolute; inset: -9px; }
+.dr-tarefa-check { position: relative; }
+@media (hover: hover) { .dr-tarefa-check:hover { border-color: var(--cos-acento); color: var(--cos-acento); } }
+.dr-tarefa-check:active { background: var(--cos-acento); border-color: var(--cos-acento); color: var(--cos-sobre-acento); }
+.dr-tarefa-texto { min-width: 0; overflow-wrap: anywhere; }
+.dr-lista-tipo { display: block; margin-bottom: 2px; font-size: 11.5px; font-weight: 500; color: var(--cos-acento-tinta); letter-spacing: .02em; }
+.dr-vazio { margin: 6px 0 2px; font-size: 14.5px; color: var(--cos-tinta-3); }
+.dr-tarefa-nova { display: flex; align-items: center; gap: 12px; min-height: 56px; margin-top: auto; border-top: 1px solid var(--cos-linha); color: var(--cos-tinta-3); }
+.dr-tarefa-nova-campo { flex: 1; min-width: 0; }
+.dr-tarefa-nova input { width: 100%; padding: 10px 0; border: 0; background: none; color: var(--cos-tinta); font: inherit; font-size: 15.5px; font-weight: 500; outline: none; }
+.dr-tarefa-nova input::placeholder { color: var(--cos-tinta-3); }
+.dr-tarefa-nova:focus-within { color: var(--cos-acento); }
+
+/* Mural: busca, cartão tocável e o painel de edição. */
+.dr-mural-busca { margin-bottom: 12px; }
+@media (min-width: 1024px) { .dr-mural-busca { max-width: 420px; } .dr-mural-lista[aria-label="Resultados da busca"] { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
+.dr-cartao-botao { width: 100%; height: 100%; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; align-content: start; transition: transform var(--cos-rapido) var(--cos-curva), box-shadow var(--cos-rapido) var(--cos-curva); }
+.dr-cartao-botao:active { transform: scale(.985); }
+@media (hover: hover) { .dr-cartao-botao:hover { box-shadow: var(--cos-sombra-alta); } }
+.dr-mural-nada { padding: 24px 4px; }
+.dr-editar { display: grid; gap: 14px; }
+.dr-editar-campo { display: grid; gap: 6px; }
+.dr-editar-campo span { font-size: 13px; font-weight: 500; color: var(--cos-tinta-2); }
+.dr-editar-campo :is(input, textarea) { width: 100%; padding: 12px 14px; border: 1px solid var(--cos-linha-forte); border-radius: var(--cos-r-interno); background: var(--cos-bloco); color: var(--cos-tinta); font: inherit; font-size: 16px; resize: vertical; outline: none; transition: border-color var(--cos-rapido) var(--cos-curva), box-shadow var(--cos-rapido) var(--cos-curva); }
+.dr-editar-campo :is(input, textarea):focus { border-color: var(--cos-acento); box-shadow: 0 0 0 4px var(--cos-acento-suave); }
+.dr-editar-campo input { font-weight: 600; }
+
+/* Faixas do app: sem internet e versão nova. Discretas, no topo do conteúdo. */
+.dr-faixas { display: flex; justify-content: center; margin: 0 0 14px; }
+.dr-faixa { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--cos-linha); border-radius: var(--cos-r-pilula); background: var(--cos-bloco); box-shadow: var(--cos-sombra); color: var(--cos-tinta-2); font: inherit; font-size: 13.5px; font-weight: 500; }
+.dr-faixa-acao { cursor: pointer; color: var(--cos-tinta); }
+.dr-faixa-acao strong { color: var(--cos-acento-tinta); font-weight: 600; }
+
+/* Aviso com ação e texto curto ("Feito · Desfazer"): numa linha só. */
+.cv2-raiz .cos-aviso:has(.cos-aviso-acao) { flex-wrap: nowrap; }
+.cv2-raiz .cos-aviso:has(.cos-aviso-acao) .cos-aviso-texto { flex: 0 1 auto; margin-right: 8px; }

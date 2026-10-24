@@ -5,6 +5,7 @@
  * existir, outro `Repositorio` com a mesma forma entra no lugar sem mexer nas telas.
  */
 import type { LogEntry, MuralState } from "./mural";
+import type { Tarefa } from "./tarefas";
 
 export const VERSAO = 1;
 export const CHAVE = "drend:dados:v1";
@@ -15,6 +16,8 @@ export interface Retrato<M = unknown> {
   mural: { state: MuralState; log: LogEntry[] };
   caixaDeEntrada: string[];
   mensagens: M[];
+  /** Opcional: retratos salvos antes das tarefas continuam válidos. */
+  tarefas?: Tarefa[];
 }
 
 export interface Repositorio<M = unknown> {
@@ -35,7 +38,8 @@ function valido(x: unknown): x is Retrato {
     typeof r.mural.state === "object" &&
     Array.isArray(r.mural.log) &&
     Array.isArray(r.caixaDeEntrada) &&
-    Array.isArray(r.mensagens)
+    Array.isArray(r.mensagens) &&
+    (r.tarefas === undefined || Array.isArray(r.tarefas))
   );
 }
 

@@ -8,7 +8,8 @@ import type { Board, Card, MuralState, Op } from "./mural";
 export type Comando =
   | { tipo: "criarQuadro"; titulo: string; cartoes: string[]; projeto: string }
   | { tipo: "desfazer" }
-  | { tipo: "ideia"; texto: string };
+  | { tipo: "ideia"; texto: string }
+  | { tipo: "tarefa"; texto: string };
 
 const PROJETOS: ReadonlyArray<[RegExp, string]> = [
   [/\b(?:da |na |para a |pra )?flush(?:store)?\b/i, "flushstore"],
@@ -31,6 +32,9 @@ export function entender(entrada: string): Comando | null {
   }
   const ideia = t.match(/^tive uma ideia[:,]?\s*(.*)$/i);
   if (ideia) return { tipo: "ideia", texto: ideia[1] || t };
+  // "me lembra de pagar o fornecedor" · "lembrar de X" · "tarefa: X" · "preciso X"
+  const tarefa = t.match(/^(?:(?:me\s+)?lembr(?:a|ar|e)(?:-me)?\s+(?:de\s+|que\s+)?|tarefa\s*:\s*|anota(?:r)?\s+(?:a\s+)?tarefa\s*:?\s*|preciso\s+(?:de\s+)?)(.+)$/i);
+  if (tarefa && tarefa[1].trim()) return { tipo: "tarefa", texto: tarefa[1].trim() };
 
   // "crie um quadro Natal com cartões A, B e C" · "quadro Natal: A, B, C"
   const q =

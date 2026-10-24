@@ -13,6 +13,7 @@ import type { ItemDeNavegacao } from "@/design-system/navegacao";
 import { useTelaLarga } from "@/design-system/useTelaLarga";
 import { EXEMPLO } from "@/data/exemplo";
 import { useStore } from "@/store";
+import { AvisosDoApp } from "./AvisosDoApp";
 import { ContaFlush } from "./ContaFlush";
 import { ContaNuvem } from "./ContaNuvem";
 import { DrendChat } from "./DrendChat";
@@ -115,6 +116,7 @@ export function Casca() {
         </header>
 
         <main id="main-content" className="cv2-conteudo" tabIndex={-1}>
+          <AvisosDoApp />
           <Outlet />
         </main>
       </div>
