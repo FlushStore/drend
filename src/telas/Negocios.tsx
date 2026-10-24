@@ -3,7 +3,6 @@ import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { Valor } from "@/design-system/Valor";
 import { Link } from "react-router-dom";
 import { SetaCirculo } from "@/design-system/BotaoCirculo";
-import { outrosProjetos } from "@/data/exemplo";
 import { atualizarStatusVM, rotulo, useStatusVM } from "@/fontes/status";
 import { useFlush } from "@/fontes/useFlush";
 import { CurvaDaSemana } from "./VendasDaSemana";
@@ -21,14 +20,20 @@ export function Negocios() {
         <Bloco className="dr-proj dr-proj-flush" aria-label="FlushStore">
           <div className="dr-proj-cab">
             <h2 className="dr-proj-nome">FlushStore</h2>
-            <span className="dr-estado"><i className="dr-ponto" data-tom={flush.exemplo ? undefined : "ok"} aria-hidden="true" />{flush.exemplo ? "Exemplo" : flush.pedidos === 1 ? `1 pedido ${flush.dia}` : `${flush.pedidos} pedidos ${flush.dia}`}</span>
+            <span className="dr-estado"><i className="dr-ponto" data-tom={flush.semLeitura ? undefined : "ok"} aria-hidden="true" />{flush.semLeitura ? "Sem leitura" : flush.pedidos === 1 ? `1 pedido ${flush.dia}` : `${flush.pedidos} pedidos ${flush.dia}`}</span>
           </div>
+          {flush.semLeitura ? (
+            <p className="dr-proj-linha">{flush.estado.fase === "carregando" ? "Lendo as vendas…" : "Ligue a FlushStore em Sua conta para ver as vendas."}</p>
+          ) : (
+          <>
           <dl className="dr-numeros">
             <div><dt>{flush.dia.charAt(0).toUpperCase() + flush.dia.slice(1)}</dt><dd><Valor valor={flush.hoje} tamanho="g" centavos={false} /></dd></div>
             <div><dt>Lucro</dt><dd><Valor valor={flush.lucro} tamanho="g" centavos={false} /></dd></div>
             <div><dt>Semana</dt><dd><Valor valor={semana} tamanho="g" centavos={false} /></dd></div>
           </dl>
           <CurvaDaSemana dias={flush.semana} ultimoEhHoje={flush.ultimoEhHoje} />
+          </>
+          )}
         </Bloco>
 
         {flush.mes && <MesDaFlush mes={flush.mes} />}
@@ -53,14 +58,6 @@ export function Negocios() {
         </Link>
       </div>
 
-      <section className="dr-pausados" aria-label="Outros projetos">
-        <h2 className="dr-rotulo">Outros</h2>
-        <ul className="dr-lista">
-          {outrosProjetos.map(([nome, estado]) => (
-            <li key={nome} className="dr-lista-item dr-lista-estatico"><span>{nome}</span><small>{estado}</small></li>
-          ))}
-        </ul>
-      </section>
     </>
   );
 }

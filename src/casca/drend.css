@@ -153,7 +153,6 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-nuvem-aviso { margin: 0; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
 
 /* Selo pequeno de número de exemplo, ao lado do rótulo. */
-.dr-tag-exemplo { padding: 1px 7px; border-radius: var(--cos-r-pilula); font-size: 11px; font-weight: 500; color: var(--cos-tinta-3); background: var(--cos-controle); letter-spacing: .02em; }
 
 /* Sugestões quando a conversa ainda está vazia: um toque preenche o campo. */
 .dr-chat-sugestoes { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 0; padding: 0; list-style: none; }

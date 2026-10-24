@@ -9,7 +9,7 @@ Painel pessoal do Rapha. Só dele. Integra Flush, Vape Mania, vida pessoal e a m
 - Tema claro e escuro, como na Flush (`data-v2-tema` no <html>, ver `src/casca/tema.ts`).
 - Não mexa no app da FlushStore nem nos bancos da Flush ou da Vape Mania.
 - Migrações em `supabase/migrations` vão só para o projeto Supabase do DREND, depois do ok do Rapha.
-- Nada de dado inventado na tela sem o selo "Dados de exemplo" (`EXEMPLO` em `src/data/exemplo.ts`).
+- Só dado real, nunca de exemplo (regra do Rapha, 24/10/2026: "quero programar ao vivo e ir evoluindo"). Sem fonte ligada, a tela fica vazia ou diz o que falta; nada de número, cartão ou seed fictício.
 - O Mural só muda por operações de `src/core/mural.ts`; toda ação entra no log e pode ser desfeita.
 - Ações seguem os níveis de `src/core/permissions.ts`: C e D pedem aprovação.
 

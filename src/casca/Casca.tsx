@@ -11,7 +11,6 @@ import { Segmentado } from "@/design-system/Segmentado";
 import { MOLA_ICONE, transicao, useMovimentoReduzido } from "@/design-system/movimento";
 import type { ItemDeNavegacao } from "@/design-system/navegacao";
 import { useTelaLarga } from "@/design-system/useTelaLarga";
-import { EXEMPLO } from "@/data/exemplo";
 import { useStore } from "@/store";
 import { AvisosDoApp } from "./AvisosDoApp";
 import { ContaFlush } from "./ContaFlush";
@@ -95,7 +94,7 @@ export function Casca() {
           <Link to="/" className="cv2-marca" aria-label="DREND, ir para Hoje">
             <span className="dr-marca-d" aria-hidden="true">D</span>
             <span className="cv2-marca-nome" aria-hidden="true">DREND</span>
-            <span className="cv2-marca-sub" title={EXEMPLO ? "Dados de exemplo: nenhuma integração ligada ainda" : undefined}>{EXEMPLO ? "Exemplo" : "Pessoal"}</span>
+            <span className="cv2-marca-sub">Pessoal</span>
           </Link>
           {largo && <AbasTopo itens={itens} ativo={ativoDe(pathname)} />}
           <div className="cv2-topo-acoes">

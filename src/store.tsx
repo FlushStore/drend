@@ -3,7 +3,7 @@ import { entender, opCriarQuadro } from "./core/comandos";
 import { Mural, MuralError, type Op, type LogEntry } from "./core/mural";
 import { VERSAO, repositorioLocal, type Repositorio, type Retrato } from "./core/persistencia";
 import { baixar, maisRecente, subir, supabase, type Session } from "./core/nuvem";
-import { muralExemplo } from "./data/exemplo";
+import { tirarExemplos } from "./core/limpeza";
 import { abertas, adicionar, concluir, novaTarefa, podar, reabrir, remover, type Tarefa } from "./core/tarefas";
 import { acharPorTexto } from "./core/fala";
 import { AJUDA, responderAgradecimento, responderMissao, responderPendencias, responderResumo, responderVendas, type LeituraFlush } from "./core/respostas";
@@ -75,7 +75,10 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
   // Lido uma vez, na abertura: o que estava no aparelho volta como estava, desfazer incluso.
   const [salvo] = useState(() => repo.carregar());
   const muralRef = useRef<Mural | null>(null);
-  if (!muralRef.current) muralRef.current = salvo ? Mural.restaurar(salvo.mural) : new Mural(muralExemplo());
+  if (!muralRef.current) {
+    muralRef.current = salvo ? Mural.restaurar(salvo.mural) : new Mural();
+    tirarExemplos(muralRef.current);
+  }
   const mural = muralRef.current;
   const [versao, setVersao] = useState(0);
   const [caixaDeEntrada, setCaixa] = useState<string[]>(salvo?.caixaDeEntrada ?? []);
@@ -119,6 +122,7 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
         if (!vivo) return;
         if (maisRecente(local, remoto) === "remoto" && remoto) {
           muralRef.current = Mural.restaurar(remoto.mural);
+          tirarExemplos(muralRef.current);
           setCaixa(remoto.caixaDeEntrada);
           setMensagens(remoto.mensagens.length ? remoto.mensagens : BOAS_VINDAS);
           setTarefas(podar(remoto.tarefas ?? []));

@@ -66,16 +66,21 @@ export function Hoje() {
         <Link to="/negocios" className="cos-bloco dr-heroi" aria-label={`FlushStore ${numeros.dia}: faturamento e lucro`}>
           <span className="dr-rotulo">
             FlushStore · {numeros.dia}
-            {numeros.exemplo && <span className="dr-tag-exemplo">exemplo</span>}
           </span>
-          <span className="dr-heroi-num">
-            <Valor valor={numeros.hoje} tamanho="gg" centavos={false} animar />
-            <span className="dr-heroi-lucro" data-tom={numeros.lucro < 0 ? "negativo" : "positivo"}>
-              lucro <Valor valor={numeros.lucro} tamanho="p" centavos={false} />
-            </span>
-            {numeros.pedidos !== null && <span className="dr-heroi-extra">{numeros.pedidos === 1 ? "1 pedido" : `${numeros.pedidos} pedidos`}</span>}
-          </span>
-          <CurvaDaSemana dias={numeros.semana} ultimoEhHoje={numeros.ultimoEhHoje} />
+          {numeros.semLeitura ? (
+            <p className="dr-vazio">{numeros.estado.fase === "carregando" ? "Lendo as vendas…" : "Sem leitura da Flush. Ligue em Sua conta."}</p>
+          ) : (
+            <>
+              <span className="dr-heroi-num">
+                <Valor valor={numeros.hoje} tamanho="gg" centavos={false} animar />
+                <span className="dr-heroi-lucro" data-tom={numeros.lucro < 0 ? "negativo" : "positivo"}>
+                  lucro <Valor valor={numeros.lucro} tamanho="p" centavos={false} />
+                </span>
+                {numeros.pedidos !== null && <span className="dr-heroi-extra">{numeros.pedidos === 1 ? "1 pedido" : `${numeros.pedidos} pedidos`}</span>}
+              </span>
+              <CurvaDaSemana dias={numeros.semana} ultimoEhHoje={numeros.ultimoEhHoje} />
+            </>
+          )}
         </Link>
 
         <section className="cos-bloco dr-para-voce" aria-labelledby="dr-pv">
