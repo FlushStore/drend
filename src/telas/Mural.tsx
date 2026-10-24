@@ -10,7 +10,7 @@ import { Painel } from "@/design-system/Painel";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { FiltroDeLista } from "@/design-system/FiltroDeLista";
 import { useTelaLarga } from "@/design-system/useTelaLarga";
-import type { Card, CardKind } from "@/core/mural";
+import type { Card, CardKind, LogEntry } from "@/core/mural";
 import { useStore } from "@/store";
 import { EditarCartao } from "./EditarCartao";
 
@@ -66,13 +66,19 @@ export function Mural() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [termo, mural, mural.state]);
 
+  // O Desfazer do aviso vale só para a ação que ele anunciou: se outra veio depois, não desfaz a errada.
+  function desfazerSeAinda(e: LogEntry) {
+    const ultima = [...mural.log].reverse().find((x) => !x.undone && !x.summary.startsWith("Desfez:"));
+    if (ultima?.id === e.id) desfazer();
+    else avisar("Outra mudança veio depois. Use o Desfazer do topo, uma por vez.", "erro");
+  }
   function salvar(c: Card, titulo: string, texto: string) {
-    executar({ type: "editCard", cardId: c.id, title: titulo, body: texto }, "rapha", `Editou “${titulo}”`);
-    avisar("Cartão salvo", "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazer() });
+    const e = executar({ type: "editCard", cardId: c.id, title: titulo, body: texto }, "rapha", `Editou “${titulo}”`);
+    avisar("Cartão salvo", "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazerSeAinda(e) });
   }
   function apagar(c: Card) {
-    executar({ type: "removeCard", cardId: c.id }, "rapha", `Apagou “${c.title}”`);
-    avisar("Cartão apagado", "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazer() });
+    const e = executar({ type: "removeCard", cardId: c.id }, "rapha", `Apagou “${c.title}”`);
+    avisar("Cartão apagado", "sucesso", { rotulo: "Desfazer", aoTocar: () => desfazerSeAinda(e) });
   }
 
   // Arrastar: a posição muda só na tela; ao soltar vira um moveCard no log (dá para desfazer).
