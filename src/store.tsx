@@ -17,6 +17,8 @@ import { iniciarVault, lerVault, motivoSemVault, notasDo } from "./fontes/vault"
 import { adicionarLancamento, confirmarLancamento, lerLancamentos, nomeDoLancamento, novoLancamento, removerLancamento, responderDinheiro, ultimos, type Lancamento } from "./core/dinheiro";
 import { adicionarHabito, alternarDia, feitoNoDia, habitoParaConcluir, lerHabitos, marcarHoje, mesmoHabito, novoHabito, removerHabito, responderHabitos, sequencia, textoDaSequencia, type Habito } from "./core/habitos";
 import { diaEmBrasilia } from "./core/brasilia";
+import { responderSemana, semanaDaFlush, type SemanaFlush } from "./core/semana";
+import type { ResumoFlush } from "./fontes/flush";
 
 /** O vault como a conversa enxerga: o índice das notas, ou o motivo de não ter. */
 function vaultDaConversa() {
@@ -38,6 +40,15 @@ function leituraDaFlush(): LeituraFlush {
   if (e.fase === "fora") return null;
   if (e.fase === "carregando") return e;
   return e.resumo ? { fase: e.fase, dias: e.resumo.dias, historico: e.resumo.historico, atualizadoEm: e.resumo.atualizadoEm } : { fase: "erro", dias: [], atualizadoEm: "" };
+}
+
+/** A semana da Flush como a conversa enxerga: null sem a Flush ligada. */
+function semanaDaConversa(): SemanaFlush | null | "carregando" {
+  const e = lerFlush();
+  if (e.fase === "fora") return null;
+  if (e.fase === "carregando") return "carregando";
+  const r: ResumoFlush | null = e.resumo;
+  return r ? semanaDaFlush(r.historico, r.dias, r.produtos?.maisVendidos ?? null) : null;
 }
 
 export type Mensagem =
@@ -314,6 +325,9 @@ export function StoreProvider({ children, repositorio }: { children: ReactNode; 
     } else if (cmd?.tipo === "missaoStatus") {
       const m = lerMissoes();
       novas.push({ id: id(), de: "drend", status: "dica", texto: m.fase === "carregando" ? "Estou lendo as Missões. Pergunte de novo em instantes." : responderMissao(m.fase === "ok" ? m.eventos : null, cmd.missao) });
+    } else if (cmd?.tipo === "semana") {
+      const { eventos } = agendaDaConversa();
+      novas.push({ id: id(), de: "drend", status: "dica", texto: responderSemana({ flush: semanaDaConversa(), tarefas, habitos, lancamentos, agenda: eventos }) });
     } else if (cmd?.tipo === "resumo") {
       novas.push({ id: id(), de: "drend", status: "dica", texto: responderResumo(tarefas, leituraDaFlush(), new Date(), "Resumo de agora:") });
     } else if (cmd?.tipo === "saudacao") {

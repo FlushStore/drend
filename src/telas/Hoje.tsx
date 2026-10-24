@@ -58,7 +58,7 @@ export function Hoje() {
   return (
     <>
       <header className="dr-ola">
-        <p className="dr-ola-data">{data}</p>
+        <p className="dr-ola-data">{data} · <Link to="/semana" className="dr-ola-semana">Sua semana</Link></p>
         <h1 className="dr-ola-titulo">{saudacao(agora)}, <em>Rapha</em>.</h1>
       </header>
 

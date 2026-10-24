@@ -6,6 +6,7 @@ import { Hoje } from "./telas/Hoje";
 import { Missoes } from "./telas/Missoes";
 import { Mural } from "./telas/Mural";
 import { Negocios } from "./telas/Negocios";
+import { Semana } from "./telas/Semana";
 import { Vault } from "./telas/Vault";
 import { Vida } from "./telas/Vida";
 
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="missoes" element={<Missoes />} />
             <Route path="mural" element={<Mural />} />
             <Route path="vida" element={<Vida />} />
+            <Route path="semana" element={<Semana />} />
             <Route path="vault" element={<Vault />} />
             <Route path="drend" element={<Drend />} />
           </Route>

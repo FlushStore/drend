@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { BookOpen, Briefcase, Heart, LayoutGrid, Lightbulb, MessageCircle, Plus, StickyNote, Sun } from "lucide-react";
+import { BookOpen, Briefcase, CalendarRange, Heart, LayoutGrid, Lightbulb, MessageCircle, Plus, StickyNote, Sun } from "lucide-react";
 import { AbasTopo } from "@/design-system/AbasTopo";
 import { BotaoCirculo } from "@/design-system/BotaoCirculo";
 import { Doca } from "@/design-system/Doca";
@@ -85,6 +85,7 @@ export function Casca() {
         { id: "falar", rotulo: "Falar com o DREND", Icone: MessageCircle, destaque: true, aoEscolher: abrirConversa },
         { id: "ideia", rotulo: "Tive uma ideia", Icone: Lightbulb, aoEscolher: abrirConversa },
         { id: "nota", rotulo: "Nota no Mural", Icone: StickyNote, aoEscolher: () => navigate("/mural?nova=1") },
+        { id: "semana", rotulo: "Revisão da semana", Icone: CalendarRange, aoEscolher: () => navigate("/semana") },
         { id: "vault", rotulo: "Vault do Obsidian", Icone: BookOpen, aoEscolher: () => navigate("/vault") },
       ],
     },
