@@ -317,6 +317,39 @@ li[data-feito="true"] > .dr-vault-caixa { border-color: var(--cos-acento); backg
 .dr-vault-filtros::-webkit-scrollbar { display: none; }
 .dr-vault-filtros > * { flex: none; }
 
+/* Vida: dinheiro pessoal e hábitos. */
+.dr-vida { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 8px; }
+@media (min-width: 1024px) { .dr-vida { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 20px; align-items: start; } }
+.dr-vida-bloco { display: flex; flex-direction: column; gap: 6px; padding: 22px 22px 10px; min-width: 0; }
+@media (min-width: 1024px) { .dr-vida-bloco { padding: 28px 30px 14px; } }
+.dr-vida-vazio { min-width: 0; }
+.dr-vida-saldo { display: grid; gap: 6px; padding: 6px 0 10px; }
+.dr-vida-saldo-partes { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; font-size: 13.5px; color: var(--cos-tinta-3); }
+.dr-vida-saldo-partes span { display: inline-flex; align-items: baseline; gap: 6px; }
+.dr-vida-saldo-partes .cos-valor { color: var(--cos-tinta); }
+.dr-vida-sub { margin-top: 12px; }
+.dr-vida-categoria { display: grid; gap: 6px; padding: 12px 0; }
+.dr-vida-linha { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; font-size: 15px; font-weight: 500; }
+.dr-vida-n { font-size: 13px; font-weight: 500; color: var(--cos-tinta-3); }
+.dr-habito-nome .dr-vida-n { display: block; margin-top: 2px; }
+.dr-vida-barra { display: block; height: 4px; border-radius: var(--cos-r-pilula); background: var(--cos-linha); overflow: hidden; }
+.dr-vida-barra i { display: block; height: 100%; border-radius: inherit; background: var(--cos-acento); }
+.dr-vida-lancamento .dr-lista-tipo[data-tipo="gasto"] { color: var(--cos-tinta-3); }
+.dr-vida-valor { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+.dr-vida-apagar { position: relative; display: grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--cos-tinta-3); cursor: pointer; transition: color var(--cos-rapido) var(--cos-curva), background var(--cos-rapido) var(--cos-curva); }
+.dr-vida-apagar::before { content: ""; position: absolute; inset: -6px; }
+@media (hover: hover) { .dr-vida-apagar:hover { color: var(--cos-negativo); background: var(--cos-negativo-suave); } }
+.dr-vida-apagar:active { color: var(--cos-negativo); background: var(--cos-negativo-suave); }
+.dr-vida-dica { margin: 4px 0 8px; font-size: 13px; color: var(--cos-tinta-3); }
+.dr-habito { justify-content: flex-start; gap: 12px; }
+.dr-habito-nome { flex: 1; }
+.dr-tarefa-check[data-feito] { background: var(--cos-acento); border-color: var(--cos-acento); color: var(--cos-sobre-acento); }
+.dr-habito { padding: 10px 0; }
+.dr-habito-dias { display: flex; gap: 4px; list-style: none; margin: 8px 0 0; padding: 0; }
+.dr-lista .dr-habito-dias li { display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 50%; background: var(--cos-linha); color: var(--cos-tinta-3); font-size: 9.5px; font-weight: 600; }
+.dr-lista .dr-habito-dias li[data-feito] { background: var(--cos-acento-suave); color: var(--cos-acento-tinta); }
+.dr-lista .dr-habito-dias li[data-hoje] { box-shadow: 0 0 0 1.5px var(--cos-linha-forte); }
+@media (max-width: 380px) { .dr-lista .dr-habito-dias li { width: 16px; height: 16px; font-size: 8.5px; } }
 /* Busca em tudo (⌘K / lupa do topo): o trecho achado marcado e o item acendendo na tela de destino. */
 .dr-busca-marca { padding: 0 1px; border-radius: 4px; background: var(--cos-acento-suave); color: inherit; font-weight: inherit; }
 [data-dr-achado] { outline: 2px solid var(--cos-acento); outline-offset: 3px; border-radius: var(--cos-r-interno); animation: dr-achado 2.4s var(--cos-curva) both; }

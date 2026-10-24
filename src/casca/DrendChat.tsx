@@ -29,7 +29,7 @@ const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
 
 /** A conversa com o DREND: no PC dentro do painel lateral, no iPhone como tela. */
 export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) => void }) {
-  const { mensagens, falar, guardarIdeia, desfazer, mural } = useStore();
+  const { mensagens, falar, guardarIdeia, desfazer, mural, lancamentos, apagarLancamento } = useStore();
   const [texto, setTexto] = useState("");
   // O cérebro: cada pedido é uma rajada, e ele "pensa" por um instante.
   const [atividade, setAtividade] = useState(0);
@@ -76,6 +76,11 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
                   {DESTINOS.map(([id, nome]) => (
                     <Botao key={id} variante="fantasma" compacto onClick={() => guardarIdeia(m.ideia!, id)}>{nome}</Botao>
                   ))}
+                </div>
+              )}
+              {m.lancamento && lancamentos.some((l) => l.id === m.lancamento) && (
+                <div className="dr-msg-acoes">
+                  <Botao variante="fantasma" compacto onClick={() => apagarLancamento(m.lancamento!)}>Desfazer</Botao>
                 </div>
               )}
               {m.logId && mural.log.some((e) => e.id === m.logId && !e.undone) && (

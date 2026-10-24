@@ -7,13 +7,15 @@ import type { Board, Card, MuralState, Op } from "./mural";
 import { normalizar } from "./fala";
 import { lerValor } from "./financeiro";
 import type { QuandoAgenda } from "./agenda";
+import { lerLancamento, type LancamentoLido } from "./dinheiro";
 
 export type Comando =
   | { tipo: "criarQuadro"; titulo: string; cartoes: string[]; projeto: string }
   | { tipo: "desfazer" }
   | { tipo: "ideia"; texto: string }
   | { tipo: "tarefa"; texto: string }
-  | { tipo: "concluir"; texto: string }
+  /** `tarefa`: a frase disse "tarefa" ("feito: a tarefa academia"), então não é hábito. */
+  | { tipo: "concluir"; texto: string; tarefa?: true }
   | { tipo: "reabrir"; texto: string }
   | { tipo: "apagarTarefa"; texto: string }
   | { tipo: "pendencias" }
@@ -27,7 +29,12 @@ export type Comando =
   | { tipo: "missaoStatus"; missao: string | null }
   | { tipo: "agenda"; quando: QuandoAgenda }
   | { tipo: "vault"; termo: string }
-  | { tipo: "projetosVault" };
+  | { tipo: "projetosVault" }
+  | { tipo: "lancamento"; lancamento: LancamentoLido }
+  | { tipo: "dinheiro" }
+  | { tipo: "apagarLancamento" }
+  | { tipo: "novoHabito"; nome: string }
+  | { tipo: "habitos" };
 
 export type Periodo = "hoje" | "ontem" | "semana" | "mes";
 
@@ -69,6 +76,20 @@ export function entender(entrada: string): Comando | null {
   if (/^(?:ajuda|help|socorro|comandos|como (?:funciona|te uso|usar)|o que (?:voce )?(?:faz|sabe fazer|consegue fazer|entende)|preciso de ajuda)(?: drend)?$/.test(n)) {
     return { tipo: "ajuda" };
   }
+
+  // Dinheiro pessoal: "gastei 50 no mercado" · "recebi 1.200 do freela" (só com valor na frase).
+  const lancamento = lerLancamento(t);
+  if (lancamento) return { tipo: "lancamento", lancamento };
+  if (/^(?:apag[ae]|apagar|remov[ae]|remover|tir[ae]|tirar|exclu[ia]|excluir|delet[ae]|deletar|desfa(?:z|zer|ca)) (?:o )?ultimo (?:lancamento|gasto|entrada|recebimento)$/.test(n)) {
+    return { tipo: "apagarLancamento" };
+  }
+  if (/^(?:quanto (?:eu )?(?:gastei|recebi|ganhei)|(?:qual (?:e |o )?)?(?:o |meu )?saldo|(?:meus|os) gastos|(?:minhas|as) financas|meu dinheiro|como (?:esta|estao|anda|andam|vai|vao) (?:o |os |as |meu |meus |minhas )?(?:saldo|dinheiro|gastos|financas))\b/.test(n)) {
+    return { tipo: "dinheiro" };
+  }
+  // "novo hábito academia" · "criar hábito: ler 10 páginas" · "hábito: beber água"
+  const habito = t.match(/^(?:(?:cri[ae]r?|cri[ae]|adiciona(?:r)?|coloca(?:r)?|novo|nova)\s+(?:um\s+)?(?:novo\s+)?h[aá]bito|h[aá]bito(?:\s+novo)?)\s*[:,-]?\s+(.+)$/i);
+  if (habito && resto(habito)) return { tipo: "novoHabito", nome: resto(habito) };
+  if (/^(?:(?:meus|os) )?habitos$|^como (?:estao|andam|vao) (?:os |meus )?habitos$/.test(n)) return { tipo: "habitos" };
 
   // "anota na missão: X" · "missão flush: X" · "anota na missão da flush: X" (antes da ideia: "anota" é dos dois).
   // Hífen só separa com espaço antes: "vape-mania" é nome.
@@ -112,7 +133,7 @@ export function entender(entrada: string): Comando | null {
     t.match(/^(?:feito|fiz|conclu[ií](?:do|da)?|terminei|acabei|pronto|marca(?:r)?(?:\s+como)?\s+feit[ao])\s*[:,-]?\s+(?:a\s+tarefa\s+)?(.+)$/i) ??
     t.match(/^marca(?:r)?\s+(.+?)\s+como\s+feit[ao]$/i) ??
     t.match(/^j[aá]\s+(.+)$/i);
-  if (feito && resto(feito)) return { tipo: "concluir", texto: resto(feito) };
+  if (feito && resto(feito)) return /\btarefa\b/i.test(t) ? { tipo: "concluir", texto: resto(feito), tarefa: true } : { tipo: "concluir", texto: resto(feito) };
   const reabrir = t.match(/^(?:reabr[ea]|reabrir|desmarca(?:r)?)\s+(?:a\s+tarefa\s+)?(.+)$/i);
   if (reabrir && resto(reabrir)) return { tipo: "reabrir", texto: resto(reabrir) };
   const apagar =

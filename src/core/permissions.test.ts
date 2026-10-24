@@ -13,6 +13,11 @@ describe("permissões", () => {
     expect(needsApproval("migration")).toBe(true);
   });
 
+  it("anotar dinheiro e hábito pessoal é nível B (automático com desfazer)", () => {
+    for (const a of ["dinheiro.anotar", "dinheiro.apagar", "habito.criar", "habito.marcar", "habito.apagar"]) expect(levelOf(a)).toBe("B");
+    expect(needsApproval("dinheiro.anotar")).toBe(false);
+  });
+
   it("ação desconhecida é tratada como nível D", () => {
     expect(levelOf("algo.novo")).toBe("D");
   });

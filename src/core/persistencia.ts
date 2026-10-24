@@ -6,6 +6,8 @@
  */
 import type { LogEntry, MuralState } from "./mural";
 import type { Tarefa } from "./tarefas";
+import type { Lancamento } from "./dinheiro";
+import type { Habito } from "./habitos";
 
 export const VERSAO = 1;
 export const CHAVE = "drend:dados:v1";
@@ -20,6 +22,10 @@ export interface Retrato<M = unknown> {
   tarefas?: Tarefa[];
   /** Metas em reais, por chave ("flush-mes"). Opcional pelo mesmo motivo. */
   metas?: Record<string, number>;
+  /** Dinheiro pessoal (Vida). Opcional: retrato antigo sem o campo = lista vazia. */
+  lancamentos?: Lancamento[];
+  /** Hábitos (Vida). Opcional pelo mesmo motivo. */
+  habitos?: Habito[];
 }
 
 export interface Repositorio<M = unknown> {
@@ -42,7 +48,9 @@ function valido(x: unknown): x is Retrato {
     Array.isArray(r.caixaDeEntrada) &&
     Array.isArray(r.mensagens) &&
     (r.tarefas === undefined || Array.isArray(r.tarefas)) &&
-    (r.metas === undefined || (typeof r.metas === "object" && r.metas !== null))
+    (r.metas === undefined || (typeof r.metas === "object" && r.metas !== null)) &&
+    (r.lancamentos === undefined || Array.isArray(r.lancamentos)) &&
+    (r.habitos === undefined || Array.isArray(r.habitos))
   );
 }
 

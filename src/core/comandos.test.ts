@@ -22,6 +22,27 @@ describe("entender", () => {
     expect(entender("tive uma ideia: kit presente")).toEqual({ tipo: "ideia", texto: "kit presente" });
   });
 
+  it("entende dinheiro pessoal", () => {
+    expect(entender("gastei 50 no mercado")).toEqual({ tipo: "lancamento", lancamento: { tipo: "gasto", valor: 50, descricao: "mercado" } });
+    expect(entender("gastei 12,90 com uber")).toEqual({ tipo: "lancamento", lancamento: { tipo: "gasto", valor: 12.9, descricao: "uber" } });
+    expect(entender("recebi 300")).toEqual({ tipo: "lancamento", lancamento: { tipo: "entrada", valor: 300, descricao: "" } });
+    expect(entender("recebi 1.200 do freela")).toEqual({ tipo: "lancamento", lancamento: { tipo: "entrada", valor: 1200, descricao: "freela" } });
+    expect(entender("quanto gastei esse mês?")).toEqual({ tipo: "dinheiro" });
+    expect(entender("como tá meu saldo")).toEqual({ tipo: "dinheiro" });
+    expect(entender("apaga o último lançamento")).toEqual({ tipo: "apagarLancamento" });
+    // Sem valor continua sendo o que era: concluir tarefa.
+    expect(entender("já paguei o fornecedor")).toEqual({ tipo: "concluir", texto: "paguei o fornecedor" });
+  });
+
+  it("entende hábitos", () => {
+    expect(entender("novo hábito academia")).toEqual({ tipo: "novoHabito", nome: "academia" });
+    expect(entender("criar hábito: ler 10 páginas")).toEqual({ tipo: "novoHabito", nome: "ler 10 páginas" });
+    expect(entender("hábito: beber água")).toEqual({ tipo: "novoHabito", nome: "beber água" });
+    expect(entender("meus hábitos")).toEqual({ tipo: "habitos" });
+    expect(entender("fiz academia")).toEqual({ tipo: "concluir", texto: "academia" });
+    expect(entender("feito: a tarefa academia")).toEqual({ tipo: "concluir", texto: "academia", tarefa: true });
+  });
+
   it("não inventa comando no que não entende", () => {
     expect(entender("qual sabor de pod combina com café")).toBeNull();
     expect(entender("Beleza, produza o máximo que der")).toBeNull();

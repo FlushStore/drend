@@ -39,6 +39,26 @@ describe("repositorioLocal", () => {
     expect(() => repo.salvar({ mural: { state: emptyMural(), log: [] }, caixaDeEntrada: [], mensagens: [] })).not.toThrow();
   });
 
+  it("retrato antigo, sem dinheiro nem hábitos, continua válido; os novos campos voltam", () => {
+    const s = memoria();
+    const antigo = { v: 1, salvoEm: "2026-10-20T00:00:00Z", mural: { state: emptyMural(), log: [] }, caixaDeEntrada: [], mensagens: [], tarefas: [] };
+    s.setItem(CHAVE, JSON.stringify(antigo));
+    const r = repositorioLocal(s).carregar();
+    expect(r).not.toBeNull();
+    expect(r?.lancamentos).toBeUndefined();
+    expect(r?.habitos).toBeUndefined();
+
+    const lancamentos = [{ id: "l1", tipo: "gasto" as const, valor: 50, descricao: "Mercado", categoria: "mercado", em: "2026-10-24T12:00:00Z" }];
+    const habitos = [{ id: "h1", nome: "Academia", criadoEm: "2026-10-24T12:00:00Z", feitos: ["2026-10-24"] }];
+    repositorioLocal(s).salvar({ mural: { state: emptyMural(), log: [] }, caixaDeEntrada: [], mensagens: [], lancamentos, habitos });
+    const volta = repositorioLocal(s).carregar();
+    expect(volta?.lancamentos).toEqual(lancamentos);
+    expect(volta?.habitos).toEqual(habitos);
+
+    s.setItem(CHAVE, JSON.stringify({ ...antigo, habitos: "quebrado" }));
+    expect(repositorioLocal(s).carregar()).toBeNull();
+  });
+
   it("guarda só as últimas mensagens", () => {
     const s = memoria();
     const repo = repositorioLocal<number>(s);
