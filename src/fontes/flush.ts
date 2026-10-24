@@ -33,6 +33,8 @@ export type EstadoFlush =
   | { fase: "ok"; resumo: ResumoFlush; atualizando: boolean };
 
 let estado: EstadoFlush = { fase: "carregando" };
+// Sobe a cada desligar: uma leitura que termina depois disso é descartada.
+let geracao = 0;
 const ouvintes = new Set<() => void>();
 function mudar(novo: EstadoFlush) {
   estado = novo;
@@ -90,13 +92,16 @@ export async function buscarSemana(agora = new Date()): Promise<ResumoFlush> {
 }
 
 export async function atualizar() {
+  const minha = geracao;
   const anterior = estado.fase === "ok" ? estado.resumo : estado.fase === "erro" ? estado.resumo : resumoGuardado();
   if (anterior) mudar({ fase: "ok", resumo: anterior, atualizando: true });
   try {
     const resumo = await buscarSemana();
+    if (minha !== geracao) return;
     guardar(resumo);
     mudar({ fase: "ok", resumo, atualizando: false });
   } catch (e) {
+    if (minha !== geracao) return;
     mudar({ fase: "erro", mensagem: e instanceof Error ? e.message : "Falha ao ler a Flush", resumo: anterior });
   }
 }
@@ -140,6 +145,7 @@ export async function entrarNaFlush(email: string, senha: string): Promise<strin
 }
 
 export async function sairDaFlush() {
+  geracao++;
   await flush().auth.signOut();
   guardar(null);
   mudar({ fase: "fora" });
