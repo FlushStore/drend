@@ -76,8 +76,8 @@ describe("das fontes para a busca", () => {
   });
   it("missões: o projeto e os itens, com a fase", () => {
     const itens = dasMissoes(eventos, new Date("2026-10-24T10:00:00Z"));
-    expect(itens.find((i) => i.id === "drend")).toMatchObject({ titulo: "DREND", destino: { tela: "missoes", projeto: "DREND", item: null } });
-    expect(itens.find((i) => i.id === "drend/busca")).toMatchObject({ titulo: "Busca em tudo", apoio: "DREND · Em andamento", destino: { item: "Busca em tudo" } });
+    expect(itens.find((i) => i.id === "drend")).toMatchObject({ titulo: "DREND", destino: { tela: "missoes", missao: "drend", chave: null } });
+    expect(itens.find((i) => i.id === "drend/busca")).toMatchObject({ titulo: "Busca em tudo", apoio: "DREND · Em andamento", destino: { missao: "drend", chave: "busca" } });
   });
   it("agenda: em ordem de início, com o local buscável", () => {
     const itens = daAgenda([

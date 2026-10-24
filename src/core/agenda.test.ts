@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { proximo, responderAgenda, type Compromisso } from "./agenda";
+import { diasDaAgenda, proximo, responderAgenda, type Compromisso } from "./agenda";
 
 // Sábado, 24/10/2026, 13h local.
 const agora = new Date(2026, 9, 24, 13, 0);
@@ -46,5 +46,31 @@ describe("evento de vários dias", () => {
     expect(responderAgenda([viagem], "amanha", agora)).toBe("Amanhã:\n• o dia todo: Viagem");
     expect(responderAgenda([viagem], "semana", agora).split("\n").length).toBe(4);
     expect(proximo([viagem], new Date(2026, 9, 26, 10))?.titulo).toBe("Viagem");
+  });
+});
+
+describe("diasDaAgenda", () => {
+  const longe = c("2026-11-10", 9, "Consulta");
+  const todos = [...lista, longe];
+
+  it("sem foco: só os 7 dias com algo, hoje sem o que já acabou", () => {
+    const d = diasDaAgenda(todos, agora);
+    expect(d.map((x) => x.dia)).toEqual(["2026-10-24", "2026-10-25", "2026-10-28"]);
+    expect(d[0].cs.map((x) => x.titulo)).toEqual(["Almoço", "Estudo"]);
+  });
+
+  it("com foco fora da semana: o dia dele entra, na ordem, com a distância em dias", () => {
+    const d = diasDaAgenda(todos, agora, longe.id);
+    expect(d.map((x) => x.dia)).toEqual(["2026-10-24", "2026-10-25", "2026-10-28", "2026-11-10"]);
+    expect(d[3]).toMatchObject({ i: 17, cs: [longe] });
+  });
+
+  it("com foco já encerrado hoje: ele volta para a lista", () => {
+    const cafe = lista[0];
+    expect(diasDaAgenda(todos, agora, cafe.id)[0].cs.map((x) => x.titulo)).toEqual(["Café", "Almoço", "Estudo"]);
+  });
+
+  it("foco que não existe não muda nada", () => {
+    expect(diasDaAgenda(todos, agora, "nao-existe")).toEqual(diasDaAgenda(todos, agora));
   });
 });

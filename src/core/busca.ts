@@ -22,7 +22,7 @@ export const GRUPOS: ReadonlyArray<{ tipo: TipoDeAchado; titulo: string }> = [
 export type Destino =
   | { tela: "hoje"; tarefa: string }
   | { tela: "mural"; cartao: string }
-  | { tela: "missoes"; projeto: string; item: string | null }
+  | { tela: "missoes"; missao: string; chave: string | null }
   | { tela: "vida"; compromisso: Compromisso };
 
 export interface Pesquisavel {
@@ -211,7 +211,7 @@ const FASES: Record<Fase, string> = { agora: "Em andamento", depois: "Depois", f
 /** Os projetos e os itens deles, como a tela de Missões mostra. */
 export function dasMissoes(eventos: readonly EventoMissao[], agora = new Date()): Pesquisavel[] {
   return projetos(eventos, agora).flatMap((p) => [
-    { tipo: "missao" as const, id: p.missao, titulo: p.nome, apoio: p.pausado ? "Projeto pausado" : "Projeto", destino: { tela: "missoes" as const, projeto: p.nome, item: null } },
+    { tipo: "missao" as const, id: p.missao, titulo: p.nome, apoio: p.pausado ? "Projeto pausado" : "Projeto", destino: { tela: "missoes" as const, missao: p.missao, chave: null } },
     ...(["agora", "depois", "feito"] as const).flatMap((f) =>
       p.itens[f].map((i) => ({
         tipo: "missao" as const,
@@ -219,7 +219,7 @@ export function dasMissoes(eventos: readonly EventoMissao[], agora = new Date())
         titulo: i.titulo,
         texto: i.texto,
         apoio: `${p.nome} · ${FASES[f]}`,
-        destino: { tela: "missoes" as const, projeto: p.nome, item: i.titulo },
+        destino: { tela: "missoes" as const, missao: p.missao, chave: i.chave },
       })),
     ),
   ]);

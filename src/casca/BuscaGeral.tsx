@@ -42,21 +42,19 @@ function irPara(d: Destino, navigate: ReturnType<typeof useNavigate>, titulo: st
       return realcar(() => porTexto(".dr-tarefa", ".dr-tarefa-texto", titulo));
     case "mural":
       return navigate(`/mural?cartao=${encodeURIComponent(d.cartao)}`);
-    case "missoes":
-      navigate("/missoes");
+    case "missoes": {
+      const q = new URLSearchParams({ projeto: d.missao, ...(d.chave ? { item: d.chave } : {}) });
+      navigate(`/missoes?${q}`);
       return realcar(() => {
-        const bloco = porTexto(".dr-missao", ".dr-proj-nome", d.projeto);
-        if (!bloco || !d.item) return bloco;
-        return porTexto(".dr-mi", ".dr-mi-titulo", d.item, bloco) ?? bloco;
+        const bloco = document.querySelector<HTMLElement>(`.dr-missao[data-missao="${CSS.escape(d.missao)}"]`);
+        if (!bloco || !d.chave) return bloco;
+        return bloco.querySelector<HTMLElement>(`.dr-mi[data-chave="${CSS.escape(d.chave)}"]`);
       });
+    }
     case "vida": {
       const c = d.compromisso;
-      navigate("/vida");
-      return realcar(() =>
-        [...document.querySelectorAll<HTMLElement>(".dr-dia-lista li")].find(
-          (li) => li.querySelector("time")?.getAttribute("dateTime") === c.inicio && li.textContent?.includes(c.titulo),
-        ) ?? null,
-      );
+      navigate(`/vida?compromisso=${encodeURIComponent(c.id)}`);
+      return realcar(() => document.querySelector<HTMLElement>(`.dr-dia-lista li[data-compromisso="${CSS.escape(c.id)}"]`));
     }
   }
 }
