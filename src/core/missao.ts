@@ -66,13 +66,15 @@ export const ehCadastro = (e: EventoMissao) => e.tipo === "nota" && (e.chave ===
 export const nomeDaMissao = (m: string) => NOMES[m] ?? m.charAt(0).toUpperCase() + m.slice(1).replace(/-/g, " ");
 
 export function projetos(eventos: readonly EventoMissao[], agora = new Date()): Projeto[] {
-  const ordenados = [...eventos].sort((a, b) => a.em.localeCompare(b.em) || a.id - b.id);
+  // O estado segue a ordem de gravação (id): um passo antigo registrado depois (histórico com a
+  // data real) ainda é a última palavra. "Mexido há" usa a data mais nova (em).
+  const ordenados = [...eventos].sort((a, b) => a.id - b.id);
   const mapa = new Map<string, { itens: Map<string, ItemMissao>; ultimo: EventoMissao | null; pausado: boolean }>();
   for (const m of ORDEM) mapa.set(m, { itens: new Map(), ultimo: null, pausado: false });
   for (const e of ordenados) {
     const p = mapa.get(e.missao) ?? { itens: new Map(), ultimo: null, pausado: false };
     mapa.set(e.missao, p);
-    if (!ehCadastro(e)) p.ultimo = e;
+    if (!ehCadastro(e) && (!p.ultimo || Date.parse(e.em) >= Date.parse(p.ultimo.em))) p.ultimo = e;
     if (e.tipo === "decisao" && e.chave === CHAVE_PAUSA) p.pausado = true;
     if (e.tipo === "decisao" && e.chave === CHAVE_RETOMADA) p.pausado = false;
     if (e.tipo === "item" && e.chave && e.fase) {
