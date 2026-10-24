@@ -26,27 +26,67 @@ function ouvir(f: () => void) {
 }
 
 let canal: RealtimeChannel | null = null;
+const PAGINA = 1000;
 
+/** O histórico inteiro, em páginas pela ordem de gravação (id): o estado do plano depende do último evento. */
+async function buscarTudo(): Promise<EventoMissao[]> {
+  const todos: EventoMissao[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await supabase!.from("drend_missao").select("*").order("id", { ascending: true }).range(de, de + PAGINA - 1);
+    if (error) throw new Error(error.message);
+    todos.push(...((data ?? []) as EventoMissao[]));
+    if (!data || data.length < PAGINA) return todos;
+  }
+}
+
+/** Junta sem repetir (o mesmo evento pode vir do histórico e do Realtime). */
+function juntar(a: readonly EventoMissao[], b: readonly EventoMissao[]): EventoMissao[] {
+  const porId = new Map<number, EventoMissao>();
+  for (const e of [...a, ...b]) porId.set(e.id, e);
+  return [...porId.values()].sort((x, y) => x.id - y.id);
+}
+
+let geracao = 0;
 async function carregar() {
   if (!supabase) return;
-  const { data, error } = await supabase.from("drend_missao").select("*").order("em", { ascending: true }).limit(2000);
-  if (error) {
-    // Antes da migração 0003 a tabela não existe: o app segue sem a Central.
-    mudar({ fase: "erro", mensagem: error.message });
-    return;
-  }
-  mudar({ fase: "ok", eventos: (data ?? []) as EventoMissao[], aoVivo: false, novo: null });
+  const minha = ++geracao;
+  // Primeiro o canal, depois o histórico: o que chegar no meio fica guardado e entra na junção.
+  const chegaram: EventoMissao[] = [];
+  let pronto = false;
+  let aoVivo = false;
+  let avisarCanal = () => {};
+  const canalPronto = new Promise<void>((ok) => (avisarCanal = ok));
   canal?.unsubscribe();
   canal = supabase
-    .channel("drend-missao")
+    .channel(`drend-missao-${minha}`)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "drend_missao" }, (payload) => {
+      if (minha !== geracao) return;
       const e = payload.new as EventoMissao;
+      if (!pronto) {
+        chegaram.push(e);
+        return;
+      }
       if (estado.fase !== "ok" || estado.eventos.some((x) => x.id === e.id)) return;
-      mudar({ ...estado, eventos: [...estado.eventos, e], novo: e.id });
+      mudar({ ...estado, eventos: juntar(estado.eventos, [e]), novo: e.id });
     })
     .subscribe((status) => {
-      if (estado.fase === "ok") mudar({ ...estado, aoVivo: status === "SUBSCRIBED" });
+      if (minha !== geracao) return;
+      aoVivo = status === "SUBSCRIBED";
+      if (status !== "CLOSED") avisarCanal();
+      if (estado.fase === "ok") mudar({ ...estado, aoVivo });
     });
+  // Só lê o histórico com o canal já ouvindo (ou desistindo dele em 5 s): nada cai no vão entre os dois.
+  await Promise.race([canalPronto, new Promise<void>((ok) => setTimeout(ok, 5000))]);
+  if (minha !== geracao) return;
+  try {
+    const historico = await buscarTudo();
+    if (minha !== geracao) return;
+    pronto = true;
+    mudar({ fase: "ok", eventos: juntar(historico, chegaram), aoVivo, novo: null });
+  } catch (e) {
+    // Antes da migração 0003 a tabela não existe: o app segue sem a Central.
+    if (minha === geracao) mudar({ fase: "erro", mensagem: e instanceof Error ? e.message : "Falha ao ler as missões" });
+  }
 }
 
 let ligado = false;
@@ -55,6 +95,7 @@ function ligar() {
   ligado = true;
   supabase.auth.onAuthStateChange((_evento, sessao) => {
     if (!sessao) {
+      geracao++;
       canal?.unsubscribe();
       canal = null;
       mudar({ fase: "fora" });

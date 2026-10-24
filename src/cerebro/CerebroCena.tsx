@@ -62,7 +62,14 @@ export default function CerebroCena({ atividade, pensando }: { atividade: number
     const branco = new THREE.Color(claro ? "#0B2A66" : "#E8F1FF");
     const corCasca = claro ? acento.clone() : acento.clone().lerp(new THREE.Color("#ffffff"), 0.18);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
+    // Sem WebGL (aparelho antigo, contexto negado): o cérebro é enfeite, a tela segue sem ele.
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
+    } catch {
+      el.dataset.semWebgl = "";
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
     el.appendChild(renderer.domElement);
