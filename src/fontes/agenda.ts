@@ -1,6 +1,6 @@
 /**
- * Agenda do Google, lida pela /api/agenda com o login do DREND (o endereço da agenda fica
- * só no servidor). Guarda a última leitura no aparelho: abre com a agenda mesmo sem internet.
+ * Agenda do Google, lida pela /api/agenda com o login do DREND. Uma tarefa agendada copia a
+ * agenda pelo conector do Google a cada hora. Guarda a última leitura no aparelho: abre com a agenda mesmo sem internet.
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/core/nuvem";
@@ -41,7 +41,7 @@ function guardar(r: { eventos: Compromisso[]; atualizadoEm: string } | null) {
 
 /** O que dizer quando a agenda não está lida. */
 export function motivoSemAgenda(e: EstadoAgenda): string {
-  if (e.fase === "sem-agenda") return "A agenda ainda não está ligada. O passo é colar o endereço secreto do Google Agenda na Vercel.";
+  if (e.fase === "sem-agenda") return "A agenda ainda não sincronizou. Ela chega do Google em até uma hora, sem nada da sua parte.";
   if (e.fase === "fora" || e.fase === "sem-banco") return "Entre na sua conta do DREND que eu leio a sua agenda.";
   if (e.fase === "carregando") return "Estou lendo a sua agenda. Pergunte de novo em instantes.";
   if (e.fase === "erro") return `Não consegui ler a agenda agora (${e.mensagem}).`;
