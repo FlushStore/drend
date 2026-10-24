@@ -1,0 +1,7 @@
+/* Puxar para atualizar (PuxarParaAtualizar, fase Fluidez, 14/10). */
+.cos-puxar { position: fixed; z-index: 45; top: calc(8px + var(--cos-seguro-topo)); left: 50%; display: grid; place-items: center;
+  width: 44px; height: 44px; border-radius: var(--cos-r-pilula); background: var(--cos-bloco); color: var(--cos-tinta-2);
+  box-shadow: var(--cos-sombra-alta), 0 0 0 1px var(--cos-linha) inset; pointer-events: none; }
+.cos-puxar[data-pronto] { color: var(--cos-tinta); }
+.cos-puxar[data-girando] svg { animation: cos-giro .7s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .cos-puxar[data-girando] svg { animation: none; } }

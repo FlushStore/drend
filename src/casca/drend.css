@@ -1,0 +1,81 @@
+/*
+ * O que é só do DREND, escrito com os tokens do painel da Flush (--cos-*).
+ * Prefixo dr-. Tudo o mais vem pronto do design-system e da casca copiados.
+ */
+
+/* Marca: o "D" no azul, no lugar da carinha da Flush. */
+.dr-marca-d { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: var(--cos-acento); color: var(--cos-sobre-acento); font-family: var(--cos-fonte-marca); font-weight: 700; font-size: 18px; line-height: 1; flex-shrink: 0; }
+@media (max-width: 767px) { .dr-marca-d { width: 27px; height: 27px; font-size: 16px; } }
+
+/* Estado curto ao lado do título ("Operando", "Fase 4"). */
+.dr-estado { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 28px; padding: 0 11px; border-radius: var(--cos-r-pilula); background: var(--cos-controle); color: var(--cos-tinta); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.dr-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--cos-tinta-3); }
+.dr-estado[data-tom="ok"]::before { background: var(--cos-positivo); }
+.dr-estado[data-tom="acento"] { background: var(--cos-acento-suave); color: var(--cos-acento-tinta); }
+.dr-estado[data-tom="acento"]::before { background: var(--cos-acento); }
+
+/* Linhas rótulo · valor. */
+.dr-linhas { display: grid; margin: 0; }
+.dr-linhas div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 0; min-width: 0; }
+.dr-linhas div + div { border-top: 1px solid var(--cos-linha); }
+.dr-linhas dt { font-size: 13.5px; color: var(--cos-tinta-2); white-space: nowrap; }
+.dr-linhas dd { margin: 0; font-size: 14.5px; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+
+/* Bloco de projeto. */
+.dr-proj { display: flex; flex-direction: column; gap: 12px; }
+.dr-proj .cos-tb { margin-bottom: 0; }
+.dr-proj-num { padding: 2px 0 0; }
+.dr-proj-spark { height: 48px; }
+.dr-proj .ini-link-rodape { margin-top: auto; }
+.dr-dia-onde { color: var(--cos-tinta-3); margin-left: 4px; }
+
+/* Vida: mês e metas. */
+.dr-mes-legenda { margin: 0 0 6px; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
+.dr-mes-barras .ini-par-cab b[data-tom="positivo"] .cos-valor { color: var(--cos-positivo); }
+.dr-mes-barras .ini-par-cab b[data-tom="negativo"] .cos-valor { color: var(--cos-negativo); }
+.dr-metas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 8px; }
+.dr-meta { display: grid; justify-items: center; gap: 10px; text-align: center; font-size: 13.5px; color: var(--cos-tinta-2); }
+
+/* Conversa. */
+.dr-chat { display: flex; flex-direction: column; gap: 12px; min-height: 100%; }
+.dr-chat-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.dr-msg-eu { align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 20px 20px 6px 20px; background: var(--cos-acento); color: var(--cos-sobre-acento); font-size: var(--cos-texto-corpo); line-height: 1.4; }
+.dr-msg-drend { display: grid; gap: 8px; padding: 14px 16px; max-width: 92%; border-radius: 20px 20px 20px 6px; }
+.dr-msg-drend p { margin: 0; font-size: var(--cos-texto-corpo); line-height: 1.45; }
+.dr-msg-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.dr-selo { justify-self: start; display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: var(--cos-r-pilula); font-size: 12px; font-weight: 600; background: var(--cos-controle); color: var(--cos-tinta-2); }
+.dr-selo[data-status="feito"] { background: var(--cos-positivo-suave); color: var(--cos-positivo); }
+.dr-selo[data-status="proposto"], .dr-selo[data-status="pergunta"] { background: var(--cos-acento-suave); color: var(--cos-acento-tinta); }
+.dr-selo[data-status="falhou"] { background: var(--cos-negativo-suave); color: var(--cos-negativo); }
+.dr-chat-campo { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: center; margin-top: auto; padding: 8px 0 4px; background: linear-gradient(to top, var(--cos-app) 70%, transparent); }
+.cos-painel .dr-chat-campo { background: none; }
+.dr-chat-entrada { flex: 1; min-width: 0; font-weight: 500; }
+.dr-chat-enviar { width: 48px; height: 48px; }
+.dr-chat-enviar:disabled { opacity: .45; }
+/* No iPhone a conversa é tela: o campo fica preso logo acima da doca, como num app de mensagens. */
+@media (max-width: 1023px) {
+  .dr-chat { padding-bottom: 72px; }
+  .dr-chat-campo { position: fixed; z-index: 5; left: max(16px, var(--cos-seguro-esq)); right: max(16px, var(--cos-seguro-dir)); bottom: calc(70px + var(--cos-folga-base)); padding: 0; background: none; }
+  .dr-chat-entrada { box-shadow: inset 0 0 0 1px var(--cos-linha-forte), var(--cos-sombra); }
+}
+
+/* Mural. */
+.dr-mural-acoes { display: flex; gap: 8px; }
+.dr-canvas { padding: 0; overflow: auto; }
+.dr-canvas-area { position: relative; background-image: radial-gradient(var(--cos-linha-forte) 1px, transparent 1px); background-size: 24px 24px; }
+.dr-canvas-ligacoes { position: absolute; inset: 0; pointer-events: none; }
+.dr-canvas-ligacoes line { stroke: var(--cos-acento); stroke-opacity: .55; stroke-width: 1.5; stroke-dasharray: 5 5; }
+.dr-cartao { display: grid; gap: 6px; padding: 14px 16px; border-radius: var(--cos-r-interno); }
+.dr-canvas .dr-cartao { position: absolute; cursor: grab; touch-action: none; user-select: none; transition: box-shadow var(--cos-rapido) var(--cos-curva); }
+.dr-canvas .dr-cartao[data-arrastando] { cursor: grabbing; box-shadow: var(--cos-sombra-alta); z-index: 2; }
+.dr-cartao-capa { display: grid; place-items: center; height: 96px; margin-bottom: 4px; border-radius: 12px; background-color: var(--cos-palco); color: var(--cos-tinta-3); }
+.dr-cartao-tipo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--cos-tinta-2); }
+.dr-cartao-tipo[data-tipo="campanha"], .dr-cartao-tipo[data-tipo="audio"] { color: var(--cos-acento-tinta); }
+.dr-cartao-titulo { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.dr-cartao-corpo { font-size: 13.5px; line-height: 1.4; color: var(--cos-tinta-2); }
+.dr-mural-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.dr-historico { list-style: none; margin: 0; padding: 0; }
+.dr-historico li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; font-size: 14px; }
+.dr-historico li + li { border-top: 1px solid var(--cos-linha); }
+.dr-historico small { flex: none; font-size: 12.5px; color: var(--cos-tinta-2); }
+.dr-historico li[data-desfeito] span { color: var(--cos-tinta-3); text-decoration: line-through; }

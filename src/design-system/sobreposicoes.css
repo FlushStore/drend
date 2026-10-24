@@ -1,0 +1,57 @@
+/* Control OS — camadas sobrepostas: busca universal (cmdk) e painel deslizante (vaul). */
+
+/* Busca: quase tela cheia no celular, janela central no desktop */
+.cos-busca-fundo { position: fixed; inset: 0; z-index: 60; background: var(--cos-veu-forte); }
+.cos-busca { position: fixed; z-index: 61; left: 50%; top: calc(8px + var(--cos-seguro-topo)); translate: -50% 0; width: calc(100% - 16px); max-width: 640px; height: calc(100dvh - 16px - var(--cos-seguro-topo)); display: flex; flex-direction: column; background: var(--cos-bloco); border: 1px solid var(--cos-linha); border-radius: 28px; box-shadow: var(--cos-sombra-alta); overflow: hidden; outline: none; }
+.cos-busca-fundo[data-state="open"] { animation: cos-surge var(--cos-medio) var(--cos-curva) both; }
+.cos-busca[data-state="open"] { animation: cos-busca-entra var(--cos-medio) var(--cos-curva) both; }
+@keyframes cos-surge { from { opacity: 0; } }
+@keyframes cos-busca-entra { from { opacity: 0; transform: translateY(-10px) scale(.98); } }
+@media (min-width: 768px) { .cos-busca { top: 12vh; height: auto; max-height: 70vh; } }
+.cos-busca [cmdk-root] { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.cos-busca-campo { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 20px; border-bottom: 1px solid var(--cos-linha); color: var(--cos-tinta-2); }
+.cos-busca-campo input { flex: 1; min-width: 0; height: 48px; border: 0; outline: 0; background: transparent; font: 500 17px var(--cos-fonte); color: var(--cos-tinta); }
+/* O campo já é a área inteira em destaque: sem o anel de foco global por cima. */
+.cos-busca-campo input:focus-visible { outline: none; }
+/* Na folha de busca o campo fica solto da borda (revisão 2): o anel de foco do sistema aparece
+   inteiro, em vez de ser cortado pela folha e virar um traço escuro embaixo. */
+.cos-busca > .cos-busca-campo, .cos-busca [cmdk-root] > .cos-busca-campo { margin: 10px 10px 4px; }
+.cos-busca-campo input::placeholder { color: var(--cos-tinta-3); }
+.cos-busca-lista { overflow-y: auto; overscroll-behavior: contain; padding: 8px 10px 16px; flex: 1; }
+.cos-busca [cmdk-group-heading] { font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-2); padding: 14px 12px 8px; }
+.cos-busca [cmdk-item] { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px; border-radius: var(--cos-r-interno); cursor: pointer; }
+.cos-busca [cmdk-item][data-selected="true"] { background: var(--cos-app); box-shadow: inset 3px 0 0 var(--cos-acento-forte); }
+.cos-busca-item-texto { display: grid; flex: 1; min-width: 0; }
+.cos-busca-item-texto strong { font-weight: 600; font-size: var(--cos-texto-corpo); overflow-wrap: anywhere; }
+.cos-busca-item-texto small { font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); overflow-wrap: anywhere; }
+.cos-busca-item-fim { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 14px; flex: none; }
+/* Miniatura do produto: tamanho fixo e redonda; o selo do sabor sem foto não cresce além dela. */
+.cos-busca .cos-busca-foto { width: 40px; border-radius: var(--cos-r-pilula); }
+.cos-busca .cos-busca-foto .cos-selo { transform: none; }
+.cos-busca-vazio, .cos-busca-carregando { padding: 32px 16px; text-align: center; color: var(--cos-tinta-2); font-size: var(--cos-texto-corpo); }
+
+/* Painel: sobe de baixo no celular (arrasto), entra pela direita no desktop */
+.cos-painel-veu { position: fixed; inset: 0; z-index: 50; background: rgb(12 12 12 / .42); }
+.cos-painel { position: fixed; z-index: 51; display: flex; flex-direction: column; background: var(--cos-app); outline: none; box-shadow: var(--cos-sombra-alta); }
+/* Altura útil: a tela menos a área segura de cima (com folga); o teclado encolhe o dvh. */
+.cos-painel-baixo { left: 0; right: 0; bottom: 0; max-height: calc(100dvh - max(40px, var(--cos-seguro-topo) + 12px)); border-radius: 28px 28px 0 0; }
+/* Sem rodapé, o fim da rolagem respeita a barra de gestos. */
+.cos-painel-baixo .cos-painel-rolagem:last-child { padding-bottom: calc(16px + var(--cos-seguro-base)); }
+/* Teclado (16/10, "ainda trava"): a folha sobe junto com o teclado em vez de pular para cima dele. */
+/* Com transform junto (17/10): a regra anterior tirava a transição de transform do vaul e a folha
+   podia ficar parada no meio do caminho ("a Conta aparece só metade" no atalho do iPhone). */
+.cos-painel-baixo { transition: transform .5s cubic-bezier(.32, .72, 0, 1), bottom .28s var(--cos-curva), max-height .28s var(--cos-curva); }
+@media (prefers-reduced-motion: reduce) { .cos-painel-baixo { transition: none; } }
+.cos-painel-direita { top: 12px; right: 12px; bottom: 12px; width: min(540px, calc(100vw - 24px)); border-radius: 28px; border: 1px solid var(--cos-linha); }
+/* Faixa de arrastar (16/10): 28 px de altura em toda a largura, a alça visível no meio. */
+.cos-raiz [data-vaul-handle].cos-painel-puxador { display: flex; justify-content: center; width: 100%; height: auto; min-height: 24px; margin: 0; padding: 0; background: none; opacity: 1; flex: none; touch-action: none; cursor: grab; }
+.cos-painel-puxador [data-vaul-handle-hitarea] { position: static; transform: none; display: flex; justify-content: center; width: 100%; height: auto; padding: 0 0 4px; }
+.cos-painel-alca { width: 44px; height: 5px; border-radius: var(--cos-r-pilula); background: var(--cos-linha-forte); margin: 10px auto 2px; flex: none; }
+.cos-painel-cabeca { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px 4px 20px; flex: none; }
+.cos-painel-direita .cos-painel-cabeca { padding: 20px 20px 4px 24px; }
+.cos-painel-titulo { font-size: 20px; font-weight: 600; letter-spacing: -.015em; min-width: 0; }
+.cos-painel-rolagem { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px 16px 16px; }
+.cos-painel-direita .cos-painel-rolagem { padding: 16px 24px 24px; }
+.cos-painel-rodape { flex: none; display: flex; gap: 10px; padding: 12px 16px calc(12px + var(--cos-seguro-base)); border-top: 1px solid var(--cos-linha); background: var(--cos-app); }
+.cos-painel-direita .cos-painel-rodape { padding: 16px 24px; border-radius: 0 0 28px 28px; }
+.cos-painel-rodape > * { flex: 1; }

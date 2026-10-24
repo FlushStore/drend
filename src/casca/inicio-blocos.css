@@ -1,0 +1,286 @@
+/* Home v2 — "hoje na loja", sabores acabando, fora da loja e palco de foto. */
+
+.ini-rotulo { font-size: var(--cos-texto-rotulo); font-weight: 500; color: var(--cos-tinta-2); margin-bottom: 8px; }
+.ini-rotulo span { color: var(--cos-tinta-2); font-weight: 400; }
+.ini-explica { font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); line-height: 1.4; }
+.ini-alerta { margin-top: 10px; padding: 8px 12px; border-radius: var(--cos-r-interno); background: var(--cos-acento-suave); color: var(--cos-acento-tinta); font-size: var(--cos-texto-rotulo); }
+.ini-mais { margin-top: 10px; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
+.ini-vazio-bloco { padding: 28px 16px; border-radius: var(--cos-r-interno); text-align: center; color: var(--cos-tinta-2); font-size: 14px; box-shadow: inset 0 0 0 1px var(--cos-linha); }
+.ini-link-rodape { display: flex; align-items: center; justify-content: space-between; min-height: 56px; margin-top: auto; padding-top: 16px; font-weight: 600; }
+@media (max-width: 374px) { .ini-link-seta-texto { display: none; } }
+.ini-link-seta { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; min-height: var(--cos-alvo-toque); min-width: var(--cos-alvo-toque); font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+/* Caixa: dinheiro na gaveta em destaque; total e detalhe por meio abaixo */
+.ini-hoje { display: flex; flex-direction: column; }
+.ini-hoje-gaveta { font-size: 30px; }
+.ini-hoje-seta { transition: transform .2s var(--cos-curva); }
+.ini-hoje-seta[data-aberto] { transform: rotate(180deg); }
+.ini-hoje-corpo { padding-top: 16px; }
+.ini-hoje-explica strong { color: var(--cos-tinta); font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (min-width: 1024px) { .ini-hoje-gaveta { font-size: 36px; } }
+
+/* Sabores acabando: carrossel no celular, grade de 4 no computador */
+.ini-acab-lista { list-style: none; margin: 0 -20px; padding: 0 20px 4px; display: grid; grid-auto-flow: column; grid-auto-columns: 152px; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 20px; scrollbar-width: none; }
+.ini-acab-item { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 8px 8px 14px; border-radius: 20px; background: var(--cos-app); scroll-snap-align: start; min-width: 0; transition: transform var(--cos-rapido) var(--cos-curva); }
+.ini-acab-item:active { transform: scale(.97); }
+.ini-acab-foto { margin-bottom: 10px; }
+.ini-acab-qtd { position: absolute; top: 16px; left: 16px; height: 24px; padding: 0 9px; border-radius: var(--cos-r-pilula); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; background: var(--cos-atencao-fundo); color: var(--cos-atencao-tinta); }
+/* "Resta N" é atenção (neutro); esgotado é bloqueio. Nunca o acento (revisão 16/10). */
+.ini-acab-qtd[data-zero] { background: var(--cos-bloqueio-fundo); color: var(--cos-bloqueio-tinta); }
+.ini-acab-sabor { font-size: 14px; font-weight: 600; padding: 0 4px; min-width: 0; }
+.ini-acab-prod { font-size: 12.5px; color: var(--cos-tinta-2); padding: 0 4px; overflow-wrap: anywhere; }
+/* Reposição na Home (item 12): o motivo em uma frase e o "Comprar N". */
+.ini-acab-motivo { font-size: 12px; line-height: 1.3; color: var(--cos-tinta-2); padding: 3px 4px 0; }
+.ini-acab-comprar { justify-self: start; margin: 6px 4px 0; height: 24px; padding: 0 9px; border-radius: var(--cos-r-pilula); background: var(--cos-acento-suave); color: var(--cos-acento-tinta); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; }
+@media (min-width: 768px) {
+  .ini-acab-lista { margin: 0; padding: 0; grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; }
+}
+
+/* Fora da loja */
+.ini-fora { display: flex; flex-direction: column; }
+.ini-fora-lista { list-style: none; margin: 0; padding: 0; }
+.ini-fora-lista li + li { border-top: 1px solid var(--cos-linha); }
+.ini-fora-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; min-height: 72px; }
+.ini-fora-avatar { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--cos-r-interno); background: var(--cos-app); box-shadow: inset 0 0 0 1px var(--cos-linha); color: var(--cos-tinta-2); font-size: 14px; font-weight: 600; flex: none; }
+.ini-fora-texto { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.ini-fora-texto strong { font-size: var(--cos-texto-corpo); font-weight: 600; overflow-wrap: anywhere; }
+.ini-fora-texto small { font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
+.ini-fora-nota { margin-top: 12px; }
+.ini-fora .ini-link-rodape { border-top: 1px solid var(--cos-linha); margin-top: 16px; }
+.ini-hoje-explica { margin-top: 6px; }
+
+/*
+ * Início mais densa no computador (pedido do Rapha, 11/10: "blocos gigantes"):
+ * blocos menores e mais juntos para a Início caber numa tela de notebook.
+ * Celular e tablet não mudam. Nada corta com reticências.
+ */
+@media (min-width: 1024px) {
+  .ini-grade { gap: 14px; }
+  .ini-grade .cos-bloco { padding: 16px 20px; }
+  .ini-grade .cos-tb { margin-bottom: 10px; }
+  .ini-grade .cos-seta { width: 32px; height: 32px; }
+
+  .ini-dia { gap: 6px; padding: 16px 20px; }
+  .ini-dia-principal .cos-valor-g { font-size: 42px; }
+  .ini-dia-numeros .cos-valor-m { font-size: 20px; }
+
+  .ini-heroi { gap: 4px; padding: 12px 16px 10px 20px; }
+  .ini-num { font-size: 26px; }
+  .ini-heroi-titulo { font-size: 16px; }
+  .ini-fila-item { min-height: 44px; padding: 3px 0; }
+  .ini-fila-nome strong { font-size: 14px; }
+
+  .ini-hoje-gaveta { font-size: 28px; }
+  .ini-hoje-corpo { padding-top: 10px; }
+  .ini-link-rodape { min-height: 40px; padding-top: 8px; font-size: 14px; }
+  .ini-link-seta { min-height: 32px; font-size: 13px; }
+
+  .ini-acoes { gap: 10px; }
+  .ini-acao { gap: 10px; padding: 8px 10px 8px 8px; border-radius: 16px; }
+  .ini-acao-icone { width: 36px; height: 36px; }
+  .ini-acao-icone svg { width: 18px; height: 18px; }
+  .ini-acao-texto strong { font-size: 14px; }
+
+  /* Sabores acabando: fichas em linha, sem o palco quadrado */
+  .ini-acab-lista { gap: 8px; }
+  .ini-acab-item { gap: 2px; padding: 10px 12px; border-radius: 14px; }
+  .ini-acab-foto { display: none; }
+  .ini-acab-qtd { position: static; order: 3; justify-self: start; height: 20px; padding: 0 7px; margin-top: 4px; font-size: 11px; }
+  .ini-acab-sabor { padding: 0; font-size: 13.5px; }
+  .ini-acab-prod { padding: 0; font-size: 12px; }
+
+  .fin-meios { margin-top: 10px; }
+  .fin-meios-barra { height: 10px; margin-bottom: 8px; }
+  .fin-meios-lista li { padding: 5px 10px; border-radius: 10px; }
+  .fin-meio { font-size: 13px; }
+
+  .ini-fora-item { min-height: 52px; padding: 6px 0; gap: 10px; }
+  .ini-fora-avatar { width: 36px; height: 36px; font-size: 12px; border-radius: 10px; }
+  .ini-fora .ini-link-rodape { margin-top: 8px; }
+}
+
+/* Caixa renovado (15/10): o card inteiro abre o Caixa, sem texto dizendo isso. O link do
+   título cobre o card (::after); a seta de recolher fica por cima com o próprio toque. */
+.ini-hoje { position: relative; transition: transform var(--cos-rapido) var(--cos-curva), box-shadow var(--cos-rapido) var(--cos-curva); }
+.ini-hoje-link { color: inherit; text-decoration: none; outline: none; }
+.ini-hoje-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
+.ini-hoje .cos-tb button, .ini-hoje button { position: relative; z-index: 2; }
+.ini-hoje:has(.ini-hoje-link:focus-visible) { box-shadow: 0 0 0 3px var(--cos-acento); }
+.ini-hoje:has(.ini-hoje-link:active) { transform: scale(.985); }
+@media (hover: hover) { .ini-hoje:has(.ini-hoje-link:hover) { box-shadow: var(--cos-sombra); } }
+.ini-hoje-gaveta { margin-top: 2px; letter-spacing: -.02em; }
+
+/* Widget opcional "O que repor" (15/10). */
+.ini-repor-resumo { margin: 0 0 8px; font-size: 14px; color: var(--cos-tinta-2); }
+.ini-repor-resumo strong { color: var(--cos-tinta); font-variant-numeric: tabular-nums; }
+.ini-repor-lista { list-style: none; margin: 0; padding: 0; display: grid; }
+.ini-repor-lista li { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; }
+.ini-repor-lista li + li { border-top: 1px solid var(--cos-linha); }
+.ini-repor-texto { display: grid; gap: 1px; min-width: 0; }
+.ini-repor-texto small { font-size: 12.5px; color: var(--cos-tinta-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ini-repor-comprar { flex: none; padding: 3px 9px; border-radius: var(--cos-r-pilula); background: var(--cos-acento-suave); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Linha do tempo do dia (15/10): hora · marca na linha vertical · texto · valor. Cor suave por tipo. */
+.ini-tl { --tl-cor: var(--cos-tinta-3); --tl-fundo: var(--cos-controle); }
+.ini-tl-lista { list-style: none; margin: 0; padding: 0; display: grid; }
+.ini-tl-item[data-tipo="venda"] { --tl-cor: var(--cos-positivo); --tl-fundo: var(--cos-positivo-suave); }
+.ini-tl-item[data-tipo="pedido"] { --tl-cor: var(--cos-tinta-2); --tl-fundo: var(--cos-controle); }
+.ini-tl-item[data-tipo="ajuste"] { --tl-cor: var(--cos-negativo); --tl-fundo: var(--cos-negativo-suave); }
+.ini-tl-item[data-tipo="entrada"] { --tl-cor: var(--cos-tinta-2); --tl-fundo: var(--cos-controle); }
+.ini-tl-item { position: relative; }
+/* o fio vertical passa pelo centro da coluna da marca (44 px de hora + 10 de vão + 14 de meia marca) */
+.ini-tl-item::before { content: ""; position: absolute; left: 68px; top: 0; bottom: 0; width: 1.5px; translate: -50% 0; background: var(--cos-linha-forte); }
+.ini-tl-lista > .ini-tl-item:first-child::before { top: 50%; }
+.ini-tl-lista > .ini-tl-item:last-child::before { bottom: 50%; }
+.ini-tl-lista > .ini-tl-item:only-child::before { display: none; }
+.ini-tl-resto > .ini-tl-item:first-child::before { top: 0; }
+.ini-tl-link { position: relative; display: grid; grid-template-columns: 44px 28px minmax(0, 1fr) auto; align-items: center; column-gap: 10px; min-height: 58px; padding: 6px 4px; border-radius: 14px; color: inherit; text-decoration: none; transition: background var(--cos-rapido) var(--cos-curva); }
+@media (hover: hover) { .ini-tl-link:hover { background: var(--cos-controle); } }
+.ini-tl-link:active { background: var(--cos-controle); }
+.ini-tl-hora { font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; text-align: right; }
+.ini-tl-marca { position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(var(--tl-fundo), var(--tl-fundo)), var(--cos-bloco); color: var(--tl-cor); box-shadow: 0 0 0 3px var(--cos-bloco); }
+.ini-tl-texto { display: grid; gap: 1px; min-width: 0; }
+.ini-tl-texto strong { font-size: 14.5px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+/* O tipo ("Venda · Pix", "Pedido · esperando") é texto, não dinheiro: tinta normal; a cor fica só na marca. */
+.ini-tl-tipo { font-size: 12px; color: var(--cos-tinta-2); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ini-tl-valor { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ini-tl-valores { display: grid; justify-items: end; gap: 1px; }
+.ini-tl-lucro { font-size: 12px; color: var(--cos-positivo); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ini-tl-lucro[data-negativo] { color: var(--cos-negativo); }
+.ini-tl-delta { min-width: 34px; padding: 2px 8px; border-radius: var(--cos-r-pilula); text-align: center; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--tl-fundo); color: var(--tl-cor); }
+.ini-tl-mais { display: inline-flex; align-items: center; gap: 6px; justify-self: start; margin-top: 6px; min-height: var(--cos-alvo-toque); padding: 0 6px; border: 0; background: none; color: var(--cos-tinta-2); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ini-tl-mais svg { transition: transform var(--cos-medio) var(--cos-curva); }
+.ini-tl-mais svg[data-aberto] { transform: rotate(180deg); }
+/* chegou agora: entra deslizando e brilha um instante */
+@keyframes ini-tl-chegou { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes ini-tl-brilho { from { background: var(--cos-acento-suave); } to { background: transparent; } }
+.ini-tl-item[data-novo] .ini-tl-link { animation: ini-tl-chegou .32s var(--cos-curva) both, ini-tl-brilho 1.6s ease-out .2s both; }
+@media (prefers-reduced-motion: reduce) { .ini-tl-item[data-novo] .ini-tl-link { animation: none; } .ini-tl-mais svg { transition: none; } }
+
+/* Vendas da semana (15/10): total em destaque, curva suave com área em degradê, hoje no acento. */
+.ini-semana-total { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ini-semana-total > span { font-size: 13px; color: var(--cos-tinta-2); }
+.ini-semana-grafico { position: relative; margin: 14px 0 0; height: 120px; }
+.ini-semana-grafico svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.ini-semana-grad-topo { stop-color: var(--cos-acento); stop-opacity: .38; }
+.ini-semana-grad-base { stop-color: var(--cos-acento); stop-opacity: 0; }
+.ini-semana-linha { fill: none; stroke: var(--cos-acento-forte); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.ini-semana-ponto { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: var(--cos-bloco); box-shadow: 0 0 0 2px var(--cos-acento-forte); }
+.ini-semana-ponto[data-hoje] { width: 12px; height: 12px; margin: -6px 0 0 -6px; background: var(--cos-acento); box-shadow: 0 0 0 3px var(--cos-bloco), 0 0 0 5px var(--cos-acento-suave); }
+.ini-semana-dias { list-style: none; margin: 8px 0 0; padding: 0 2px; display: flex; justify-content: space-between; font-size: 11.5px; color: var(--cos-tinta-3); }
+.ini-semana-dias li { width: 28px; text-align: center; }
+.ini-semana-dias li:first-child { text-align: left; } .ini-semana-dias li:last-child { text-align: right; }
+.ini-semana-dias li[data-hoje] { color: var(--cos-tinta); font-weight: 600; }
+.ini-semana-melhor { margin: 12px 0 0; font-size: 13.5px; color: var(--cos-tinta-2); }
+.ini-semana-melhor strong { color: var(--cos-tinta); font-weight: 600; }
+
+/* Mais vendidos (15/10): posição, PNG do modelo, barra proporcional ao primeiro. */
+.ini-top-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ini-top-item { display: grid; grid-template-columns: 18px 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 6px; border-radius: 16px; color: inherit; text-decoration: none; transition: background var(--cos-rapido) var(--cos-curva); }
+@media (hover: hover) { .ini-top-item:hover { background: var(--cos-controle); } }
+.ini-top-item:active { background: var(--cos-controle); }
+.ini-top-pos { font-size: 13px; font-weight: 700; color: var(--cos-tinta-3); text-align: center; font-variant-numeric: tabular-nums; }
+.ini-top-lista li:first-child .ini-top-pos { color: var(--cos-acento-tinta); }
+.ini-top-foto { width: 52px; height: 52px; border-radius: 14px; }
+.ini-top-texto { display: grid; gap: 8px; min-width: 0; }
+.ini-top-texto strong { font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ini-top-barra { display: block; height: 6px; border-radius: var(--cos-r-pilula); background: var(--cos-controle); overflow: hidden; }
+.ini-top-barra i { display: block; height: 100%; width: calc(var(--parte, 0) * 100%); border-radius: inherit; background: var(--cos-tinta-3); transform-origin: left; animation: ini-top-cresce .6s var(--cos-curva) both; animation-delay: calc(var(--i, 0) * 70ms); }
+.ini-top-lista li:first-child .ini-top-barra i { background: var(--cos-acento-forte); }
+@keyframes ini-top-cresce { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.ini-top-num { display: grid; justify-items: end; gap: 1px; }
+.ini-top-num strong { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ini-top-num small { font-size: 12px; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+.ini-top-rodape { margin: 8px 0 0; font-size: 12px; color: var(--cos-tinta-3); }
+@media (prefers-reduced-motion: reduce) { .ini-top-barra i { animation: none; } }
+/* Computador denso (revisão 16/10): a Início cabe em 1440×900. Lista dos mais vendidos mais
+   baixa; a linha do tempo não estica o valor para longe do texto (largura limitada). */
+@media (min-width: 1024px) {
+  .ini-top-item { grid-template-columns: 18px 40px minmax(0, 1fr) auto; padding: 5px 6px; gap: 10px; }
+  .ini-top-foto { width: 40px; height: 40px; border-radius: 12px; }
+  .ini-top-texto { gap: 6px; }
+  .ini-tl-lista, .ini-tl-mais { max-width: 680px; }
+  .ini-semana-grafico { height: 110px; margin-top: 10px; }
+}
+.ini-semana-total .cos-valor { font-size: 34px; font-weight: 700; color: var(--cos-tinta); }
+
+
+/* Mouse (15/10): sem dedo para arrastar de lado, a lista quebra em linhas e mostra tudo. */
+@media (pointer: fine) { .ini-acab-lista { margin: 0; padding: 0; grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); grid-auto-columns: auto; overflow: visible; } }
+
+/* ── Biblioteca visual da Início (16/10): meta, hoje × ontem, ticket, ritmo, caixa por meio, vitrine ── */
+.ini-mod .cos-tb-sub { font-size: 12.5px; }
+@keyframes ini-mod-sobe { from { opacity: 0; transform: translateY(6px); } }
+
+/* Meta do dia */
+.ini-meta-corpo { display: flex; align-items: center; gap: 18px; margin-top: 6px; }
+.ini-meta-pct { font-size: 26px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ini-meta .cos-anel-meio small { font-size: 12px; color: var(--cos-tinta-2); }
+.ini-meta-numeros { flex: 1; min-width: 0; margin: 0; display: grid; gap: 8px; }
+.ini-meta-numeros div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ini-meta-numeros dt { font-size: 13px; color: var(--cos-tinta-2); }
+.ini-meta-numeros dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ini-meta-numeros dd[data-tom="positivo"] { color: var(--cos-positivo); }
+
+/* Hoje × ontem */
+.ini-pares { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 14px; }
+.ini-par { animation: ini-mod-sobe var(--cos-medio) var(--cos-curva) calc(var(--i) * 70ms) both; }
+.ini-par-cab { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--cos-tinta-2); }
+.ini-par-cab b { font-weight: 600; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+.ini-par-cab b[data-tom="positivo"] { color: var(--cos-positivo); }
+.ini-par-cab b[data-tom="negativo"] { color: var(--cos-negativo); }
+.ini-par-barras { display: grid; gap: 4px; margin: 6px 0 4px; }
+.ini-par-barra { display: block; height: 8px; border-radius: var(--cos-r-pilula); background: var(--cos-controle); overflow: hidden; }
+.ini-par-barra i { display: block; height: 100%; width: calc(var(--parte) * 100%); border-radius: inherit; background: var(--cos-tinta-3); transform-origin: left; animation: ini-barra-cresce .6s var(--cos-curva) both; }
+.ini-par-barra[data-hoje] i { background: var(--cos-acento-forte); }
+.ini-par-num { margin: 0; font-size: 12.5px; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+.ini-par-num strong { color: var(--cos-tinta); font-weight: 600; }
+@keyframes ini-barra-cresce { from { transform: scaleX(0); } }
+
+/* Ticket médio */
+.ini-ticket-corpo { display: grid; gap: 6px; margin-top: 4px; }
+.ini-ticket-var { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+.ini-ticket-var[data-tom="positivo"] { color: var(--cos-positivo); }
+.ini-ticket-var[data-tom="negativo"] { color: var(--cos-negativo); }
+.ini-ticket-var span { font-weight: 400; color: var(--cos-tinta-2); }
+
+/* Ritmo do dia */
+.ini-ritmo { margin: 12px 0 0; height: 96px; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; align-items: end; gap: 4px; }
+.ini-ritmo-barra { display: block; height: max(4px, calc(var(--parte) * 100%)); border-radius: 6px 6px 3px 3px; background: var(--cos-tinta-3); opacity: .55; transform-origin: bottom; animation: ini-ritmo-cresce .55s var(--cos-curva) calc(var(--i) * 25ms) both; }
+.ini-ritmo-barra[data-vazia] { background: var(--cos-controle); opacity: 1; }
+.ini-ritmo-barra[data-agora] { background: var(--cos-acento-forte); opacity: 1; }
+.ini-ritmo-eixo { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11.5px; color: var(--cos-tinta-3); }
+@keyframes ini-ritmo-cresce { from { transform: scaleY(0); } }
+
+/* Caixa por meio */
+.ini-meios { display: flex; align-items: center; gap: 18px; margin-top: 6px; }
+.ini-meios .cos-anel-meio small { font-size: 11.5px; color: var(--cos-tinta-2); }
+.ini-meios .cos-anel-meio strong { font-size: 14px; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ini-meios-lista { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 0; display: grid; gap: 10px; }
+.ini-meios-lista li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; font-size: 14px; }
+.ini-meios-lista i { width: 10px; height: 10px; border-radius: 50%; background: var(--cos-tinta-3); }
+.ini-meios-lista i[data-tom="acento"] { background: var(--cos-acento-forte); }
+.ini-meios-lista i[data-tom="tinta"] { background: var(--cos-meio-dinheiro); }
+.ini-meios-lista strong { font-weight: 600; font-variant-numeric: tabular-nums; }
+.ini-meios-lista small { min-width: 34px; text-align: right; font-size: 12px; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+
+/* Vitrine dos campeões: o 1º grande, os outros dois embaixo */
+.ini-vitrine-grade { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ini-vitrine-grade > li { animation: ini-mod-sobe var(--cos-medio) var(--cos-curva) calc(var(--i) * 80ms) both; min-width: 0; }
+.ini-vitrine-grade > li:first-child { grid-column: 1 / -1; }
+.ini-vitrine-grade[data-n="2"] > li:first-child { grid-column: auto; }
+.ini-vitrine-item { position: relative; display: grid; gap: 8px; color: inherit; text-decoration: none; border-radius: var(--cos-r-interno); transition: transform var(--cos-rapido) var(--cos-curva); }
+.ini-vitrine-item:active { transform: scale(.98); }
+.ini-vitrine-foto { aspect-ratio: 4 / 3; border-radius: var(--cos-r-interno); }
+.ini-vitrine-grade > li:first-child .ini-vitrine-foto { aspect-ratio: 16 / 9; }
+.ini-vitrine-selo { position: absolute; top: 8px; left: 8px; padding: 3px 9px; border-radius: var(--cos-r-pilula); background: var(--cos-heroi); color: var(--cos-heroi-num); font-size: 12px; font-weight: 700; }
+.ini-vitrine-texto { display: grid; gap: 1px; min-width: 0; }
+.ini-vitrine-texto strong { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ini-vitrine-texto small { font-size: 12.5px; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ini-par, .ini-par-barra i, .ini-ritmo-barra, .ini-vitrine-grade > li { animation: none; }
+}
+@media (max-width: 360px) {
+  .ini-meta-corpo, .ini-meios { gap: 12px; }
+}

@@ -1,0 +1,262 @@
+/* Control OS — primitivas: botão, círculos, bloco, valor, segmentado, selo e carimbo. */
+
+/* Botão (pílula, alvo ≥ 48 px) */
+.cos-botao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: var(--cos-r-pilula); font-size: var(--cos-texto-corpo); font-weight: 600; white-space: nowrap; transition: transform var(--cos-rapido) var(--cos-curva), background-color .2s var(--cos-curva), opacity .2s; }
+.cos-botao:active:not(:disabled) { transform: scale(.97); }
+.cos-botao:disabled { cursor: not-allowed; }
+.cos-botao[aria-busy="true"] { cursor: progress; }
+.cos-botao-primaria { background: var(--cos-acento); color: var(--cos-sobre-acento); box-shadow: inset 0 -2px 0 rgb(0 0 0 / .08); }
+@media (hover: hover) { .cos-botao-primaria:hover:not(:disabled) { background: var(--cos-acento-forte); } }
+.cos-botao-primaria:disabled:not([aria-busy="true"]) { background: var(--cos-controle); color: var(--cos-tinta-3); box-shadow: none; }
+.cos-botao-secundaria { background: var(--cos-controle-ativo); color: var(--cos-controle-ativo-tinta); }
+.cos-botao-secundaria:disabled:not([aria-busy="true"]) { opacity: .5; }
+.cos-botao-fantasma { border: 1px solid var(--cos-linha-forte); background: transparent; }
+@media (hover: hover) { .cos-botao-fantasma:hover:not(:disabled) { background: var(--cos-controle); } }
+.cos-botao-fantasma:disabled:not([aria-busy="true"]) { color: var(--cos-tinta-3); }
+.cos-heroi .cos-botao-fantasma { border-color: var(--cos-heroi-linha); color: var(--cos-heroi-tinta); }
+.cos-botao-largo { width: 100%; }
+/* ação secundária dentro de cartão ou linha (Corrigir custo, Renomear, Reativar) */
+.cos-botao-compacto { min-height: 40px; padding: 0 10px; font-size: 13px; }
+
+/* Círculo de ícone (44 px) e seta decorativa */
+.cos-circulo { display: inline-grid; place-items: center; width: var(--cos-alvo-toque); height: var(--cos-alvo-toque); border-radius: var(--cos-r-pilula); background: var(--cos-bloco); border: 1px solid var(--cos-linha); flex: none; transition: transform var(--cos-rapido) var(--cos-curva), background-color .2s; }
+@media (hover: hover) { .cos-circulo:hover:not(:disabled) { background: var(--cos-controle); } }
+.cos-circulo:active:not(:disabled) { transform: scale(.94); }
+.cos-circulo:disabled { opacity: .5; cursor: not-allowed; }
+.cos-circulo-acento { background: var(--cos-acento); border-color: transparent; color: var(--cos-sobre-acento); }
+@media (hover: hover) { .cos-circulo-acento:hover:not(:disabled) { background: var(--cos-acento-forte); } }
+.cos-circulo-heroi { background: transparent; border-color: var(--cos-heroi-linha); color: var(--cos-heroi-tinta); }
+.cos-seta { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: var(--cos-r-pilula); border: 1px solid var(--cos-linha-forte); flex: none; transition: transform .2s var(--cos-curva); }
+.cos-seta-heroi { border-color: var(--cos-heroi-linha); }
+.cos-seta-acento { background: var(--cos-acento); color: var(--cos-sobre-acento); border-color: transparent; }
+:is(a, button):active .cos-seta { transform: rotate(45deg); }
+@media (hover: hover) { :is(a, button):hover .cos-seta { transform: rotate(45deg); } }
+
+/* Bloco e herói */
+.cos-bloco { background: var(--cos-bloco); border-radius: var(--cos-r-bloco); padding: 20px; box-shadow: var(--cos-sombra); border: 1px solid var(--cos-linha); min-width: 0; }
+.cos-heroi { background: var(--cos-heroi); color: var(--cos-heroi-tinta); border-color: transparent; }
+/* Escuro (16/10): cartões ganham um filete de luz de 1 px no topo para se separar do fundo;
+   o herói, uma borda fina no acento. */
+:root[data-v2-tema="escuro"] .cos-raiz .cos-bloco { box-shadow: inset 0 1px 0 rgb(255 255 255 / .06), var(--cos-sombra); }
+:root[data-v2-tema="escuro"] .cos-raiz .cos-heroi { box-shadow: inset 0 0 0 1px rgb(47 111 235 / .3), var(--cos-sombra); }
+@media (min-width: 1024px) { .cos-bloco { padding: 24px; } }
+.cos-tb { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.cos-tb-titulo { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.cos-tb-sub { font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); margin-top: 3px; }
+.cos-heroi .cos-tb-sub { color: var(--cos-heroi-tinta-2); }
+
+/* Valor em reais: R$ a ~45%, centavos discretos, algarismos tabulares */
+.cos-valor { display: inline-flex; align-items: baseline; font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: -.03em; line-height: 1; white-space: nowrap; }
+.cos-valor-rs { font-size: .45em; font-weight: 500; color: var(--cos-tinta-2); margin-right: .22em; letter-spacing: 0; align-self: flex-start; margin-top: .14em; }
+.cos-valor-cent { font-size: .5em; color: var(--cos-tinta-2); margin-left: .04em; letter-spacing: -.01em; }
+.cos-heroi .cos-valor-rs, .cos-heroi .cos-valor-cent { color: var(--cos-heroi-tinta-2); }
+.cos-heroi .cos-valor-int { color: var(--cos-heroi-num); }
+/* Valor com sinal: o número inteiro (R$ e centavos acompanham, mais suaves) */
+.cos-valor-positivo { color: var(--cos-positivo); }
+.cos-valor-negativo { color: var(--cos-negativo); }
+.cos-valor-positivo :is(.cos-valor-rs, .cos-valor-cent), .cos-valor-negativo :is(.cos-valor-rs, .cos-valor-cent) { color: inherit; opacity: .75; }
+.cos-valor-p { font-size: 17px; }
+.cos-valor-m { font-size: 26px; }
+.cos-valor-g { font-size: 44px; }
+/* Informação restrita (Flush, cargo gerente): cadeado + palavra, em tinta secundária. Do
+   tamanho do número que estaria ali, para o bloco não pular; sem cor de alerta. */
+.cos-restrito { display: inline-flex; align-items: center; gap: .3em; color: var(--cos-tinta-2); font-weight: 500; letter-spacing: 0; line-height: 1; white-space: nowrap; }
+.cos-restrito svg { width: 1em; height: 1em; flex: none; }
+.cos-restrito-p { font-size: 14px; }
+.cos-restrito-m { font-size: 17px; }
+.cos-restrito-g, .cos-restrito-gg { font-size: 22px; }
+.cos-valor-gg { font-size: 56px; }
+@media (min-width: 1024px) { .cos-valor-gg { font-size: 64px; } }
+
+/* Segmentado com indicador que desliza */
+.cos-seg { display: inline-flex; gap: 2px; padding: 4px; border-radius: var(--cos-r-pilula); background: var(--cos-controle); max-width: 100%; overflow-x: auto; scrollbar-width: none; touch-action: pan-x pan-y; overscroll-behavior-x: contain; }
+.cos-seg-op { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: var(--cos-alvo-toque); padding: 0 16px; border-radius: var(--cos-r-pilula); font-size: 14px; font-weight: 500; color: var(--cos-tinta-2); white-space: nowrap; transition: transform var(--cos-rapido) var(--cos-curva); }
+.cos-seg-op:active { transform: scale(.97); }
+.cos-seg-op[aria-checked="true"], .cos-seg-op[aria-selected="true"] { color: var(--cos-controle-ativo-tinta); }
+.cos-seg-marca { position: absolute; inset: 0; border-radius: var(--cos-r-pilula); background: var(--cos-controle-ativo); z-index: 0; }
+.cos-seg-op > :not(.cos-seg-marca) { position: relative; z-index: 1; }
+.cos-seg-heroi { background: var(--cos-heroi-linha); }
+.cos-seg-heroi .cos-seg-op { color: var(--cos-heroi-tinta-2); }
+.cos-seg-heroi .cos-seg-op:is([aria-checked="true"], [aria-selected="true"]) { color: var(--cos-sobre-acento); }
+.cos-seg-heroi .cos-seg-marca { background: var(--cos-acento); }
+
+/* Selo de emoji: tamanho fixo, nunca empurra o texto */
+.cos-sabor { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.cos-sabor-nome { min-width: 0; overflow-wrap: anywhere; }
+.cos-selo { position: relative; display: inline-grid; place-items: center; flex: none; border-radius: var(--cos-r-pilula); background: var(--cos-app); box-shadow: inset 0 0 0 1px var(--cos-linha); line-height: 1; font-family: var(--cos-fonte-emoji); font-weight: 400; }
+.cos-selo-20 { width: 20px; height: 20px; font-size: 12px; }
+.cos-selo-26 { width: 26px; height: 26px; font-size: 15px; }
+.cos-selo-32 { width: 32px; height: 32px; font-size: 18px; }
+.cos-selo-extra { position: absolute; right: -4px; bottom: -3px; display: grid; place-items: center; width: 14px; height: 14px; border-radius: var(--cos-r-pilula); background: var(--cos-bloco); box-shadow: 0 0 0 1px var(--cos-linha); font-size: 8.5px; }
+.cos-selo-20 .cos-selo-extra { width: 11px; height: 11px; font-size: 7px; right: -3px; bottom: -2px; }
+
+/* Palco de foto (1:1, sem pulo de layout) */
+.cos-palco-foto { position: relative; display: grid; place-items: center; aspect-ratio: 1; width: 100%; border-radius: var(--cos-r-interno); background: var(--cos-palco); overflow: hidden; isolation: isolate; }
+.cos-palco-foto img { width: 86%; height: 86%; object-fit: contain; mix-blend-mode: multiply; }
+/* Sem foto, o emoji fica direto no palco: o círculo do selo, ampliado num palco pequeno,
+   deixava um crescente do palco aparecendo (QA de 16/10, escuro). */
+.cos-palco-foto .cos-selo { transform: scale(1.6); background: none; box-shadow: none; }
+.cos-palco-foto:has(> img) { background: var(--cos-palco-papel); }
+
+/* Carimbo "atualizado há…" */
+.cos-carimbo { display: inline-flex; align-items: center; gap: 10px; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); }
+.cos-carimbo-ponto { width: 8px; height: 8px; border-radius: var(--cos-r-pilula); background: var(--cos-acento-forte); box-shadow: 0 0 0 4px var(--cos-acento-suave); flex: none; }
+.cos-carimbo[data-desatualizado] .cos-carimbo-ponto { background: var(--cos-tinta-3); box-shadow: 0 0 0 4px var(--cos-controle); }
+.cos-carimbo[data-atualizando] .cos-carimbo-ponto { animation: cos-pulso .7s var(--cos-curva) infinite; }
+
+/* Confirmação de ação que não volta (segundo toque) */
+.cos-confirma { display: grid; gap: 10px; padding: 14px; border-radius: 18px; box-shadow: inset 0 0 0 1px var(--cos-linha-forte); font-size: 14px; line-height: 1.4; }
+.cos-confirma-botoes { display: flex; gap: 8px; }
+.cos-confirma-botoes > * { flex: 1; }
+
+/* Opções da tela (⋯): atualizado/atualizar e ações da tela num menu só */
+.cos-opcoes { position: relative; display: inline-flex; }
+.cos-opcoes-alerta { position: relative; }
+.cos-opcoes-alerta::after { content: ""; position: absolute; top: 9px; right: 9px; width: 8px; height: 8px; border-radius: var(--cos-r-pilula); background: var(--cos-alerta-ponto); box-shadow: 0 0 0 2px var(--cos-app); }
+.cos-opcoes-ocupado .cos-icone { animation: cos-pulso .7s var(--cos-curva) infinite; }
+.cos-opcoes-menu { position: absolute; z-index: 40; top: calc(100% + 8px); right: 0; min-width: 232px; display: grid; gap: 2px; padding: 8px; border-radius: 20px; background: var(--cos-bloco); border: 1px solid var(--cos-linha); box-shadow: var(--cos-sombra-alta); animation: cos-opcoes-entra var(--cos-rapido) var(--cos-curva) both; }
+@keyframes cos-opcoes-entra { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .cos-opcoes-menu { animation: none; } }
+.cos-opcoes-estado { padding: 8px 10px 10px; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); border-bottom: 1px solid var(--cos-linha); margin-bottom: 4px; }
+.cos-opcoes-item { display: flex; align-items: center; gap: 10px; min-height: var(--cos-alvo-toque); padding: 0 10px; border-radius: 12px; font-size: 15px; font-weight: 500; color: var(--cos-tinta); text-align: left; }
+.cos-opcoes-item:active, .cos-opcoes-item:focus-visible { background: var(--cos-app); }
+@media (hover: hover) { .cos-opcoes-item:hover { background: var(--cos-app); } }
+.cos-opcoes-item:disabled { opacity: .5; }
+
+/* Sub-abas de seção (item 15): links com sublinhado no ativo; rolam de lado se não couberem. */
+.cos-subabas { display: flex; gap: 4px; margin: 0 0 14px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--cos-linha); }
+/* Mais abas para o lado (QA de 16/10, "Comp" e "sumo" cortados sem aviso): a borda que
+   tem conteúdo escondido some num degradê. SubAbas.tsx marca data-mais-antes/-depois ao
+   rolar. A máscara só pinta: o toque continua chegando à aba. A 2a camada mantém a linha
+   e o sublinhado de baixo inteiros. Sem animação, então nada muda com movimento reduzido. */
+.cos-subabas[data-mais-antes], .cos-subabas[data-mais-depois] {
+  --cos-sumir-antes: 0px; --cos-sumir-depois: 0px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--cos-sumir-antes), #000 calc(100% - var(--cos-sumir-depois)), transparent), linear-gradient(#000, #000);
+  mask-image: linear-gradient(to right, transparent, #000 var(--cos-sumir-antes), #000 calc(100% - var(--cos-sumir-depois)), transparent), linear-gradient(#000, #000);
+  -webkit-mask-size: 100% 100%, 100% 3px; mask-size: 100% 100%, 100% 3px;
+  -webkit-mask-position: 0 0, 0 100%; mask-position: 0 0, 0 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+.cos-subabas[data-mais-antes] { --cos-sumir-antes: 28px; }
+.cos-subabas[data-mais-depois] { --cos-sumir-depois: 28px; }
+.cos-subaba { position: relative; display: inline-flex; align-items: center; min-height: var(--cos-alvo-toque); padding: 0 12px; font-size: 14.5px; font-weight: 500; color: var(--cos-tinta-2); white-space: nowrap; border-radius: 12px 12px 0 0; }
+@media (hover: hover) { .cos-subaba:hover { color: var(--cos-tinta); } }
+.cos-subaba[aria-current="page"] { color: var(--cos-tinta); font-weight: 600; }
+.cos-subaba[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--cos-acento-forte); }
+/* Abas + ferramentas da tela (busca, filtros) na mesma linha quando cabe (10/10: "mais enxuto"); no celular as ferramentas descem. */
+.cos-subabas-linha { margin: 0 0 14px; }
+.cos-subabas-linha > .cos-subabas { margin-bottom: 12px; }
+.cos-subabas-ferramentas { display: grid; gap: 12px; min-width: 0; }
+@media (min-width: 1024px) {
+  .cos-subabas-linha { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0 16px; border-bottom: 1px solid var(--cos-linha); }
+  .cos-subabas-linha > .cos-subabas { margin: 0; border-bottom: 0; overflow: visible; }
+  .cos-subabas-ferramentas { flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 16px; margin-left: auto; padding: 6px 0 8px; }
+  .cos-subabas-ferramentas .cos-filtros { flex: none; }
+  .cos-subabas-ferramentas .cos-busca-campo { flex: 0 1 300px; min-width: 220px; height: 44px; }
+}
+
+/* Cabeçalho de tela (item 10): título + uma linha + o ⋯ (ou a ação) à direita, igual em todo módulo. */
+.cos-cab { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; margin: 4px 0 12px; }
+.cos-cab-texto { min-width: 0; }
+.cos-cab-titulo { font-size: var(--cos-texto-titulo); font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.cos-cab-sub { margin-top: 4px; font-size: var(--cos-texto-corpo); color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+/* Voltar da subtela: círculo à esquerda do título; o texto ocupa o resto da linha. */
+.cos-cab-com-voltar { flex-wrap: nowrap; align-items: center; justify-content: flex-start; }
+.cos-cab-com-voltar .cos-cab-texto { flex: 1; }
+.cos-cab-voltar { color: var(--cos-tinta); }
+
+/* Confirmação entra em crossfade curto (item 18): só opacity/transform. */
+@keyframes cos-entrar { from { opacity: 0; transform: translateY(6px); } }
+.cos-confirma { animation: cos-entrar var(--cos-rapido) var(--cos-curva); }
+
+/* Stepper − n + (item 20): alvos de 44 px, número tabular no meio. */
+.cos-stepper { display: inline-flex; align-items: center; height: 44px; border-radius: var(--cos-r-pilula); background: var(--cos-controle); }
+.cos-stepper-botao { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--cos-r-pilula); color: var(--cos-tinta); }
+.cos-stepper-botao:disabled { color: var(--cos-tinta-3); cursor: default; }
+/* Campo de 16 px: menos que isso o iOS dá zoom no toque (revisão 2). */
+.cos-stepper-campo { width: 40px; height: 44px; border: 0; background: none; font: inherit; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: center; color: var(--cos-tinta); outline: none; }
+/* Compacto (carrinho da venda, 15/10): 40 px (alvo mínimo de toque), número menor; a lixeira aparece no mínimo. */
+.cos-stepper-compacto { height: 40px; }
+.cos-stepper-compacto .cos-stepper-botao { width: 40px; height: 40px; }
+.cos-stepper-compacto .cos-stepper-campo { width: 28px; height: 40px; font-size: 16px; }
+.cos-stepper-remover { color: var(--cos-tinta-2); }
+
+/* Teclado numérico do balcão (item 23): 3 × 4 teclas de 56 px. */
+.cos-teclado { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cos-teclado-tecla { height: 56px; border-radius: 16px; background: var(--cos-app); box-shadow: inset 0 0 0 1px var(--cos-linha); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; display: grid; place-items: center; }
+.cos-teclado-tecla:disabled { opacity: .5; }
+
+/* Campo de digitação do Control OS (valor, nome curto). Prefixo opcional em <span>. */
+.cos-entrada { display: flex; align-items: center; gap: 6px; height: 48px; padding: 0 14px; border-radius: 14px; background: var(--cos-bloco); box-shadow: inset 0 0 0 1px var(--cos-linha-forte); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cos-entrada:focus-within { box-shadow: inset 0 0 0 1px var(--cos-linha-forte), 0 0 0 5px var(--cos-acento-suave); }
+:root[data-v2-tema="escuro"] .cos-entrada:focus-within { box-shadow: inset 0 0 0 1px var(--cos-linha-forte), 0 0 0 5px rgba(47, 111, 235, .18); }
+.cos-entrada > span { color: var(--cos-tinta-3); font-size: 13px; font-weight: 500; }
+.cos-entrada input { width: 100%; min-width: 0; border: 0; background: none; font: inherit; color: inherit; outline: none; }
+.cos-entrada input::placeholder { color: var(--cos-tinta-3); font-weight: 500; }
+@media (max-width: 420px) { .cos-subabas { gap: 0; } .cos-subaba { padding: 0 9px; font-size: 14px; } .cos-subaba[aria-current="page"]::after { left: 9px; right: 9px; } }
+
+/* CampoDeBusca (10/10): uma pílula só em toda lista; o anel de foco é do campo inteiro
+   (tinta + halo no claro, acento no escuro, WCAG 1.4.11), não do input. */
+.cos-busca-campo { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: var(--cos-r-pilula); background: var(--cos-bloco); box-shadow: inset 0 0 0 1px var(--cos-linha-forte); color: var(--cos-tinta-2); }
+/* 16 px: abaixo disso o Safari do iPhone dá zoom na tela ao tocar no campo. */
+.cos-busca-campo input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: 500 16px var(--cos-fonte); color: var(--cos-tinta); }
+.cos-busca-campo input::placeholder { color: var(--cos-tinta-3); }
+.cos-busca-campo input::-webkit-search-cancel-button, .cos-busca-campo input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+.cos-busca-limpar { flex: none; display: grid; place-items: center; width: 40px; height: 40px; margin-right: -12px; border-radius: var(--cos-r-pilula); background: var(--cos-controle); color: var(--cos-tinta-2); }
+.cos-busca-limpar:active { transform: scale(.92); }
+.cos-raiz .cos-busca-campo input:focus-visible { outline: 0; box-shadow: none; }
+.cos-busca-campo:focus-within { box-shadow: inset 0 0 0 1px var(--cos-linha-forte), 0 0 0 5px var(--cos-acento-suave); }
+:root[data-v2-tema="escuro"] .cos-busca-campo:focus-within { box-shadow: inset 0 0 0 1px var(--cos-linha-forte), 0 0 0 5px rgba(47, 111, 235, .18); }
+
+/* ListaDeAtalhos (10/10): atalhos secundários como linhas (título, frase, seta) num bloco. */
+.cos-atalhos { display: grid; gap: 4px; padding: 16px 18px 8px; border-radius: var(--cos-r-bloco); background: var(--cos-bloco); box-shadow: inset 0 0 0 1px var(--cos-linha); }
+.cos-atalhos-titulo { font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--cos-tinta-2); }
+.cos-atalhos ul { list-style: none; margin: 0; padding: 0; }
+.cos-atalhos li + li .cos-atalho { border-top: 1px solid var(--cos-linha); }
+.cos-atalho { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; padding: 8px 0; color: inherit; }
+.cos-atalho:active .cos-seta { rotate: 45deg; }
+@media (hover: hover) { .cos-atalho:hover .cos-seta { rotate: 45deg; } }
+.cos-atalho-texto { display: grid; gap: 2px; min-width: 0; }
+.cos-atalho-texto strong { font-size: 15px; font-weight: 600; }
+.cos-atalho-texto small { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--cos-tinta-2); }
+.cos-atalho-etiqueta { padding: 1px 8px; border-radius: var(--cos-r-pilula); box-shadow: inset 0 0 0 1px var(--cos-linha-forte); font-size: 11.5px; font-weight: 600; color: var(--cos-tinta-2); }
+
+/* Filtros de lista ao lado da busca (11/10, "algo mais clean"): texto simples, o escolhido em pílula escura,
+   contagem discreta. Sem trilho cinza; rola de lado no celular. */
+.cos-filtros { display: flex; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; touch-action: pan-x pan-y; overscroll-behavior-x: contain; }
+.cos-filtro { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border-radius: var(--cos-r-pilula); font-size: 14px; font-weight: 500; color: var(--cos-tinta-2); white-space: nowrap;  }
+@media (hover: hover) { .cos-filtro:hover { color: var(--cos-tinta); } }
+/* Ativo = o mesmo verde-claro do segmentado (QA de 16/10: era tinta, preto no claro). */
+.cos-filtro[aria-checked="true"] { background: var(--cos-controle-ativo); color: var(--cos-controle-ativo-tinta); font-weight: 600; }
+.cos-filtro-conta { font-size: 12px; opacity: .6; font-variant-numeric: tabular-nums; }
+
+/* Celular mais denso (13/10/2026, "mais informação por tela, sem apertar"): menos ar
+   entre blocos e números de destaque menores. Os alvos de toque continuam ≥ 40 px. */
+@media (max-width: 767px) {
+  .cos-bloco { padding: 16px; border-radius: 20px; }
+  .cos-tb { margin-bottom: 12px; }
+  .cos-tb-titulo { font-size: 16px; }
+  .cos-valor-m { font-size: 22px; }
+  .cos-valor-g { font-size: 38px; }
+  .cos-valor-gg { font-size: 46px; }
+  .cos-cab { margin: 0 0 6px; align-items: center; }
+  .cos-cab-sub { margin-top: 2px; font-size: 14px; }
+  .cos-cab .cos-circulo { width: 40px; height: 40px; }
+  .cos-subabas { margin-bottom: 10px; }
+  .cos-subabas-linha { margin-bottom: 10px; }
+  .cos-subabas-linha > .cos-subabas { margin-bottom: 8px; }
+  .cos-subaba { min-height: 40px; }
+  .cos-subabas-ferramentas { gap: 8px; }
+  .cos-busca-campo { height: 44px; }
+  .cos-seg-op { min-height: 40px; }
+  .cos-atalho { min-height: 52px; }
+}
+
+/* Mouse (15/10): sem dedo para arrastar de lado, a lista quebra em linhas e mostra tudo. */
+@media (pointer: fine) { .cos-filtros { flex-wrap: wrap; overflow: visible; } }
+
+/* Tem mais para o lado (16/10): a borda com conteúdo escondido esmaece (useBordaDeRolagem).
+   Só no Segmentado: as SubAbas da Flush já têm o degradê próprio (data-mais-antes/-depois). */
+.cos-seg[data-mais-dir] { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); }
+.cos-seg[data-mais-esq] { -webkit-mask-image: linear-gradient(90deg, transparent, #000 32px); mask-image: linear-gradient(90deg, transparent, #000 32px); }
+.cos-seg[data-mais-esq][data-mais-dir] { -webkit-mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 32px), transparent); }

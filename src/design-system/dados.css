@@ -1,0 +1,27 @@
+/* Control OS — marcadores de dado: Delta (variação contra uma base) e Sparkline (tendência). */
+.cos-delta { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.cos-delta-positivo { color: var(--cos-positivo); }
+.cos-delta-negativo { color: var(--cos-negativo); }
+.cos-delta-base { margin-left: 2px; color: var(--cos-tinta-3); font-weight: 400; }
+.cos-sparkline { display: block; overflow: visible; }
+.cos-sparkline rect { fill: var(--cos-tinta-3); opacity: .5; }
+.cos-sparkline .cos-sparkline-hoje { fill: var(--cos-acento-forte); opacity: 1; }
+/* Delta compacto (pedido do Rapha, 11/10): "até ontem R$ X" na linha; variação no balão. */
+.cos-delta-compacto { position: relative; }
+.cos-delta-alvo { position: relative; display: inline; min-height: 28px; padding: 0 2px; margin: -4px -2px; border-radius: var(--cos-r-pilula); color: inherit; font: inherit; text-align: left; cursor: help; }
+/* Alvo de toque de 40 px sem crescer o desenho (revisão 2, R3): a área invisível vai além do texto. */
+.cos-delta-alvo::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; min-height: 40px; height: 100%; transform: translateY(-50%); }
+/* Seta + primeira palavra numa peça só: a seta nunca fica órfã quando a linha quebra. */
+.cos-delta-cola { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; vertical-align: middle; }
+.cos-delta-cola > svg { flex: none; }
+.cos-delta-balao { position: absolute; z-index: 5; left: 0; bottom: calc(100% + 6px); padding: 8px 12px; border-radius: 10px; background: var(--cos-doca); color: var(--cos-doca-tinta-ativa); font-size: 12.5px; font-weight: 500; white-space: normal; width: max-content; max-width: min(240px, calc(100vw - 32px)); box-shadow: var(--cos-sombra-alta); pointer-events: none; display: none; animation: cos-delta-balao-entra var(--cos-rapido) var(--cos-curva); }
+/* Fechado não ocupa lugar (senão o balão da última coluna empurra a tela de lado no celular). */
+@keyframes cos-delta-balao-entra { from { opacity: 0; transform: translateY(4px); } }
+.cos-delta-balao > span { display: grid; gap: 2px; }
+.cos-delta-balao-num { font-size: 15px; font-weight: 600; }
+.cos-delta-balao-texto { font-weight: 400; opacity: .8; white-space: normal; }
+/* Perto da borda direita o balão se ancora pela direita (ladoDoBalao em Delta.tsx). */
+.cos-delta-compacto[data-lado="direita"] .cos-delta-balao { left: auto; right: 0; }
+.cos-delta-compacto[data-aberto] .cos-delta-balao, .cos-delta-alvo:focus-visible + .cos-delta-balao { display: block; }
+@media (hover: hover) { .cos-delta-alvo:hover + .cos-delta-balao { display: block; } }
+@media (prefers-reduced-motion: reduce) { .cos-delta-balao { animation: none; } }

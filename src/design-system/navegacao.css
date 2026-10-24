@@ -1,0 +1,69 @@
+/* Control OS — navegação: doca (celular), menu + e abas do topo (desktop). */
+
+/* Doca flutuante: só a pílula, sem faixa de fundo; respeita a área segura. */
+/* Presa pelas duas bordas (sem translateX), para nunca vazar da tela. */
+.cos-doca { position: fixed; z-index: 40; left: 12px; right: 12px; margin: 0 auto; max-width: 420px; bottom: var(--cos-folga-base); height: 60px; display: grid; grid-template-columns: 1fr 1fr 60px 1fr 1fr; align-items: center; padding: 0 6px; border-radius: var(--cos-r-pilula); background: var(--cos-doca); box-shadow: var(--cos-doca-sombra), 0 0 0 1px var(--cos-doca-borda) inset; transition: transform var(--cos-lento) var(--cos-curva), opacity var(--cos-lento) var(--cos-curva); will-change: transform; }
+.cos-doca[data-escondida] { transform: translateY(calc(100% + 32px)); opacity: 0; pointer-events: none; }
+.cos-doca-item { position: relative; display: grid; justify-items: center; align-content: center; gap: 2px; height: 48px; border-radius: var(--cos-r-pilula); color: var(--cos-doca-tinta); transition: transform var(--cos-rapido) var(--cos-curva); }
+.cos-doca-item:active { transform: scale(.97); }
+.cos-doca-item[aria-current="page"] { color: var(--cos-doca-ativo); }
+.cos-doca-marca { position: absolute; inset: 0 2px; border-radius: var(--cos-r-pilula); background: var(--cos-doca-marca); }
+.cos-doca-icone { position: relative; display: grid; place-items: center; }
+.cos-doca-rotulo { position: relative; font-size: 11px; font-weight: 500; letter-spacing: -.005em; white-space: nowrap; }
+.cos-doca-item[aria-current="page"] .cos-doca-rotulo { color: var(--cos-doca-tinta-ativa); }
+.cos-doca-bolha { position: absolute; top: -6px; right: -10px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--cos-r-pilula); background: var(--cos-acento); color: var(--cos-sobre-acento); font-size: 11px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--cos-doca); }
+.cos-doca-sai { position: absolute; top: -2px; right: -5px; width: 6px; height: 6px; border-radius: var(--cos-r-pilula); box-shadow: inset 0 0 0 1.5px currentColor; opacity: .8; }
+.cos-doca-mais { justify-self: center; display: grid; place-items: center; width: 46px; height: 46px; border-radius: var(--cos-r-pilula); background: var(--cos-acento); color: var(--cos-sobre-acento); box-shadow: 0 6px 14px -6px rgb(47 111 235 / .6); transition: transform var(--cos-rapido) var(--cos-curva); }
+.cos-doca-mais:active { transform: scale(.94); }
+@media (max-width: 389px) {
+  .cos-doca { left: 8px; right: 8px; grid-template-columns: 1fr 1.2fr 56px 1fr 1fr; padding: 0 4px; }
+  .cos-doca-mais { width: 44px; height: 44px; }
+  .cos-doca-rotulo { font-size: 10.5px; letter-spacing: -.015em; }
+  .cos-doca-marca { inset: 0; }
+}
+@media (min-width: 1024px) { .cos-doca { display: none; } }
+
+/* Menu + (ações rápidas e atalhos) */
+.cos-mais-veu { position: fixed; inset: 0; z-index: 38; background: var(--cos-veu); }
+.cos-mais-veu-topo { background: transparent; }
+.cos-mais { z-index: 39; background: var(--cos-bloco); border: 1px solid var(--cos-linha); border-radius: 28px; padding: 18px; box-shadow: var(--cos-sombra-alta); }
+.cos-mais-doca { position: fixed; left: 50%; bottom: calc(var(--cos-folga-base) + 88px); width: min(100% - 24px, 420px); translate: -50% 0; transform-origin: 50% 100%; }
+.cos-mais-topo { position: absolute; right: 0; top: 56px; width: min(380px, calc(100vw - 32px)); transform-origin: 90% 0; }
+.cos-mais-titulo { font-size: var(--cos-texto-rotulo); font-weight: 500; color: var(--cos-tinta-2); margin: 2px 4px 12px; }
+.cos-mais-grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.cos-mais-grade + .cos-mais-titulo { margin-top: 18px; }
+.cos-mais-item { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 6px 2px; border-radius: 18px; min-height: 88px; text-align: center; transition: transform var(--cos-rapido) var(--cos-curva); }
+.cos-mais-item:active { background: var(--cos-app); }
+@media (hover: hover) { .cos-mais-item:hover { background: var(--cos-app); } }
+.cos-mais-item:active { transform: scale(.97); }
+.cos-mais-icone { display: grid; place-items: center; width: 52px; height: 52px; border-radius: var(--cos-r-pilula); background: var(--cos-acento-suave); color: var(--cos-acento-tinta); }
+.cos-mais-item[data-destaque] .cos-mais-icone { background: var(--cos-acento); color: var(--cos-sobre-acento); }
+.cos-mais-rotulo { font-size: 12.5px; font-weight: 500; line-height: 1.2; }
+
+/* Abas do topo (desktop) */
+.cos-abas { display: inline-flex; gap: 2px; padding: 5px; border-radius: var(--cos-r-pilula); background: var(--cos-bloco); border: 1px solid var(--cos-linha); box-shadow: var(--cos-sombra); }
+.cos-aba { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: var(--cos-alvo-toque); padding: 0 22px; border-radius: var(--cos-r-pilula); font-size: var(--cos-texto-corpo); font-weight: 500; color: var(--cos-tinta-2); transition: color .2s, transform var(--cos-rapido) var(--cos-curva); }
+@media (hover: hover) { .cos-aba:hover { color: var(--cos-tinta); } }
+.cos-aba:active { transform: scale(.97); }
+.cos-aba[aria-current="page"] { color: var(--cos-controle-ativo-tinta); }
+.cos-aba-marca { position: absolute; inset: 0; border-radius: var(--cos-r-pilula); background: var(--cos-controle-ativo); }
+.cos-aba-texto { position: relative; }
+.cos-aba-sai { position: relative; margin-left: -4px; opacity: .55; }
+.cos-aba-bolha { position: relative; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--cos-r-pilula); background: var(--cos-acento); color: var(--cos-sobre-acento); font-size: 12px; font-weight: 700; display: inline-grid; place-items: center; }
+
+/* Alerta discreto (fase Facilidade, 14/10): ponto no ícone, sem número. Alerta não é acento
+   (QA de 16/10): o ponto usa --cos-alerta-ponto; o verde ficaria parecendo "ok". */
+.cos-doca-alerta { position: absolute; top: -1px; right: -4px; width: 8px; height: 8px; border-radius: var(--cos-r-pilula); background: var(--cos-alerta-ponto); box-shadow: 0 0 0 2px var(--cos-doca); }
+.cos-aba-alerta { width: 7px; height: 7px; border-radius: var(--cos-r-pilula); background: var(--cos-alerta-ponto); }
+
+/* Arrastar na doca (15/10, revisão de fluidez): o cursor segue o dedo por transform (sem React);
+   enquanto ele aparece, a marca fixa some; a aba sob o dedo acende com data-sob. */
+.cos-doca-cursor { position: absolute; left: 0; top: 6px; height: 48px; border-radius: var(--cos-r-pilula); background: var(--cos-doca-marca); opacity: 0; pointer-events: none; will-change: transform; z-index: 0; }
+.cos-doca[data-esfregando] .cos-doca-cursor { opacity: 1; }
+.cos-doca-cursor[data-pousando] { transition: transform 160ms var(--cos-curva); }
+.cos-doca[data-esfregando] .cos-doca-marca { opacity: 0; }
+.cos-doca-item { z-index: 1; }
+.cos-doca[data-esfregando] .cos-doca-item { color: var(--cos-doca-tinta); transition: color 90ms linear; }
+.cos-doca[data-esfregando] .cos-doca-item[data-sob] { color: var(--cos-doca-ativo); }
+.cos-doca[data-esfregando] .cos-doca-item[data-sob] .cos-doca-rotulo { color: var(--cos-doca-tinta-ativa); }
+.cos-doca[data-esfregando] .cos-doca-item:active { transform: none; }

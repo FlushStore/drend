@@ -1,0 +1,26 @@
+/* Troca por arrasto lateral (useArrastoLateral, leva 2 do polimento mobile, 14/10).
+   Só durante a troca o elemento arrastado ganha nome de transição: a antiga sai pelo
+   lado e a nova entra colada nela, as duas partindo de onde o dedo soltou
+   (--cos-arrasto-x) na direção do gesto (--cos-arrasto-lado: 1 = próximo). */
+:root[data-cos-arrasto="tela"] [data-arrasto-lateral="tela"] { view-transition-name: cos-arrasto; }
+:root[data-cos-arrasto="item"] [data-arrasto-lateral="item"] { view-transition-name: cos-arrasto; }
+
+::view-transition-group(cos-arrasto) { animation-duration: .34s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+::view-transition-old(cos-arrasto) { animation: cos-arrasto-sai .34s cubic-bezier(.2, .8, .2, 1) both; }
+::view-transition-new(cos-arrasto) { animation: cos-arrasto-entra .34s cubic-bezier(.2, .8, .2, 1) both; }
+/* O resto da página (topo, doca) troca sem esmaecer. */
+:root[data-cos-arrasto]::view-transition-old(root),
+:root[data-cos-arrasto]::view-transition-new(root) { animation: none; }
+
+@keyframes cos-arrasto-sai {
+  from { transform: translateX(var(--cos-arrasto-x, 0px)); opacity: 1; }
+  to { transform: translateX(calc(var(--cos-arrasto-lado, 1) * -100%)); opacity: .5; }
+}
+@keyframes cos-arrasto-entra {
+  from { transform: translateX(calc(var(--cos-arrasto-lado, 1) * 100% + var(--cos-arrasto-x, 0px))); }
+  to { transform: none; }
+}
+/* A doca fica por cima das telas que deslizam (camada própria, já no estado novo). */
+:root[data-cos-arrasto="tela"] .cos-doca { view-transition-name: cos-doca; }
+::view-transition-old(cos-doca) { display: none; }
+::view-transition-new(cos-doca) { animation: none; }

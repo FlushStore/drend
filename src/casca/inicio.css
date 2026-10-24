@@ -1,0 +1,186 @@
+/* Home v2 — cabeçalho, grade bento, herói da fila e ações rápidas (tokens --cos-*). */
+
+/* Cabeçalho de UMA linha (crítica de design, item 1): saudação + data curta, opções à direita */
+/* Sem saudação nem data (pedido do Rapha, 11/10): o cabeçalho é só o ⋯ das ações da tela, à direita e baixo. */
+.ini-cab { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.ini-cab .cos-circulo { width: 36px; height: 36px; }
+/* Período do resumo (20/10, "mais clean"): texto pequeno ao lado de "Faturamento"; a lista curta abre ao tocar. */
+.ini-dia-rotulo { display: flex; align-items: center; gap: 2px; }
+.ini-per { position: relative; display: inline-flex; }
+.ini-per-selo { display: inline-flex; align-items: center; gap: 2px; min-height: 24px; padding: 0 4px; margin: -4px 0; border: 0; border-radius: 8px;
+  background: none; color: var(--cos-tinta-3); font: inherit; cursor: pointer; }
+.ini-per-selo::before { content: "·"; margin-right: 4px; }
+.ini-per-selo[aria-expanded="true"] { color: var(--cos-tinta); }
+.ini-per-selo svg { transition: transform .2s; }
+.ini-per-selo svg[data-aberto] { transform: rotate(180deg); }
+.ini-per-lista { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; display: grid; min-width: 112px; padding: 4px;
+  border-radius: 14px; background: var(--cos-bloco); box-shadow: 0 8px 24px rgb(0 0 0 / .14); }
+.ini-per-item { padding: 8px 12px; border: 0; border-radius: 10px; background: none; color: var(--cos-tinta); font: inherit; font-size: 13.5px; font-weight: 500; text-align: left; cursor: pointer; }
+.ini-per-item:focus-visible { background: var(--cos-acento-suave); outline: none; }
+@media (hover: hover) {
+  .ini-per-selo:hover { color: var(--cos-tinta); }
+  .ini-per-item:hover { background: var(--cos-acento-suave); }
+}
+.ini-per-item[aria-checked="true"] { font-weight: 700; }
+.ini-dia-com-aviso { display: grid; gap: 6px; min-width: 0; }
+.ini-dia-velho { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; padding: 0 4px; font-size: 12.5px; color: var(--cos-tinta-2); }
+.ini-dia-erro { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ini-cab-lado { display: flex; align-items: center; justify-content: flex-end; flex: none; }
+
+/* Grade bento: um herói, o resto acompanha. Colunas de cada lugar vêm do layout
+   (lugaresNaGrade → --ini-cm no tablet, --ini-cl no computador); a ordem é a do DOM (ordemNaTela). */
+.ini-grade { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.ini-lugar { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.ini-lugar-conteudo { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ini-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ini-lugar { grid-column: span var(--ini-cm, 2); }
+}
+@media (min-width: 1024px) {
+  .ini-grade { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; }
+  .ini-lugar { grid-column: span var(--ini-cl, 12); }
+}
+.ini-osso { border-radius: var(--cos-r-bloco); padding: 0; }
+
+/* Topo (revisão 16/10): resumo do dia + fila no lugar do herói. Celular: um embaixo do outro.
+   Computador: lado a lado (≈5/12 e 7/12 do herói), e o Caixa vem na mesma linha (1/3). */
+.ini-topo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+@media (min-width: 768px) { .ini-topo { gap: 16px; } }
+@media (min-width: 1024px) {
+  .ini-topo { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; align-items: stretch; }
+  /* Revisão 2 (R5): o cartão do faturamento não estica até a altura da fila (metade vazia). */
+  .ini-topo > .ini-dia, .ini-topo > .ini-dia-com-aviso { align-content: start; align-self: start; }
+  .ini-topo > .ini-heroi { align-self: stretch; }
+  .ini-topo .ini-dia-principal .cos-valor-g { font-size: 48px; }
+  .ini-fila-item { min-height: 48px; padding: 4px 0; }
+}
+
+/* Herói da fila: compacto — quantos esperam, o mais antigo e a fila em linhas curtas */
+.ini-heroi { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; align-self: start; gap: 8px; padding: 12px 12px 12px 18px; }
+.ini-heroi-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ini-heroi-titulo { display: flex; align-items: baseline; gap: 10px; font-size: 17px; font-weight: 500; line-height: 1.2; letter-spacing: -.01em; min-width: 0; }
+.ini-num { font-size: 28px; font-weight: 600; line-height: 1; letter-spacing: -.03em; color: var(--cos-heroi-num); font-variant-numeric: tabular-nums; }
+.ini-heroi-todos { display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: var(--cos-alvo-toque); min-width: var(--cos-alvo-toque); justify-content: flex-end; font-size: var(--cos-texto-rotulo); font-weight: 500; color: var(--cos-heroi-tinta-2); }
+.ini-heroi-todos:active .cos-seta { rotate: 45deg; }
+@media (hover: hover) { .ini-heroi-todos:hover .cos-seta { rotate: 45deg; } }
+.ini-nota { font-size: 14px; color: var(--cos-heroi-tinta-2); line-height: 1.4; }
+.ini-heroi-alternar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; min-width: 0; flex: 1; min-height: var(--cos-alvo-toque); text-align: left; color: inherit; }
+.ini-heroi-alternar .ini-heroi-titulo { grid-column: 1; }
+.ini-heroi-alternar .ini-nota { grid-column: 1; font-size: 12.5px; }
+.ini-heroi-seta { grid-column: 2; grid-row: 1 / span 2; color: var(--cos-heroi-tinta-2); transition: transform var(--cos-medio) var(--cos-curva); }
+.ini-heroi-seta-aberta { transform: rotate(180deg); }
+.ini-heroi-alternar:disabled { cursor: default; }
+.ini-fila[hidden] { display: none; }
+@media (max-width: 400px) { .ini-heroi-todos-texto { display: none; } }
+
+/* Fila vazia: uma linha só (item 1) */
+.ini-heroi-vazio { gap: 0; padding-top: 8px; padding-bottom: 8px; }
+.ini-heroi-vazio .ini-heroi-titulo { font-size: 15px; }
+.ini-heroi-vazio .ini-num { font-size: 22px; }
+
+/* O mais antigo já na linha recolhida: um toque abre o pedido */
+.ini-heroi-proximo { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 48px; padding: 6px 0 2px; border-top: 1px solid var(--cos-heroi-linha); color: inherit; }
+.ini-heroi-proximo-texto { display: grid; gap: 1px; min-width: 0; }
+.ini-heroi-proximo-texto strong { font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+.ini-heroi-proximo-texto small { font-size: 12.5px; color: var(--cos-heroi-tinta-2); overflow-wrap: anywhere; }
+.ini-heroi-atender { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: var(--cos-r-pilula); border: 1px solid var(--cos-heroi-linha); font-size: 13px; font-weight: 600; white-space: nowrap; transition: background-color var(--cos-rapido); }
+.ini-heroi-proximo:active .ini-heroi-atender { background: var(--cos-heroi-linha); }
+@media (hover: hover) { .ini-heroi-proximo:hover .ini-heroi-atender { background: var(--cos-heroi-linha); } }
+
+.ini-fila { list-style: none; margin: 0; padding: 0; min-width: 0; overflow: hidden; }
+.ini-fila li + li { border-top: 1px solid var(--cos-heroi-linha); }
+.ini-fila-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; min-height: 56px; padding: 6px 0; }
+.ini-fila-nome { display: grid; gap: 2px; min-width: 0; }
+.ini-fila-nome strong { font-size: 15px; font-weight: 600; white-space: nowrap; }
+.ini-fila-nome small { font-size: 12.5px; color: var(--cos-heroi-tinta-2); overflow-wrap: anywhere; }
+.ini-fila-min { font-size: var(--cos-texto-rotulo); color: var(--cos-heroi-tinta-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ini-fila-min.ini-urgente { padding: 3px 9px; border-radius: var(--cos-r-pilula); background: var(--cos-atencao-fundo); color: var(--cos-atencao-tinta); font-weight: 600; }
+.ini-fila-total .cos-valor-rs, .ini-fila-total .cos-valor-cent { color: var(--cos-heroi-tinta-2); }
+.ini-fila-mais { padding: 10px 0; font-size: var(--cos-texto-rotulo); color: var(--cos-heroi-tinta-2); }
+@media (min-width: 1024px) { .ini-heroi { padding: 14px 16px 14px 24px; } .ini-num { font-size: 32px; } .ini-heroi-titulo { font-size: 18px; } }
+@media (max-width: 359px) { .ini-fila-total { display: none; } .ini-fila-item { grid-template-columns: minmax(0, 1fr) auto; } }
+
+/* Resumo do dia em modo resumo (fase Aparência, 14/10): faturamento e lucro de hoje à vista,
+   sem centavos e sem linhas; tendência, vendas e comparação com ontem recolhidas. */
+.ini-dia { display: grid; padding: 18px 20px; }
+.ini-dia-topo { display: flex; align-items: center; gap: 12px; }
+.ini-dia-numeros { flex: 1; display: flex; align-items: flex-end; flex-wrap: wrap; gap: 4px 28px; margin: 0; min-width: 0; }
+.ini-dia-numeros > div { display: grid; gap: 2px; min-width: 0; }
+/* Detalhe em linhas: rótulo à esquerda; valor e a comparação com ontem à direita. */
+.ini-dia-linhas > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; }
+.ini-dia-linhas > div > dd { grid-column: 2; justify-self: end; text-align: right; }
+.ini-dia-linhas > div > dt { grid-row: 1; }
+.ini-dia-numeros dt, .ini-dia-linhas dt { font-size: 12.5px; font-weight: 500; color: var(--cos-tinta-2); white-space: nowrap; }
+.ini-dia-numeros dd, .ini-dia-linhas dd { margin: 0; min-width: 0; }
+.ini-dia-numeros .cos-valor-m, .ini-dia-linhas .cos-valor-m { font-size: 20px; }
+.ini-dia-detalhe { display: grid; gap: 14px; padding-top: 16px; }
+.ini-dia-linhas { display: grid; gap: 12px; margin: 0; }
+.ini-dia-linhas .cos-delta { margin-top: 2px; }
+.ini-dia-pedidos { font-size: 20px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.ini-dia-nota { font-size: var(--cos-texto-rotulo); color: var(--cos-acento-tinta); }
+.ini-dia .ini-link-rodape { padding-top: 4px; min-height: 48px; }
+@media (min-width: 768px) {
+  .ini-dia { padding: 20px 24px; }
+  .ini-dia-principal .cos-valor-g { font-size: 56px; }
+  .ini-dia-numeros .cos-valor-m { font-size: 24px; }
+}
+@media (max-width: 359px) { .ini-dia-principal .cos-valor-g { font-size: 36px; } }
+
+/* Ações rápidas: ícones em círculo no celular, atalhos tingidos no computador */
+.ini-acoes { display: grid; grid-template-columns: repeat(var(--ini-n, 4), minmax(0, 1fr)); gap: 8px; }
+.ini-acao { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 4px 0; text-align: center; border-radius: 20px; min-width: 0; transition: transform var(--cos-rapido) var(--cos-curva); }
+.ini-acao:active { transform: scale(.97); }
+.ini-acao-icone { display: grid; place-items: center; width: 60px; height: 60px; border-radius: var(--cos-r-pilula); background: var(--cos-bloco); border: 1px solid var(--cos-linha); box-shadow: var(--cos-sombra); color: var(--cos-tinta); }
+.ini-acao[data-acao="atender"] .ini-acao-icone { background: var(--cos-acento); color: var(--cos-sobre-acento); border-color: transparent; }
+.ini-acao-texto strong { display: block; font-size: var(--cos-texto-rotulo); font-weight: 500; line-height: 1.2; }
+.ini-acao-texto small, .ini-acao-seta { display: none; }
+.ini-acao-curto { display: none; }
+@media (min-width: 768px) {
+  .ini-acoes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .ini-acao { grid-template-columns: auto minmax(0, 1fr) auto; justify-items: start; align-items: center; gap: 14px; padding: 14px 14px 14px 16px; text-align: left; background: var(--cos-bloco); border: 1px solid var(--cos-linha); box-shadow: var(--cos-sombra); }
+  .ini-acao[data-acao="atender"] { background: var(--cos-acento-suave); border-color: transparent; }
+  .ini-acao-icone { width: 48px; height: 48px; box-shadow: none; background: var(--cos-app); }
+  .ini-acao-texto { display: grid; gap: 2px; min-width: 0; width: 100%; }
+  .ini-acao-texto strong { font-size: var(--cos-texto-corpo); font-weight: 600; }
+  .ini-acao-texto small { display: block; font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); overflow-wrap: anywhere; }
+  .ini-acao-seta { display: inline-grid; }
+}
+@media (min-width: 1024px) { .ini-acoes { grid-template-columns: repeat(var(--ini-n, 4), minmax(0, 1fr)); } }
+
+/* Desatualizado: o último dado continua, com o aviso */
+.ini-desatualizado { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; padding: 12px 12px 12px 20px; border-radius: var(--cos-r-bloco); background: var(--cos-acento-suave); color: var(--cos-acento-tinta); font-weight: 500; }
+.ini-desatualizado .cos-botao { min-height: 44px; border-color: currentColor; color: inherit; }
+.ini-rodape { font-size: var(--cos-texto-rotulo); color: var(--cos-tinta-2); text-align: center; padding: 4px 0 0; }
+.ini-lugar-cheio { grid-column: 1 / -1; }
+
+/* Celular mais denso (13/10/2026, "mais informação por tela, sem apertar"): menos ar
+   entre blocos e números de destaque menores. Os alvos de toque continuam ≥ 40 px. */
+@media (max-width: 767px) {
+  .ini-grade { gap: 12px; }
+  .ini-acao { gap: 6px; }
+  .ini-acao-icone { width: 52px; height: 52px; }
+  .ini-acao-texto strong { position: relative; font-size: 12.5px; white-space: nowrap; }
+  /* Revisão 2 (R4): "Atender pedido" quebrava em 390 px e desalinhava a fileira; no celular
+     aparece "Atender" (o leitor de tela continua ouvindo o rótulo completo). */
+  .ini-acao-longo { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .ini-acao-curto { display: inline; }
+}
+/* Abaixo de 375 px o rótulo pode quebrar em duas linhas equilibradas, sem invadir o vizinho. */
+@media (max-width: 374px) {
+  .ini-acao-texto { max-width: 100%; }
+  .ini-acao-texto strong { white-space: normal; text-wrap: balance; }
+}
+/* Comparação com balão: na coluna da direita do resumo o balão abre PARA BAIXO, alinhado à
+   direita: não cobre o número de cima nem sai da tela (revisão 16/10). */
+.ini-dia-linhas .cos-delta-balao,
+.ini-dia-linhas .cos-delta-compacto[data-lado] .cos-delta-balao { left: auto; right: 0; bottom: auto; top: calc(100% + 6px); }
+.ini-dia-comparacao { align-items: center; }
+.ini-dia-comparacao dt { color: var(--cos-tinta-2); }
+
+/* Exportar catálogo copiou (15/10): o círculo fica verde com o check por um instante. */
+.ini-acao[data-feito] .ini-acao-icone { background: var(--cos-positivo-suave); color: var(--cos-positivo); transition: background var(--cos-rapido) var(--cos-curva), color var(--cos-rapido) var(--cos-curva); }
+
+/* Faturamento de hoje é o cartão principal da Início (16/10): número mais forte e um brilho
+   do acento bem leve no canto, para não pesar o mesmo que Caixa e Vendas da semana. */
+.ini-dia { background: radial-gradient(90% 140% at 100% 0%, var(--cos-acento-suave), transparent 62%), var(--cos-bloco); }
+.ini-dia-principal .cos-valor-int { font-weight: 700; letter-spacing: -.025em; }

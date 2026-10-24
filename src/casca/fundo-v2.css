@@ -1,0 +1,28 @@
+/*
+ * Fundo do Control OS (opção C, escolhida pelo Rapha em 16/10): luz da marca + grão.
+ *
+ * - Luz: um brilho do acento (--cos-acento) bem fraco vindo do canto de cima à direita,
+ *   atrás do topo. Fica parado (camada fixa) enquanto a tela rola.
+ * - Grão: ruído de papel quase invisível (SVG em data URI, 160 px, sem arquivo extra),
+ *   que tira o "digital chapado".
+ *
+ * Celular: a camada fixa fica atrás de tudo (`::before` com z-index -1 e `isolation`).
+ * Computador: a mesma luz e o mesmo grão dentro da moldura; o fundo de fora continua liso.
+ * Movimento reduzido não muda nada (não há animação).
+ */
+.cv2-raiz {
+  --cv2-grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --cv2-luz: radial-gradient(120% 55% at 85% -8%, rgb(47 111 235 / .2), transparent 60%);
+}
+:root[data-v2-tema="escuro"] .cv2-raiz {
+  --cv2-grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --cv2-luz: radial-gradient(120% 55% at 85% -8%, rgb(47 111 235 / .09), transparent 60%);
+}
+
+@media (max-width: 1023px) {
+  .cv2-raiz { position: relative; isolation: isolate; background: transparent; }
+  .cv2-raiz::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--cv2-grao), var(--cv2-luz), var(--cos-app); }
+}
+@media (min-width: 1024px) {
+  .cv2-raiz .cv2-moldura { background: var(--cv2-grao), var(--cv2-luz), var(--cos-app); }
+}

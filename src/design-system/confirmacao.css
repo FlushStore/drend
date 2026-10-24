@@ -1,0 +1,24 @@
+/* Confirmação de ação importante (16/10): cartão no meio da tela com o ✓ se desenhando.
+   Na Flush: o ✓ usa o acento verde da marca (círculo no acento, traço na tinta do acento, que
+   escurece no claro e acende no escuro); sem movimento, o ✓ aparece pronto. */
+.cos-confirmacao-lugar { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; pointer-events: none; }
+.cos-confirmacao-veu { position: fixed; inset: 0; pointer-events: auto; background: rgb(12 12 12 / .22); }
+.cos-confirmacao {
+  position: relative;
+  pointer-events: auto; display: grid; justify-items: center; gap: 6px; width: min(100%, 320px);
+  padding: 24px 22px 20px; border-radius: 28px; background: var(--cos-bloco); color: var(--cos-tinta);
+  box-shadow: 0 0 0 1px var(--cos-linha), 0 24px 60px -18px rgb(0 0 0 / .35); text-align: center; font: inherit;
+}
+.cos-confirmacao-marca { width: 56px; height: 56px; margin-bottom: 6px; }
+.cos-confirmacao-circulo { fill: var(--cos-acento-suave); stroke: var(--cos-acento-forte); stroke-width: 2.5; stroke-dasharray: 151; stroke-dashoffset: 151; animation: cos-confirmacao-traco .26s var(--cos-curva) forwards; }
+.cos-confirmacao-check { fill: none; stroke: var(--cos-acento-tinta); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 34; stroke-dashoffset: 34; animation: cos-confirmacao-traco .18s var(--cos-curva) .14s forwards; }
+@keyframes cos-confirmacao-traco { to { stroke-dashoffset: 0; } }
+.cos-confirmacao-titulo { font-size: 18px; font-weight: 600; letter-spacing: -.01em; line-height: 1.25; }
+.cos-confirmacao-detalhe { font-size: 14px; color: var(--cos-tinta-2); line-height: 1.4; overflow-wrap: anywhere; }
+/* Escuro (QA de 16/10): o véu de 22% sumia no fundo escuro e o cartão tinha a cor dos blocos,
+   então a confirmação se misturava à tela. Véu mais denso e cartão um degrau acima. */
+:root[data-v2-tema="escuro"] .cos-confirmacao-veu { background: rgb(0 0 0 / .56); }
+:root[data-v2-tema="escuro"] .cos-confirmacao { background: #262626; box-shadow: inset 0 1px 0 rgb(255 255 255 / .08), 0 0 0 1px var(--cos-linha-forte), 0 24px 60px -18px rgb(0 0 0 / .6); }
+@media (prefers-reduced-motion: reduce) {
+  .cos-confirmacao-circulo, .cos-confirmacao-check { animation: none; stroke-dashoffset: 0; }
+}
