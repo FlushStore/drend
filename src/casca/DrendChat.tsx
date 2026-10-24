@@ -3,6 +3,7 @@ import { ArrowUp } from "lucide-react";
 import { Botao } from "@/design-system/Botao";
 import { useStore, type Mensagem } from "@/store";
 import { iniciarFlush } from "@/fontes/flush";
+import { Cerebro } from "@/cerebro/Cerebro";
 
 const DESTINOS = [
   ["flushstore", "FlushStore"],
@@ -30,6 +31,20 @@ const SELO: Record<Extract<Mensagem, { de: "drend" }>["status"], string> = {
 export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) => void }) {
   const { mensagens, falar, guardarIdeia, desfazer, mural } = useStore();
   const [texto, setTexto] = useState("");
+  // O cérebro: cada pedido é uma rajada, e ele "pensa" por um instante.
+  const [atividade, setAtividade] = useState(0);
+  const [pensando, setPensando] = useState(false);
+  const fimDoPensar = useRef<ReturnType<typeof setTimeout>>();
+  function pedir(frase: string) {
+    if (!frase.trim()) return;
+    setAtividade((a) => a + 1);
+    setPensando(true);
+    clearTimeout(fimDoPensar.current);
+    fimDoPensar.current = setTimeout(() => setPensando(false), 1600);
+    falar(frase);
+  }
+  useEffect(() => () => clearTimeout(fimDoPensar.current), []);
+  const vazia = mensagens.every((m) => m.de === "drend" && m.status === "dica");
   const fim = useRef<HTMLDivElement>(null);
   const entrada = useRef<HTMLInputElement>(null);
   // O Desfazer só volta a última ação ativa: o botão aparece só na mensagem dela.
@@ -44,6 +59,10 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
 
   return (
     <div className="dr-chat">
+      <div className="dr-chat-cerebro">
+        <Cerebro atividade={atividade} pensando={pensando} tamanho={vazia ? "g" : "p"} />
+        <p className="dr-chat-estado" aria-live="polite">{pensando ? "Pensando…" : "\u00a0"}</p>
+      </div>
       <ol className="dr-chat-lista" aria-label="Conversa com o DREND">
         {mensagens.map((m) =>
           m.de === "rapha" ? (
@@ -69,11 +88,11 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
           ),
         )}
       </ol>
-      {mensagens.every((m) => m.de === "drend" && m.status === "dica") && (
+      {vazia && (
         <ul className="dr-chat-sugestoes" aria-label="Sugestões">
           {SUGESTOES.map(([rotulo, inicio, enviar]) => (
             <li key={rotulo}>
-              <button type="button" className="dr-chat-sugestao" onClick={() => { if (enviar) falar(inicio); else { setTexto(inicio); entrada.current?.focus(); } }}>{rotulo}</button>
+              <button type="button" className="dr-chat-sugestao" onClick={() => { if (enviar) pedir(inicio); else { setTexto(inicio); entrada.current?.focus(); } }}>{rotulo}</button>
             </li>
           ))}
         </ul>
@@ -83,7 +102,7 @@ export function DrendChat({ aoAbrirMural }: { aoAbrirMural: (quadro?: string) =>
         className="dr-chat-campo"
         onSubmit={(e) => {
           e.preventDefault();
-          falar(texto);
+          pedir(texto);
           setTexto("");
         }}
       >

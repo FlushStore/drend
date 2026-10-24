@@ -1,13 +1,17 @@
 import { Bloco } from "@/design-system/Bloco";
 import { CabecalhoDeTela } from "@/design-system/CabecalhoDeTela";
 import { Valor } from "@/design-system/Valor";
-import { drendStatus, outrosProjetos } from "@/data/exemplo";
+import { Link } from "react-router-dom";
+import { SetaCirculo } from "@/design-system/BotaoCirculo";
+import { outrosProjetos } from "@/data/exemplo";
+import { atualizarStatusVM, rotulo, useStatusVM } from "@/fontes/status";
 import { useFlush } from "@/fontes/useFlush";
 import { CurvaDaSemana } from "./VendasDaSemana";
 
 /** Um projeto por bloco: o número que importa e o estado. Operar é no painel do projeto. */
 export function Negocios() {
   const flush = useFlush();
+  const vm = useStatusVM();
   const semana = flush.semana.reduce((t, d) => t + d.valor, 0);
   return (
     <>
@@ -26,13 +30,24 @@ export function Negocios() {
           <CurvaDaSemana dias={flush.semana} ultimoEhHoje={flush.ultimoEhHoje} />
         </Bloco>
 
-        <Bloco className="dr-proj" aria-label="DREND">
+        <Bloco className="dr-proj" aria-label="Vape Mania">
           <div className="dr-proj-cab">
-            <h2 className="dr-proj-nome">DREND</h2>
-            <span className="dr-estado"><i className="dr-ponto" data-tom="acento" aria-hidden="true" />{drendStatus.fase}</span>
+            <h2 className="dr-proj-nome">Vape Mania</h2>
+            <button type="button" className="dr-mi-mais" onClick={() => void atualizarStatusVM(true)} disabled={vm.verificando}>{vm.verificando ? "Verificando…" : "Verificar"}</button>
           </div>
-          <p className="dr-proj-linha">{drendStatus.saude[1][1]}</p>
+          <dl className="dr-saude">
+            <div><dt>Site</dt><dd><i className="dr-ponto" data-tom={vm.site.ok === null ? undefined : vm.site.ok ? "ok" : "alerta"} aria-hidden="true" />{rotulo(vm.site, "site")}</dd></div>
+            <div><dt>Banco</dt><dd><i className="dr-ponto" data-tom={vm.banco.ok === null ? undefined : vm.banco.ok ? "ok" : "alerta"} aria-hidden="true" />{rotulo(vm.banco, "banco")}</dd></div>
+          </dl>
         </Bloco>
+
+        <Link to="/missoes" className="cos-bloco dr-proj" aria-label="Missões">
+          <div className="dr-proj-cab">
+            <h2 className="dr-proj-nome">Missões</h2>
+            <SetaCirculo />
+          </div>
+          <p className="dr-proj-linha">Tudo que está andando em cada projeto, ao vivo.</p>
+        </Link>
       </div>
 
       <section className="dr-pausados" aria-label="Outros projetos">

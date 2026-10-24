@@ -193,3 +193,41 @@ a.dr-heroi:active { transform: scale(.99); }
 /* Aviso com ação e texto curto ("Feito · Desfazer"): numa linha só. */
 .cv2-raiz .cos-aviso:has(.cos-aviso-acao) { flex-wrap: nowrap; }
 .cv2-raiz .cos-aviso:has(.cos-aviso-acao) .cos-aviso-texto { flex: 0 1 auto; margin-right: 8px; }
+
+/* Missões ao vivo (Central de IAs) */
+.dr-ao-vivo { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border: 1px solid var(--cos-linha); border-radius: var(--cos-r-pilula); font-size: 13px; font-weight: 600; color: var(--cos-tinta-2); }
+.dr-ao-vivo i { width: 8px; height: 8px; border-radius: 50%; background: var(--cos-tinta-3); }
+.dr-ao-vivo[data-on] { color: var(--cos-tinta); }
+.dr-ao-vivo[data-on] i { background: var(--cos-positivo); animation: dr-pulso 2s ease-out infinite; }
+@keyframes dr-pulso { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cos-positivo) 55%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+.dr-missao { gap: 12px; }
+.dr-mi-lista { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.dr-mi { position: relative; display: flex; gap: 12px; padding: 8px 0; border-radius: 12px; }
+.dr-mi-marca { flex: none; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; border: 2px solid var(--cos-acento); }
+.dr-mi[data-fase="feito"] .dr-mi-marca { background: var(--cos-positivo); border-color: var(--cos-positivo); }
+.dr-mi[data-fase="depois"] .dr-mi-marca { border-color: var(--cos-tinta-3); }
+.dr-mi-corpo { display: grid; gap: 2px; min-width: 0; color: inherit; text-decoration: none; }
+a.dr-mi-corpo { grid-template-columns: minmax(0, 1fr) auto; column-gap: 6px; }
+a.dr-mi-corpo .dr-mi-link { grid-row: 1; grid-column: 2; color: var(--cos-tinta-3); margin-top: 3px; }
+.dr-mi-titulo { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.dr-mi[data-fase="feito"] .dr-mi-titulo { color: var(--cos-tinta-2); }
+.dr-mi-texto { grid-column: 1; font-size: 13px; line-height: 1.4; color: var(--cos-tinta-2); }
+.dr-mi[data-novo], .dr-feed-item[data-novo] { animation: dr-chegou 2.4s ease-out; }
+@keyframes dr-chegou { 0% { background: var(--cos-acento-suave); } 100% { background: transparent; } }
+.dr-mi-mais { align-self: flex-start; padding: 6px 12px; border: 1px solid var(--cos-linha); border-radius: var(--cos-r-pilula); background: none; color: var(--cos-tinta-2); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.dr-mi-resto { display: grid; gap: 10px; padding-top: 4px; border-top: 1px solid var(--cos-linha); }
+.dr-feed { display: grid; gap: 4px; padding: 24px 4px 0; }
+.dr-feed-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 8px; border-radius: 12px; }
+.dr-feed-quem { grid-column: 1; font-size: 12px; font-weight: 600; color: var(--cos-acento-tinta); }
+.dr-feed-o-que { grid-column: 1; font-size: 14.5px; font-weight: 500; }
+.dr-feed-item time { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 12.5px; color: var(--cos-tinta-3); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .dr-ao-vivo[data-on] i, .dr-mi[data-novo], .dr-feed-item[data-novo] { animation: none; } }
+.dr-saude { display: grid; gap: 10px; margin: 0; }
+.dr-saude div { display: flex; justify-content: space-between; gap: 12px; font-size: 14.5px; }
+.dr-saude dt { color: var(--cos-tinta-2); }
+.dr-saude dd { margin: 0; font-weight: 600; }
+
+/* Cérebro no topo da conversa: fica à vista enquanto as mensagens rolam por baixo. */
+.dr-chat-cerebro { position: sticky; top: 0; z-index: 2; display: grid; justify-items: center; margin: 0 -16px; padding: 0 16px 4px; background: linear-gradient(to bottom, var(--cos-app) 78%, transparent); }
+.cos-painel .dr-chat-cerebro { background: linear-gradient(to bottom, var(--cos-bloco) 78%, transparent); }
+.dr-chat-estado { margin: -6px 0 0; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--cos-acento-tinta); min-height: 1.2em; }

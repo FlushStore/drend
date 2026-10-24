@@ -6,7 +6,10 @@ import { SetaCirculo } from "@/design-system/BotaoCirculo";
 import { useAviso } from "@/design-system/useAviso";
 import { abertas } from "@/core/tarefas";
 import { Valor } from "@/design-system/Valor";
-import { agenda, drendStatus } from "@/data/exemplo";
+import { agenda } from "@/data/exemplo";
+import { DIAS_PARADO, projetos } from "@/core/missao";
+import { useMissoes } from "@/fontes/missoes";
+import { useStatusVM } from "@/fontes/status";
 import { useFlush } from "@/fontes/useFlush";
 import { useStore } from "@/store";
 import { CurvaDaSemana } from "./VendasDaSemana";
@@ -23,6 +26,15 @@ function saudacao(agora: Date) {
 export function Hoje() {
   const { caixaDeEntrada, tarefas, criarTarefa, concluirTarefa, reabrirTarefa } = useStore();
   const numeros = useFlush();
+  const vm = useStatusVM();
+  const missoes = useMissoes();
+  const resumoMissoes = (() => {
+    if (missoes.fase !== "ok") return { agora: 0, parados: 0, texto: "Abrir" };
+    const ps = projetos(missoes.eventos);
+    const agora = ps.reduce((t, p) => t + p.itens.agora.length, 0);
+    const parados = ps.filter((p) => p.parado !== null && p.parado >= DIAS_PARADO).length;
+    return { agora, parados, texto: parados ? `${parados} parado${parados > 1 ? "s" : ""}` : `${agora} em andamento` };
+  })();
   const { aviso, avisar, limpar } = useAviso();
   const [nova, setNova] = useState("");
   const agora = new Date();
@@ -104,12 +116,12 @@ export function Hoje() {
 
       <nav className="dr-tiras" aria-label="Resumo">
         <Link to="/negocios" className="dr-tira">
-          <span className="dr-rotulo">Flush · 7 dias{numeros.exemplo && <span className="dr-tag-exemplo">exemplo</span>}</span>
-          <strong><Valor valor={numeros.semana.reduce((t, d) => t + d.valor, 0)} tamanho="p" centavos={false} /></strong>
+          <span className="dr-rotulo">Vape Mania</span>
+          <strong><i className="dr-ponto" data-tom={vm.site.ok === null ? undefined : vm.site.ok && vm.banco.ok ? "ok" : "alerta"} aria-hidden="true" />{vm.site.ok === null ? "Verificando" : !vm.site.ok ? "Site fora do ar" : !vm.banco.ok ? "Banco sem resposta" : "No ar"}</strong>
         </Link>
-        <Link to="/negocios" className="dr-tira">
-          <span className="dr-rotulo">DREND</span>
-          <strong><i className="dr-ponto" data-tom="acento" aria-hidden="true" />{drendStatus.fase}</strong>
+        <Link to="/missoes" className="dr-tira">
+          <span className="dr-rotulo">Missões</span>
+          <strong><i className="dr-ponto" data-tom={resumoMissoes.parados ? "alerta" : resumoMissoes.agora ? "acento" : undefined} aria-hidden="true" />{resumoMissoes.texto}</strong>
         </Link>
         <Link to="/vida" className="dr-tira">
           <span className="dr-rotulo">Próximo · {hora}</span>
