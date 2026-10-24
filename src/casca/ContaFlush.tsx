@@ -15,7 +15,8 @@ export function ContaFlush() {
 
   if (estado.fase === "carregando") return null;
 
-  if (estado.fase !== "fora") {
+  const doServidor = estado.fase !== "fora" && estado.resumo?.origem === "servidor" ? estado.resumo : null;
+  if (estado.fase !== "fora" && !doServidor) {
     const erro = estado.fase === "erro";
     const quando = estado.resumo ? hora(estado.resumo.atualizadoEm) : null;
     return (
@@ -45,6 +46,7 @@ export function ContaFlush() {
   return (
     <form className="dr-nuvem" onSubmit={(e) => { e.preventDefault(); void enviar(); }}>
       <span className="cv2-conta-rotulo">Ligar a FlushStore · só leitura</span>
+      {doServidor && <p className="dr-nuvem-aviso">Os números vêm do servidor, atualizados às {hora(doServidor.atualizadoEm)} (de hora em hora). Para ver ao vivo, ligue aqui.</p>}
       <label className="cos-entrada">
         <span className="cos-sr">E-mail de admin da Flush</span>
         <input type="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} />

@@ -8,7 +8,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { inicioDoMesAnterior } from "@/core/financeiro";
 import { diasDesde, resumirPorDia, type CaixaFlush, type CustoPadrao, type VendaFlush } from "./flush-regras";
-import { criarFonte, type EstadoLoja, type ResumoLoja } from "./loja";
+import { criarFonte, type DiaLoja, type EstadoLoja, type ResumoLoja } from "./loja";
+import { supabase as drend } from "@/core/nuvem";
 
 /** Flush Principal (Unaí). Samambaia é a ...0002. */
 export const LOJA_PRINCIPAL = "5f1a9c00-0000-4000-8000-000000000001";
@@ -63,6 +64,20 @@ export async function buscarSemana(db: SupabaseClient, agora = new Date()): Prom
   return { dias: historico.slice(-7), historico, atualizadoEm: new Date().toISOString() };
 }
 
+/** A cópia que o servidor do DREND guarda (lida da Flush de hora em hora, só leitura). */
+async function doServidor(): Promise<ResumoFlush | null> {
+  if (!drend) return null;
+  const { data } = await drend.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return null;
+  const r = await fetch("/api/flush", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  if (r.status === 404 || r.status === 401) return null;
+  if (!r.ok) throw new Error(`servidor respondeu ${r.status}`);
+  const corpo = (await r.json()) as { historico?: DiaLoja[]; lidoEm?: string };
+  if (!Array.isArray(corpo.historico) || !corpo.historico.length || !corpo.lidoEm) return null;
+  return { dias: corpo.historico.slice(-7), historico: corpo.historico, atualizadoEm: corpo.lidoEm, origem: "servidor" };
+}
+
 const fonte = criarFonte({
   nome: "Flush",
   url: "https://yglmhmcqknjqoprilhwp.supabase.co",
@@ -70,11 +85,21 @@ const fonte = criarFonte({
   sessao: "drend:flush",
   cache: "drend:flush:resumo",
   buscar: buscarSemana,
+  doServidor,
 });
 
 export const lerEstado = fonte.lerEstado;
 export const ouvir = fonte.ouvir;
 export const atualizar = fonte.atualizar;
-export const iniciarFlush = fonte.iniciar;
+let ouvindoDrend = false;
+/** Liga a leitura e, ao entrar no DREND depois de abrir o app, busca a cópia do servidor. */
+export function iniciarFlush() {
+  fonte.iniciar();
+  if (ouvindoDrend || !drend || typeof window === "undefined") return;
+  ouvindoDrend = true;
+  drend.auth.onAuthStateChange((evento) => {
+    if (evento === "SIGNED_IN") void fonte.atualizar();
+  });
+}
 export const entrarNaFlush = fonte.entrar;
 export const sairDaFlush = fonte.sair;
