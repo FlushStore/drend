@@ -101,6 +101,16 @@ a.dr-heroi:active { transform: scale(.99); }
 .dr-prod-barra { flex: 1 0 100%; height: 4px; border-radius: var(--cos-r-pilula); background: var(--cos-acento-suave); overflow: hidden; }
 .dr-prod-barra i { display: block; height: 100%; width: calc(var(--parte) * 100%); border-radius: inherit; background: var(--cos-acento); }
 .dr-prod-vazio { margin: 4px 0 0; padding: 20px 16px; }
+/* Reposição da Flush */
+.dr-rep .dr-proj-cab { flex-wrap: wrap; row-gap: 10px; }
+.dr-rep-grade { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+@media (min-width: 1024px) { .dr-rep-grade { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; } }
+.dr-rep-qtd { flex-shrink: 0; min-width: 40px; height: 28px; padding: 0 10px; border-radius: var(--cos-r-pilula); display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--cos-acento-suave); color: var(--cos-acento); }
+.dr-rep-rodape { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; border-top: 1px solid var(--cos-linha); }
+.dr-rep-total { font-size: 14px; font-weight: 600; color: var(--cos-tinta-2); font-variant-numeric: tabular-nums; }
+.dr-rep-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.dr-rep-acoes a { text-decoration: none; }
+.dr-rep-nota { margin: 0; font-size: 12.5px; color: var(--cos-tinta-3); }
 .dr-pausados { display: grid; gap: 4px; padding: 8px 4px 0; }
 
 /* Vida. */
