@@ -1,11 +1,11 @@
 # Liga o vault ao vivo no DREND: uma tarefa do Windows, a cada 5 minutos, manda as notas
 # que mudaram direto da pasta do Obsidian (sem esperar o push para o GitHub).
 # Uso (PowerShell, na pasta do drend):
-#   .\scripts\vault-pc.ps1 -Vault segundo-cerebro -Pasta "C:\Users\rapha\Desktop\ObsidianSegundoCerebro"
+#   .\scripts\vault-pc.ps1 -Vault segundo-cerebro -Pasta "C:\Users\rapha\Desktop\ObsidianUnificado"
 # Antes: [Environment]::SetEnvironmentVariable("DREND_VAULT_TOKEN", "<token>", "User")
 # Para desligar: Unregister-ScheduledTask -TaskName "DREND vault <vault>" -Confirm:$false
 param(
-  [Parameter(Mandatory)][ValidateSet("segundo-cerebro", "rapha-os-business")][string]$Vault,
+  [Parameter(Mandatory)][ValidateSet("segundo-cerebro")][string]$Vault,
   [Parameter(Mandatory)][string]$Pasta,
   [int]$Minutos = 5
 )

@@ -1,5 +1,5 @@
 // Envia um vault Obsidian (clone do repositório no GitHub) para o DREND.
-// Uso: node scripts/vault-enviar.mjs <vault> <pasta> [--se-mudou]   (vault: segundo-cerebro | rapha-os-business)
+// Uso: node scripts/vault-enviar.mjs <vault> <pasta> [--se-mudou]   (vault: segundo-cerebro, a pasta do ObsidianUnificado)
 // O token vem de DREND_VAULT_TOKEN (PC do Rapha) ou DREND_AGENTE_TOKEN; no ambiente de nuvem do
 // DREND o proxy já o injeta. DREND_URL troca o endereço (padrão: produção).
 // --se-mudou: só envia quando alguma nota mudou desde o último envio (é o que roda no PC a cada
