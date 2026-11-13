@@ -4,7 +4,6 @@
 
 export const VAULTS = {
   "segundo-cerebro": "Segundo Cérebro",
-  "rapha-os-business": "Rapha OS Business",
 };
 
 /** Pastas que não são notas do Rapha: modelos, anexos, configuração. */

@@ -1,4 +1,4 @@
-// Vaults Obsidian do Rapha (Segundo Cérebro e Rapha OS Business), só leitura no DREND.
+// Vaults Obsidian do Rapha (só o Segundo Cérebro, que é o ObsidianUnificado), só leitura no DREND.
 // POST: a tarefa agendada lê os repositórios dos vaults e manda as notas em lotes, com o
 // token dos agentes; no fim de cada vault manda { fechar } e as notas que sumiram saem.
 // GET: o app lê com o login do Rapha. Sem ?caminho, devolve o índice (sem o texto das notas);
